@@ -2,12 +2,58 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Bloomberg</title>
+  <title>Mini Bloomberg - Panel</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-wrap: wrap;
+      height: 100vh;
+    }
+    .panel {
+      border: 1px solid #333;
+      box-sizing: border-box;
+      padding: 10px;
+      flex: 1 1 50%; /* cada panel ocupa mitad del ancho por defecto */
+      height: 50%;
+      overflow: auto; /* para que no se corte contenido si hay mucho */
+    }
+    h2 { 
+      margin-top: 0; 
+    }
+    /* Opcional: color de fondo distinto para cada panel */
+    #panel-eurodolar { background-color: #f5f5f5; }
+    #panel-dolar { background-color: #e8f0fe; }
+    #panel-oro { background-color: #fff4e5; }
+    #panel-cfd { background-color: #fdecea; }
+  </style>
 </head>
 <body>
 
-  <h1>Mini Bloomberg</h1>
-  <p>Panel de mercados e indicadores</p>
+  <!-- Panel EuroDólar -->
+  <div class="panel" id="panel-eurodolar">
+    <h2>EuroDólar</h2>
+    <p>Gráfico e indicadores aquí</p>
+  </div>
+
+  <!-- Panel Índice del Dólar -->
+  <div class="panel" id="panel-dolar">
+    <h2>Índice del Dólar</h2>
+    <p>Gráfico e indicadores aquí</p>
+  </div>
+
+  <!-- Panel Oro / Petróleo -->
+  <div class="panel" id="panel-oro">
+    <h2>Oro / Petróleo</h2>
+    <p>Gráfico e indicadores aquí</p>
+  </div>
+
+  <!-- Panel CFD Bueno / Malo -->
+  <div class="panel" id="panel-cfd">
+    <h2>CFD Bueno / Malo</h2>
+    <p>Indicaciones aquí</p>
+  </div>
 
 </body>
 </html>
