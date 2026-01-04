@@ -7,32 +7,31 @@
   <style>
     body {
       margin: 0;
+      background: #0b0f14;
+      color: white;
       font-family: Arial, sans-serif;
-      background: #0e1117;
-      color: #fff;
       display: flex;
       flex-wrap: wrap;
       height: 100vh;
     }
 
     .panel {
-      border: 1px solid #222;
-      box-sizing: border-box;
-      padding: 6px;
-      flex: 1 1 50%;
+      width: 50%;
       height: 50%;
+      box-sizing: border-box;
+      border: 1px solid #222;
+      padding: 6px;
       display: flex;
       flex-direction: column;
     }
 
     h2 {
-      margin: 4px 0;
       text-align: center;
       font-size: 14px;
-      color: #7aa2f7;
+      margin: 4px 0;
     }
 
-    .widget {
+    .tv {
       flex: 1;
       margin-bottom: 4px;
     }
@@ -41,74 +40,65 @@
 
 <body>
 
-  <!-- EURO / USD -->
+  <!-- EURUSD + EU10Y -->
   <div class="panel">
-    <h2>EUR/USD · Bonos Alemania</h2>
-    <div id="tv_eurusd" class="widget"></div>
-    <div id="tv_de10y" class="widget"></div>
+    <h2>EUR/USD + Bono EU</h2>
+    <div id="eurusd" class="tv"></div>
+    <div id="eu10y" class="tv"></div>
   </div>
 
-  <!-- DÓLAR -->
+  <!-- DXY + US10Y -->
   <div class="panel">
-    <h2>DXY · Bonos USA</h2>
-    <div id="tv_dxy" class="widget"></div>
-    <div id="tv_us10y" class="widget"></div>
+    <h2>DXY + Bono USA</h2>
+    <div id="dxy" class="tv"></div>
+    <div id="us10y" class="tv"></div>
   </div>
 
-  <!-- MATERIAS PRIMAS / BTC -->
+  <!-- ORO / BRENT / BTC -->
   <div class="panel">
-    <h2>Oro · Petróleo · Bitcoin</h2>
-    <div id="tv_gold" class="widget"></div>
-    <div id="tv_oil" class="widget"></div>
-    <div id="tv_btc" class="widget"></div>
+    <h2>Oro / Brent / BTC</h2>
+    <div id="gold" class="tv"></div>
+    <div id="brent" class="tv"></div>
+    <div id="btc" class="tv"></div>
   </div>
 
-  <!-- RIESGO -->
+  <!-- SP500 / NASDAQ / VIX -->
   <div class="panel">
-    <h2>NASDAQ · S&P500 · VIX</h2>
-    <div id="tv_nasdaq" class="widget"></div>
-    <div id="tv_sp500" class="widget"></div>
-    <div id="tv_vix" class="widget"></div>
+    <h2>SP500 / NASDAQ / VIX</h2>
+    <div id="spx" class="tv"></div>
+    <div id="nasdaq" class="tv"></div>
+    <div id="vix" class="tv"></div>
   </div>
 
-  <!-- TradingView -->
   <script src="https://s3.tradingview.com/tv.js"></script>
-
   <script>
-    function crearWidget(id, symbol) {
+    function widget(id, symbol) {
       new TradingView.widget({
         container_id: id,
-        width: "100%",
-        height: "100%",
         symbol: symbol,
         interval: "60",
-        timezone: "Europe/Madrid",
         theme: "dark",
-        style: "1",
         locale: "es",
+        width: "100%",
+        height: "100%",
         hide_top_toolbar: true,
-        hide_legend: true,
-        allow_symbol_change: false
+        hide_legend: true
       });
     }
 
-    // EUR / USD
-    crearWidget("tv_eurusd", "FX:EURUSD");
-    crearWidget("tv_de10y", "TVC:DE10Y");
+    widget("eurusd", "FX:EURUSD");
+    widget("eu10y", "TVC:EU10Y");
 
-    // DÓLAR
-    crearWidget("tv_dxy", "TVC:DXY");
-    crearWidget("tv_us10y", "TVC:US10Y");
+    widget("dxy", "TVC:DXY");
+    widget("us10y", "TVC:US10Y");
 
-    // COMMODITIES
-    crearWidget("tv_gold", "TVC:GOLD");
-    crearWidget("tv_oil", "TVC:USOIL");
-    crearWidget("tv_btc", "BINANCE:BTCUSDT");
+    widget("gold", "OANDA:XAUUSD");
+    widget("brent", "TVC:UKOIL");
+    widget("btc", "BINANCE:BTCUSDT");
 
-    // RIESGO
-    crearWidget("tv_nasdaq", "NASDAQ:NDX");
-    crearWidget("tv_sp500", "SP:SPX");
-    crearWidget("tv_vix", "CBOE:VIX");
+    widget("spx", "SP:SPX");
+    widget("nasdaq", "NASDAQ:NDX");
+    widget("vix", "CBOE:VIX");
   </script>
 
 </body>
