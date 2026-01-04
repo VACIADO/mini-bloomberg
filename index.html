@@ -10,28 +10,22 @@
       display: flex;
       flex-wrap: wrap;
       height: 100vh;
-      background-color: #111; /* fondo oscuro */
+      background-color: #121212;
+      color: white;
     }
     .panel {
       border: 1px solid #333;
       box-sizing: border-box;
       padding: 10px;
-      flex: 1 1 50%; /* cada panel ocupa mitad del ancho */
+      flex: 1 1 50%;
       height: 50%;
       display: flex;
       flex-direction: column;
-      background-color: #1e1e1e;
-      color: #fff;
     }
-    h2 { 
-      margin-top: 0; 
-      text-align: center; 
-      font-size: 1.2em;
-    }
-    .tradingview-widget-container { 
-      flex: 1; 
-      margin-top: 5px; 
-    }
+    h2 { margin-top: 0; text-align: center; }
+    .tradingview-widget-container { flex: 1; margin-top: 5px; }
+    input { margin-bottom: 5px; width: 100%; padding: 2px; }
+    label { font-size: 12px; }
   </style>
 </head>
 <body>
@@ -39,17 +33,30 @@
   <!-- Panel EuroDólar -->
   <div class="panel" id="panel-eurodolar">
     <h2>EuroDólar y correlados</h2>
+    <label>EUR/USD:</label>
+    <input type="text" id="simbolo_eur" value="FX:EURUSD">
     <div class="tradingview-widget-container">
       <div id="tv_eurodolar"></div>
     </div>
+
+    <label>Bono Europeo 10Y:</label>
+    <input type="text" id="simbolo_bono_eu" value="TVC:EU10Y">
+    <div class="tradingview-widget-container">
+      <div id="tv_bonos_eu"></div>
+    </div>
   </div>
 
-  <!-- Panel Índice Dólar -->
+  <!-- Panel Índice del Dólar -->
   <div class="panel" id="panel-dolar">
-    <h2>Índice Dólar y bonos USA</h2>
+    <h2>Índice Dólar y Bonos EEUU</h2>
+    <label>DXY:</label>
+    <input type="text" id="simbolo_dxy" value="ICE:DXY">
     <div class="tradingview-widget-container">
-      <div id="tv_dxy"></div>
+      <div id="tv_dolar"></div>
     </div>
+
+    <label>Bono EEUU 10Y:</label>
+    <input type="text" id="simbolo_bono_us" value="TVC:US10Y">
     <div class="tradingview-widget-container">
       <div id="tv_bonos_us"></div>
     </div>
@@ -57,70 +64,92 @@
 
   <!-- Panel Oro / Petróleo / BTC -->
   <div class="panel" id="panel-oro">
-    <h2>Oro / Petróleo / Bitcoin</h2>
+    <h2>Oro / Petróleo / BTC</h2>
+    <label>Oro:</label>
+    <input type="text" id="simbolo_oro" value="COMEX:GOLD">
     <div class="tradingview-widget-container">
       <div id="tv_oro"></div>
     </div>
+
+    <label>Petróleo (BRENT):</label>
+    <input type="text" id="simbolo_petroleo" value="TVC:BRENT">
     <div class="tradingview-widget-container">
       <div id="tv_petroleo"></div>
     </div>
+
+    <label>BTC:</label>
+    <input type="text" id="simbolo_btc" value="BINANCE:BTCUSDT">
     <div class="tradingview-widget-container">
       <div id="tv_btc"></div>
     </div>
   </div>
 
-  <!-- Panel Índices / VIX -->
-  <div class="panel" id="panel-indices">
-    <h2>S&P 500 / NASDAQ / VIX</h2>
+  <!-- Panel CFD / S&P / VIX -->
+  <div class="panel" id="panel-cfd">
+    <h2>CFD / SP500 / VIX</h2>
+    <label>CFD Bueno / Malo:</label>
+    <input type="text" id="simbolo_cfd" value="SP:SPX">
+    <div class="tradingview-widget-container">
+      <div id="tv_cfd"></div>
+    </div>
+
+    <label>SP500:</label>
+    <input type="text" id="simbolo_sp500" value="SP:SPX">
     <div class="tradingview-widget-container">
       <div id="tv_sp500"></div>
     </div>
-    <div class="tradingview-widget-container">
-      <div id="tv_nasdaq"></div>
-    </div>
+
+    <label>VIX:</label>
+    <input type="text" id="simbolo_vix" value="CBOE:VIX">
     <div class="tradingview-widget-container">
       <div id="tv_vix"></div>
     </div>
   </div>
 
   <!-- TradingView JS -->
-  <script src="https://s3.tradingview.com/tv.js"></script>
-  <script>
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <script type="text/javascript">
     function crearWidget(containerId, symbol) {
       new TradingView.widget({
-        container_id: containerId,
-        symbol: symbol,
-        interval: "60",
-        timezone: "Europe/Madrid",
-        theme: "dark",
-        style: "1",
-        locale: "es",
-        hide_top_toolbar: true,
-        allow_symbol_change: false,
-        width: "100%",
-        height: "100%"
+        "width": "100%",
+        "height": "100%",
+        "symbol": symbol,
+        "interval": "60",
+        "timezone": "Europe/Madrid",
+        "theme": "dark",
+        "style": "1",
+        "locale": "es",
+        "hide_top_toolbar": true,
+        "container_id": containerId
       });
     }
 
-    // Panel EuroDólar
-    crearWidget("tv_eurodolar", "FX:EURUSD");
+    function actualizarWidgets() {
+      // EuroDólar y correlados
+      crearWidget("tv_eurodolar", document.getElementById("simbolo_eur").value);
+      crearWidget("tv_bonos_eu", document.getElementById("simbolo_bono_eu").value);
 
-    // Panel Índice Dólar y bonos USA
-    crearWidget("tv_dxy", "TVC:DXY");
-    crearWidget("tv_bonos_us", "TVC:US10Y");
+      // Índice del Dólar
+      crearWidget("tv_dolar", document.getElementById("simbolo_dxy").value);
+      crearWidget("tv_bonos_us", document.getElementById("simbolo_bono_us").value);
 
-    // Panel Oro / Petróleo / BTC
-    crearWidget("tv_oro", "OANDA:XAUUSD");
-    crearWidget("tv_petroleo", "TVC:UKOIL");
-    crearWidget("tv_btc", "BINANCE:BTCUSD");
+      // Oro / Petróleo / BTC
+      crearWidget("tv_oro", document.getElementById("simbolo_oro").value);
+      crearWidget("tv_petroleo", document.getElementById("simbolo_petroleo").value);
+      crearWidget("tv_btc", document.getElementById("simbolo_btc").value);
 
-    // Panel S&P 500 / NASDAQ / VIX
-    crearWidget("tv_sp500", "SP:SPX");
-    crearWidget("tv_nasdaq", "NASDAQ:NDX");
-    crearWidget("tv_vix", "CBOE:VIX");
+      // CFD / SP500 / VIX
+      crearWidget("tv_cfd", document.getElementById("simbolo_cfd").value);
+      crearWidget("tv_sp500", document.getElementById("simbolo_sp500").value);
+      crearWidget("tv_vix", document.getElementById("simbolo_vix").value);
+    }
 
-    // Opcional: Bonos europeos (proxy si no carga EU10Y)
-    // crearWidget("tv_bonos_eu", "TVC:DE10Y"); // Bonos Alemania 10Y
+    // Crear widgets iniciales
+    actualizarWidgets();
+
+    // Actualizar al cambiar el valor de algún input
+    const inputs = document.querySelectorAll("input");
+    inputs.forEach(input => input.addEventListener("change", actualizarWidgets));
   </script>
 
 </body>
