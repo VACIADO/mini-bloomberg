@@ -2,103 +2,104 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Bloomberg</title>
-
+  <title>Mini Bloomberg - Panel</title>
   <style>
     body {
       margin: 0;
-      background: #0b0f14;
-      color: white;
       font-family: Arial, sans-serif;
       display: flex;
       flex-wrap: wrap;
       height: 100vh;
+      background-color: #1e1e1e;
+      color: white;
     }
-
     .panel {
-      width: 50%;
-      height: 50%;
+      border: 1px solid #333;
       box-sizing: border-box;
-      border: 1px solid #222;
-      padding: 6px;
+      padding: 5px;
+      flex: 1 1 50%; /* cada panel ocupa la mitad del ancho */
+      height: 50%;
       display: flex;
       flex-direction: column;
     }
-
-    h2 {
-      text-align: center;
-      font-size: 14px;
-      margin: 4px 0;
+    h2 { 
+      margin-top: 0; 
+      text-align: center; 
+      font-size: 1rem;
     }
-
-    .tv {
-      flex: 1;
-      margin-bottom: 4px;
+    .tradingview-widget-container { 
+      flex: 1; 
+      margin-top: 5px; 
     }
   </style>
 </head>
-
 <body>
 
-  <!-- EURUSD + EU10Y -->
-  <div class="panel">
-    <h2>EUR/USD + Bono EU</h2>
-    <div id="eurusd" class="tv"></div>
-    <div id="eu10y" class="tv"></div>
+  <!-- Panel EuroDólar y Bonos EU -->
+  <div class="panel" id="panel-eurodolar">
+    <h2>EUR/USD & Bonos EU 10Y</h2>
+    <div class="tradingview-widget-container"><div id="tv_eurodolar"></div></div>
+    <div class="tradingview-widget-container"><div id="tv_bonos_eu"></div></div>
   </div>
 
-  <!-- DXY + US10Y -->
-  <div class="panel">
-    <h2>DXY + Bono USA</h2>
-    <div id="dxy" class="tv"></div>
-    <div id="us10y" class="tv"></div>
+  <!-- Panel Dólar y Bonos USA -->
+  <div class="panel" id="panel-dolar">
+    <h2>DXY & Bonos USA 10Y</h2>
+    <div class="tradingview-widget-container"><div id="tv_dxy"></div></div>
+    <div class="tradingview-widget-container"><div id="tv_bonos_us"></div></div>
   </div>
 
-  <!-- ORO / BRENT / BTC -->
-  <div class="panel">
-    <h2>Oro / Brent / BTC</h2>
-    <div id="gold" class="tv"></div>
-    <div id="brent" class="tv"></div>
-    <div id="btc" class="tv"></div>
+  <!-- Panel Oro / Petróleo / BTC -->
+  <div class="panel" id="panel-commodities">
+    <h2>Oro / Petróleo / BTC</h2>
+    <div class="tradingview-widget-container"><div id="tv_oro"></div></div>
+    <div class="tradingview-widget-container"><div id="tv_petroleo"></div></div>
+    <div class="tradingview-widget-container"><div id="tv_btc"></div></div>
   </div>
 
-  <!-- SP500 / NASDAQ / VIX -->
-  <div class="panel">
-    <h2>SP500 / NASDAQ / VIX</h2>
-    <div id="spx" class="tv"></div>
-    <div id="nasdaq" class="tv"></div>
-    <div id="vix" class="tv"></div>
+  <!-- Panel Índices / CFD / VIX -->
+  <div class="panel" id="panel-indices">
+    <h2>NASDAQ / SP500 / VIX</h2>
+    <div class="tradingview-widget-container"><div id="tv_nasdaq"></div></div>
+    <div class="tradingview-widget-container"><div id="tv_sp500"></div></div>
+    <div class="tradingview-widget-container"><div id="tv_vix"></div></div>
   </div>
 
-  <script src="https://s3.tradingview.com/tv.js"></script>
-  <script>
-    function widget(id, symbol) {
+  <!-- TradingView JS -->
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <script type="text/javascript">
+    function crearWidget(containerId, symbol) {
       new TradingView.widget({
-        container_id: id,
-        symbol: symbol,
-        interval: "60",
-        theme: "dark",
-        locale: "es",
-        width: "100%",
-        height: "100%",
-        hide_top_toolbar: true,
-        hide_legend: true
+        "width": "100%",
+        "height": "100%",
+        "symbol": symbol,
+        "interval": "60",
+        "timezone": "Europe/Madrid",
+        "theme": "dark",
+        "style": "1",
+        "locale": "es",
+        "hide_top_toolbar": true,
+        "container_id": containerId
       });
     }
 
-    widget("eurusd", "FX:EURUSD");
-    widget("eu10y", "TVC:EU10Y");
+    // Panel EuroDólar y Bonos EU
+    crearWidget("tv_eurodolar", "EURUSD");
+    crearWidget("tv_bonos_eu", "EU10Y");
 
-    widget("dxy", "TVC:DXY");
-    widget("us10y", "TVC:US10Y");
+    // Panel DXY y Bonos USA
+    crearWidget("tv_dxy", "DXY");
+    crearWidget("tv_bonos_us", "US10Y");
 
-    widget("gold", "OANDA:XAUUSD");
-    widget("brent", "TVC:UKOIL");
-    widget("btc", "BINANCE:BTCUSDT");
+    // Panel Oro / Petróleo / BTC
+    crearWidget("tv_oro", "GOLD");
+    crearWidget("tv_petroleo", "BRENT");
+    crearWidget("tv_btc", "BTCUSD");
 
-    widget("spx", "SP:SPX");
-    widget("nasdaq", "NASDAQ:NDX");
-    widget("vix", "CBOE:VIX");
+    // Panel Índices / CFD / VIX
+    crearWidget("tv_nasdaq", "NASDAQ");
+    crearWidget("tv_sp500", "SPX");
+    crearWidget("tv_vix", "VIX");
   </script>
 
 </body>
