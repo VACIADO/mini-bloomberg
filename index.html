@@ -25,63 +25,89 @@
     h2 { margin-top: 0; text-align: center; }
     .tradingview-widget-container { flex: 1; margin-top: 5px; }
     .symbol-input { width: 100%; margin-bottom: 5px; }
+    .label-type { font-size: 0.9em; color: #aaa; margin-bottom: 3px; }
   </style>
 </head>
 <body>
 
-  <!-- Panel EuroDólar y correlados -->
-  <div class="panel" id="panel-eurodolar">
-    <h2>EuroDólar y correlados</h2>
-    <input class="symbol-input" id="sym_eurodolar" value="EURUSD" placeholder="Símbolo EuroDólar">
-    <div class="tradingview-widget-container"><div id="tv_eurodolar"></div></div>
+  <!-- Panel Forex -->
+  <div class="panel" id="panel-forex">
+    <h2>Forex / Monedas</h2>
 
-    <input class="symbol-input" id="sym_euro_idx" value="EURO" placeholder="Símbolo Índice Euro">
+    <div class="label-type">EUR/USD</div>
+    <input class="symbol-input" id="sym_eurusd" value="EURUSD">
+    <div class="tradingview-widget-container"><div id="tv_eurusd"></div></div>
+
+    <div class="label-type">Índice Euro</div>
+    <input class="symbol-input" id="sym_euro_idx" value="EURO">
     <div class="tradingview-widget-container"><div id="tv_euro_idx"></div></div>
 
-    <input class="symbol-input" id="sym_bono_eu" value="EU10Y" placeholder="Bono Europeo 10Y">
-    <div class="tradingview-widget-container"><div id="tv_bono_eu"></div></div>
+    <div class="label-type">DXY / Índice Dólar</div>
+    <input class="symbol-input" id="sym_dxy" value="DXY">
+    <div class="tradingview-widget-container"><div id="tv_dxy"></div></div>
   </div>
 
-  <!-- Panel Índice Dólar y correlados -->
-  <div class="panel" id="panel-dolar">
-    <h2>Índice Dólar y correlados</h2>
-    <input class="symbol-input" id="sym_dxy" value="DXY" placeholder="Símbolo DXY">
-    <div class="tradingview-widget-container"><div id="tv_dxy"></div></div>
+  <!-- Panel Bonos -->
+  <div class="panel" id="panel-bonos">
+    <h2>Bonos</h2>
 
-    <input class="symbol-input" id="sym_bono_us" value="US10Y" placeholder="Bono USA 10Y">
+    <div class="label-type">Bono Europeo 10Y</div>
+    <input class="symbol-input" id="sym_bono_eu" value="EU10Y">
+    <div class="tradingview-widget-container"><div id="tv_bono_eu"></div></div>
+
+    <div class="label-type">Bono USA 10Y</div>
+    <input class="symbol-input" id="sym_bono_us" value="US10Y">
     <div class="tradingview-widget-container"><div id="tv_bono_us"></div></div>
   </div>
 
-  <!-- Panel Oro / Petróleo / BTC -->
+  <!-- Panel Materias primas -->
   <div class="panel" id="panel-commodities">
-    <h2>Oro / Petróleo / BTC</h2>
-    <input class="symbol-input" id="sym_oro" value="GOLD" placeholder="Oro">
+    <h2>Materias primas</h2>
+
+    <div class="label-type">Oro (GOLD)</div>
+    <input class="symbol-input" id="sym_oro" value="GOLD">
     <div class="tradingview-widget-container"><div id="tv_oro"></div></div>
 
-    <input class="symbol-input" id="sym_petroleo" value="BRENT" placeholder="Petróleo">
+    <div class="label-type">Petróleo (BRENT)</div>
+    <input class="symbol-input" id="sym_petroleo" value="BRENT">
     <div class="tradingview-widget-container"><div id="tv_petroleo"></div></div>
+  </div>
 
-    <input class="symbol-input" id="sym_btc" value="BTC" placeholder="BTC">
+  <!-- Panel Cripto -->
+  <div class="panel" id="panel-crypto">
+    <h2>Criptomonedas</h2>
+
+    <div class="label-type">BTC</div>
+    <input class="symbol-input" id="sym_btc" value="BTC">
     <div class="tradingview-widget-container"><div id="tv_btc"></div></div>
   </div>
 
-  <!-- Panel CFD Polmillone / SP500 / NASDAQ / VIX -->
-  <div class="panel" id="panel-cfd">
-    <h2>CFD Polmillone / SP500 / NASDAQ / VIX</h2>
-    <input class="symbol-input" id="sym_cfd" value="POLMILLONE" placeholder="CFD Polmillone">
-    <div class="tradingview-widget-container"><div id="tv_cfd"></div></div>
+  <!-- Panel Índices -->
+  <div class="panel" id="panel-indices">
+    <h2>Índices</h2>
 
-    <input class="symbol-input" id="sym_sp500" value="SPX" placeholder="S&P 500">
-    <div class="tradingview-widget-container"><div id="tv_sp500"></div></div>
-
-    <input class="symbol-input" id="sym_nasdaq" value="NASDAQ" placeholder="NASDAQ">
+    <div class="label-type">NASDAQ</div>
+    <input class="symbol-input" id="sym_nasdaq" value="NASDAQ">
     <div class="tradingview-widget-container"><div id="tv_nasdaq"></div></div>
 
-    <input class="symbol-input" id="sym_vix" value="VIX" placeholder="VIX">
-    <div class="tradingview-widget-container"><div id="tv_vix"></div></div>
+    <div class="label-type">S&P 500 (SPX)</div>
+    <input class="symbol-input" id="sym_sp500" value="SPX">
+    <div class="tradingview-widget-container"><div id="tv_sp500"></div></div>
   </div>
 
-  <!-- TradingView JS -->
+  <!-- Panel Otros -->
+  <div class="panel" id="panel-otros">
+    <h2>Otros</h2>
+
+    <div class="label-type">VIX</div>
+    <input class="symbol-input" id="sym_vix" value="VIX">
+    <div class="tradingview-widget-container"><div id="tv_vix"></div></div>
+
+    <div class="label-type">CFD Polmillone</div>
+    <input class="symbol-input" id="sym_cfd" value="POLMILLONE">
+    <div class="tradingview-widget-container"><div id="tv_cfd"></div></div>
+  </div>
+
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
   <script>
     const widgets = {};
@@ -102,30 +128,29 @@
       });
     }
 
-    // Inicializar widgets con valores por defecto
+    // Lista de todos los gráficos con su input
     const simbolos = [
-      {id: "tv_eurodolar", input: "sym_eurodolar"},
+      {id: "tv_eurusd", input: "sym_eurusd"},
       {id: "tv_euro_idx", input: "sym_euro_idx"},
-      {id: "tv_bono_eu", input: "sym_bono_eu"},
       {id: "tv_dxy", input: "sym_dxy"},
+      {id: "tv_bono_eu", input: "sym_bono_eu"},
       {id: "tv_bono_us", input: "sym_bono_us"},
       {id: "tv_oro", input: "sym_oro"},
       {id: "tv_petroleo", input: "sym_petroleo"},
       {id: "tv_btc", input: "sym_btc"},
-      {id: "tv_cfd", input: "sym_cfd"},
-      {id: "tv_sp500", input: "sym_sp500"},
       {id: "tv_nasdaq", input: "sym_nasdaq"},
-      {id: "tv_vix", input: "sym_vix"}
+      {id: "tv_sp500", input: "sym_sp500"},
+      {id: "tv_vix", input: "sym_vix"},
+      {id: "tv_cfd", input: "sym_cfd"}
     ];
 
+    // Inicializar y permitir cambiar símbolos dinámicamente
     simbolos.forEach(s => {
-      const val = document.getElementById(s.input).value;
-      crearWidget(s.id, val);
+      crearWidget(s.id, document.getElementById(s.input).value);
       document.getElementById(s.input).addEventListener("change", () => {
         crearWidget(s.id, document.getElementById(s.input).value);
       });
     });
   </script>
-
 </body>
 </html>
