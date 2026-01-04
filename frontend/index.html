@@ -3,9 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <title>Mini Bloomberg - Panel</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-wrap: wrap;
+      height: 100vh;
+    }
+    .panel {
+      border: 1px solid #333;
+      box-sizing: border-box;
+      padding: 10px;
+      flex: 1 1 50%; /* cada panel ocupa mitad del ancho por defecto */
+      height: 50%;
+    }
+    h2 { margin-top: 0; }
+  </style>
 </head>
 <body>
-  <h1>Panel de gráficos</h1>
-  <p>Aquí añadiremos los indicadores y mercados.</p>
+
+  <div class="panel" id="panel-eurodolar">
+    <h2>EuroDólar</h2>
+    <p>Gráfico e indicadores aquí</p>
+  </div>
+
+  <div class="panel" id="panel-dolar">
+    <h2>Índice del Dólar</h2>
+    <p>Gráfico e indicadores aquí</p>
+  </div>
+
+  <div class="panel" id="panel-oro">
+    <h2>Oro / Petróleo</h2>
+    <p>Gráfico e indicadores aquí</p>
+  </div>
+
+  <div class="panel" id="panel-cfd">
+    <h2>CFD Bueno / Malo</h2>
+    <p>Indicaciones aquí</p>
+  </div>
+
 </body>
 </html>
