@@ -15,67 +15,103 @@
       border: 1px solid #333;
       box-sizing: border-box;
       padding: 10px;
-      flex: 1 1 50%; /* cada panel ocupa mitad del ancho por defecto */
+      flex: 1 1 50%; /* cada panel ocupa mitad del ancho */
       height: 50%;
-      overflow: auto; /* para que no se corte contenido si hay mucho */
+      display: flex;
+      flex-direction: column;
     }
-    h2 { 
-      margin-top: 0; 
-    }
-    /* Opcional: color de fondo distinto para cada panel */
-    #panel-eurodolar { background-color: #f5f5f5; }
-    #panel-dolar { background-color: #e8f0fe; }
-    #panel-oro { background-color: #fff4e5; }
-    #panel-cfd { background-color: #fdecea; }
+    h2 { margin-top: 0; text-align: center; }
+    .tradingview-widget-container { flex: 1; margin-top: 5px; }
   </style>
 </head>
 <body>
 
   <!-- Panel EuroDólar -->
- <div class="panel" id="panel-eurodolar">
-  <h2>EuroDólar</h2>
-
-  <!-- TradingView Widget -->
-  <div class="tradingview-widget-container">
-    <div id="tradingview_eurodolar"></div>
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script type="text/javascript">
-      new TradingView.widget({
-        "width": "100%",
-        "height": "100%",
-        "symbol": "FX:EURUSD",
-        "interval": "60", // cada vela 1 hora
-        "timezone": "Europe/Madrid",
-        "theme": "light",
-        "style": "1",
-        "locale": "es",
-        "toolbar_bg": "#f1f3f6",
-        "enable_publishing": false,
-        "hide_top_toolbar": true,
-        "container_id": "tradingview_eurodolar"
-      });
-    </script>
+  <div class="panel" id="panel-eurodolar">
+    <h2>EuroDólar y correlados</h2>
+    <div class="tradingview-widget-container">
+      <div id="tv_eurodolar"></div>
+    </div>
+    <div class="tradingview-widget-container">
+      <div id="tv_bonos_eu"></div>
+    </div>
   </div>
-</div>
-
 
   <!-- Panel Índice del Dólar -->
   <div class="panel" id="panel-dolar">
-    <h2>Índice del Dólar</h2>
-    <p>Gráfico e indicadores aquí</p>
+    <h2>Índice Dólar y correlados</h2>
+    <div class="tradingview-widget-container">
+      <div id="tv_dolar"></div>
+    </div>
+    <div class="tradingview-widget-container">
+      <div id="tv_bonos_us"></div>
+    </div>
   </div>
 
-  <!-- Panel Oro / Petróleo -->
+  <!-- Panel Oro / Petróleo / BTC -->
   <div class="panel" id="panel-oro">
-    <h2>Oro / Petróleo</h2>
-    <p>Gráfico e indicadores aquí</p>
+    <h2>Oro / Petróleo / BTC</h2>
+    <div class="tradingview-widget-container">
+      <div id="tv_oro"></div>
+    </div>
+    <div class="tradingview-widget-container">
+      <div id="tv_petroleo"></div>
+    </div>
+    <div class="tradingview-widget-container">
+      <div id="tv_btc"></div>
+    </div>
   </div>
 
-  <!-- Panel CFD Bueno / Malo -->
+  <!-- Panel CFD Bueno / Malo / S&P / VIX -->
   <div class="panel" id="panel-cfd">
-    <h2>CFD Bueno / Malo</h2>
-    <p>Indicaciones aquí</p>
+    <h2>CFD / S&P 500 / VIX</h2>
+    <div class="tradingview-widget-container">
+      <div id="tv_cfd"></div>
+    </div>
+    <div class="tradingview-widget-container">
+      <div id="tv_sp500"></div>
+    </div>
+    <div class="tradingview-widget-container">
+      <div id="tv_vix"></div>
+    </div>
   </div>
+
+  <!-- TradingView JS -->
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <script type="text/javascript">
+    function crearWidget(containerId, symbol) {
+      new TradingView.widget({
+        "width": "100%",
+        "height": "100%",
+        "symbol": symbol,
+        "interval": "60",
+        "timezone": "Europe/Madrid",
+        "theme": "dark",
+        "style": "1",
+        "locale": "es",
+        "hide_top_toolbar": true,
+        "container_id": containerId
+      });
+    }
+
+    // Panel EuroDólar
+    crearWidget("tv_eurodolar", "FX:EURUSD");
+    crearWidget("tv_bonos_eu", "TVC:GB10Y"); // Bonos Europeos 10Y
+
+    // Panel Índice del Dólar
+    crearWidget("tv_dolar", "ICE:DX1!");
+    crearWidget("tv_bonos_us", "TVC:US10Y"); // Bonos EEUU 10Y
+
+    // Panel Oro / Petróleo / BTC
+    crearWidget("tv_oro", "COMEX:GC1!"); // Oro
+    crearWidget("tv_petroleo", "NYMEX:CL1!"); // Petróleo
+    crearWidget("tv_btc", "BINANCE:BTCUSDT"); // BTC
+
+    // Panel CFD / S&P / VIX
+    crearWidget("tv_cfd", "SP:SPX");
+    crearWidget("tv_sp500", "SP:SPX");
+    crearWidget("tv_vix", "CBOE:VIX");
+  </script>
 
 </body>
 </html>
