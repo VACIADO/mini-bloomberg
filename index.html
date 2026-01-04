@@ -1,33 +1,36 @@
-¡<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Bloomberg Interactivo</title>
+  <title>Mini Bloomberg Profesional</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       display: flex;
-      flex-wrap: wrap;
       height: 100vh;
       background-color: #1e1e1e;
       color: #fff;
     }
-    .panel {
+    .column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       border: 1px solid #444;
-      box-sizing: border-box;
       padding: 10px;
-      flex: 1 1 50%;
-      height: 50%;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    .panel {
+      border: 1px solid #555;
+      padding: 10px;
+      margin-bottom: 10px;
+      flex: 1;
       display: flex;
       flex-direction: column;
       background-color: #2b2b2b;
     }
-    h2 { 
-      margin-top: 0; 
-      text-align: center; 
-      font-size: 1.2em;
-    }
+    h2 { text-align: center; margin: 0 0 5px 0; font-size: 1.1em; }
     select {
       margin: 5px 0;
       padding: 5px;
@@ -41,67 +44,47 @@
       color: #0f0;
       font-family: monospace;
       padding: 10px;
+      height: 150px;
       overflow-y: auto;
-      height: 100%;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
 
-<!-- Panel Forex -->
-<div class="panel" id="panel-forex">
-  <h2>Forex</h2>
-  <select id="symbol_eurusd">
-    <option value="FX:EURUSD">EUR/USD</option>
-    <option value="INDEX:DXY">DXY</option>
-    <option value="INDEX:EUR">Índice Euro</option>
-  </select>
-  <div class="tradingview-widget-container" id="container_eurusd"></div>
+<!-- COLUMNA IZQUIERDA: EURO / USD y correlacionados -->
+<div class="column">
+  <div class="panel">
+    <h2>EUR/USD y correlacionados</h2>
+    <select id="symbol_eurusd">
+      <option value="FX:EURUSD">EUR/USD</option>
+      <option value="TVC:EU10Y">Bono EU 10Y</option>
+      <option value="TVC:US10Y">Bono USA 10Y</option>
+      <option value="COMEX:GC1!">Oro</option>
+      <option value="ICE:BRENT">Petróleo (Brent)</option>
+      <option value="BINANCE:BTCUSDT">BTC</option>
+    </select>
+    <div class="tradingview-widget-container" id="container_eurusd"></div>
+  </div>
 </div>
 
-<!-- Panel Bonos -->
-<div class="panel" id="panel-bonos">
-  <h2>Bonos</h2>
-  <select id="symbol_us10y">
-    <option value="TVC:US10Y">Bono USA 10Y</option>
-    <option value="TVC:EU10Y">Bono EU 10Y</option>
-  </select>
-  <div class="tradingview-widget-container" id="container_us10y"></div>
-</div>
+<!-- COLUMNA DERECHA: DXY e índices -->
+<div class="column">
+  <div class="panel">
+    <h2>Índice del Dólar y correlacionados</h2>
+    <select id="symbol_dxy">
+      <option value="INDEX:DXY">DXY</option>
+      <option value="SP:SPX">S&P 500</option>
+      <option value="NASDAQ:IXIC">Nasdaq</option>
+      <option value="CBOE:VIX">VIX</option>
+      <option value="SP:SPX">CFD Polmillone</option>
+    </select>
+    <div class="tradingview-widget-container" id="container_dxy"></div>
+  </div>
 
-<!-- Panel Materias Primas / Crypto -->
-<div class="panel" id="panel-commodities">
-  <h2>Materias Primas / Crypto</h2>
-  <select id="symbol_commodities">
-    <option value="COMEX:GC1!">Oro</option>
-    <option value="ICE:BRENT">Petróleo (Brent)</option>
-    <option value="BINANCE:BTCUSDT">BTC</option>
-  </select>
-  <div class="tradingview-widget-container" id="container_commodities"></div>
-</div>
-
-<!-- Panel Índices -->
-<div class="panel" id="panel-indices">
-  <h2>Índices</h2>
-  <select id="symbol_indices">
-    <option value="NASDAQ:IXIC">Nasdaq</option>
-    <option value="SP:SPX">S&P 500</option>
-    <option value="CBOE:VIX">VIX</option>
-  </select>
-  <div class="tradingview-widget-container" id="container_indices"></div>
-</div>
-
-<!-- Panel CFD / IA -->
-<div class="panel" id="panel-cfd">
-  <h2>CFD Polmillone / Consola IA</h2>
-  <select id="symbol_cfd">
-    <option value="SP:SPX">CFD Polmillone</option>
-  </select>
-  <div class="tradingview-widget-container" id="container_cfd"></div>
   <div id="ia-console">Consola IA activa aquí...</div>
 </div>
 
-<!-- TradingView JS -->
 <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 <script>
   function crearWidget(containerId, symbol) {
@@ -119,31 +102,24 @@
     });
   }
 
-  // Inicializamos todos los widgets
+  // Inicializamos widgets
   let widgets = {
     eurusd: crearWidget("container_eurusd", "FX:EURUSD"),
-    us10y: crearWidget("container_us10y", "TVC:US10Y"),
-    commodities: crearWidget("container_commodities", "COMEX:GC1!"),
-    indices: crearWidget("container_indices", "NASDAQ:IXIC"),
-    cfd: crearWidget("container_cfd", "SP:SPX")
+    dxy: crearWidget("container_dxy", "INDEX:DXY")
   };
 
   // Función para actualizar widget al cambiar símbolo
   function actualizarWidget(selectId, containerId, key) {
     document.getElementById(selectId).addEventListener('change', function() {
       let symbol = this.value;
-      document.getElementById(containerId).innerHTML = ""; // limpia el contenedor
+      document.getElementById(containerId).innerHTML = "";
       widgets[key] = crearWidget(containerId, symbol);
     });
   }
 
-  // Asignamos actualización a cada panel
   actualizarWidget("symbol_eurusd", "container_eurusd", "eurusd");
-  actualizarWidget("symbol_us10y", "container_us10y", "us10y");
-  actualizarWidget("symbol_commodities", "container_commodities", "commodities");
-  actualizarWidget("symbol_indices", "container_indices", "indices");
-  actualizarWidget("symbol_cfd", "container_cfd", "cfd");
-
+  actualizarWidget("symbol_dxy", "container_dxy", "dxy");
 </script>
+
 </body>
 </html>
