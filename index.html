@@ -2,119 +2,110 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Bloomberg Profesional</title>
+  <title>Mini Bloomberg - Panel</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       display: flex;
-      background-color: #121212;
-      color: #fff;
+      flex-wrap: wrap;
       height: 100vh;
-      overflow: hidden;
-    }
-    .column {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 8px;
-      box-sizing: border-box;
-      overflow-y: auto;
     }
     .panel {
-      background: #1e1e1e;
-      border: 1px solid #444;
-      margin-bottom: 10px;
-      padding: 6px;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
+      border: 1px solid #333;
+      box-sizing: border-box;
+      padding: 10px;
+      flex: 1 1 50%; /* cada panel ocupa mitad del ancho */
+      height: 50%;
     }
-    h2 {
-      margin: 0 0 6px 0;
-      font-size: 1rem;
-      text-align: center;
-    }
-    .widget-container {
-      flex: 1;
-      margin-top: 4px;
-    }
-    #ia-console {
-      background: #000;
-      color: #0f0;
-      font-family: monospace;
-      padding: 6px;
-      height: 140px;
-      overflow-y: auto;
-      font-size: 0.8rem;
-    }
+    h2 { margin-top: 0; }
+    .tradingview-widget-container { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
 
-  <!-- Columna Izquierda (Euro / Forex) -->
-  <div class="column">
-    <div class="panel">
-      <h2>EUR/USD</h2>
-      <div id="widget_eurusd" class="widget-container"></div>
-    </div>
-    <div class="panel">
-      <h2>Bonos Europeos (Proxy: DE10Y)</h2>
-      <div id="widget_eu10y" class="widget-container"></div>
-    </div>
-    <div class="panel">
-      <h2>Oro (XAUUSD)</h2>
-      <div id="widget_gold" class="widget-container"></div>
+  <div class="panel" id="panel-eurodolar">
+    <h2>EuroDólar</h2>
+    <div class="tradingview-widget-container">
+      <div id="tradingview_eurodolar"></div>
     </div>
   </div>
 
-  <!-- Columna Derecha (DXY / Índices) -->
-  <div class="column">
-    <div class="panel">
-      <h2>DXY - Índice del Dólar</h2>
-      <div id="widget_dxy" class="widget-container"></div>
-    </div>
-    <div class="panel">
-      <h2>Bonos USA 10Y</h2>
-      <div id="widget_us10y" class="widget-container"></div>
-    </div>
-    <div class="panel">
-      <h2>SP500 / Nasdaq / VIX</h2>
-      <div id="widget_spx" class="widget-container"></div>
-      <div id="widget_ndx" class="widget-container"></div>
-      <div id="widget_vix" class="widget-container"></div>
+  <div class="panel" id="panel-dolar">
+    <h2>Índice del Dólar</h2>
+    <div class="tradingview-widget-container">
+      <div id="tradingview_dolar"></div>
     </div>
   </div>
 
-  <!-- Later puedes poner aquí un footer o IA, pero no ocupa espacio ahora -->
+  <div class="panel" id="panel-oro">
+    <h2>Oro / Petróleo</h2>
+    <div class="tradingview-widget-container">
+      <div id="tradingview_oro"></div>
+    </div>
+  </div>
 
-  <script src="https://s3.tradingview.com/tv.js"></script>
-  <script>
-    function crear(symbol, container) {
-      new TradingView.widget({
-        container_id: container,
-        symbol: symbol,
-        interval: "60",
-        timezone: "Europe/Madrid",
-        theme: "dark",
-        style: "1",
-        locale: "es",
-        hide_top_toolbar: true,
-        width: "100%",
-        height: "100%"
-      });
-    }
+  <div class="panel" id="panel-cfd">
+    <h2>CFD Bueno / Malo</h2>
+    <div class="tradingview-widget-container">
+      <div id="tradingview_cfd"></div>
+    </div>
+  </div>
 
-    // ✔ Símbolos probados válidos
-    crear("FX:EURUSD", "widget_eurusd");
-    crear("TVC:DE10Y", "widget_eu10y");
-    crear("OANDA:XAUUSD", "widget_gold");
+  <!-- TradingView JS -->
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <script type="text/javascript">
+    // EuroDólar
+    new TradingView.widget({
+      "width": "100%", "height": "100%",
+      "symbol": "FX:EURUSD",
+      "interval": "60",
+      "timezone": "Europe/Madrid",
+      "theme": "dark",
+      "style": "1",
+      "locale": "es",
+      "hide_top_toolbar": true,
+      "container_id": "tradingview_eurodolar"
+    });
 
-    crear("TVC:DXY", "widget_dxy");
-    crear("TVC:US10Y", "widget_us10y");
-    crear("SP:SPX", "widget_spx");
-    crear("NASDAQ:NDX", "widget_ndx");
-    crear("TVC:VIX", "widget_vix");
+    // Índice del Dólar
+    new TradingView.widget({
+      "width": "100%", "height": "100%",
+      "symbol": "ICE:DX1!",
+      "interval": "60",
+      "timezone": "Europe/Madrid",
+      "theme": "dark",
+      "style": "1",
+      "locale": "es",
+      "hide_top_toolbar": true,
+      "container_id": "tradingview_dolar"
+    });
+
+    // Oro / Petróleo
+    new TradingView.widget({
+      "width": "100%", "height": "100%",
+      "symbol": "COMEX:GC1!",
+      "interval": "60",
+      "timezone": "Europe/Madrid",
+      "theme": "dark",
+      "style": "1",
+      "locale": "es",
+      "hide_top_toolbar": true,
+      "container_id": "tradingview_oro"
+    });
+
+    // CFD Bueno / Malo (ejemplo con S&P500)
+    new TradingView.widget({
+      "width": "100%", "height": "100%",
+      "symbol": "SP:SPX",
+      "interval": "60",
+      "timezone": "Europe/Madrid",
+      "theme": "dark",
+      "style": "1",
+      "locale": "es",
+      "hide_top_toolbar": true,
+      "container_id": "tradingview_cfd"
+    });
   </script>
 
 </body>
