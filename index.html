@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Bloomberg - Vista Previa</title>
+  <title>Mini Bloomberg - Panel Completo</title>
   <style>
     body {
       margin: 0;
@@ -26,7 +26,7 @@
       min-width: 300px;
       display: flex;
       flex-direction: column;
-      height: 300px;
+      height: 320px;
     }
 
     h2 {
@@ -69,41 +69,52 @@
 </head>
 <body>
 
+  <!-- PANEL EURO / CORRELADOS -->
   <div class="panel" id="panel-eurodolar">
     <h2>Euro / Correlados</h2>
-    <select class="selector" onchange="updateWidget(this, 'tv_eurusd')">
+    <select class="selector" onchange="updateWidget(this, 'tv_eurodolar')">
       <option value="FX:EURUSD">EUR/USD</option>
-      <option value="TVC:DE10Y">Bono Euro 10Y</option>
+      <option value="TVC:EU10Y">Bono Euro 10Y</option>
       <option value="OANDA:XAUUSD">Oro</option>
       <option value="TVC:UKOIL">Petróleo Brent</option>
+      <option value="BINANCE:BTCUSDT">BTC</option>
     </select>
-    <div class="tradingview-widget-container"><div id="tv_eurusd"></div></div>
+    <div class="tradingview-widget-container"><div id="tv_eurodolar"></div></div>
   </div>
 
+  <!-- PANEL DXY / CORRELADOS -->
   <div class="panel" id="panel-dolar">
     <h2>DXY / Correlados</h2>
     <select class="selector" onchange="updateWidget(this, 'tv_dxy')">
       <option value="TVC:DXY">DXY</option>
       <option value="TVC:US10Y">Bono USA 10Y</option>
-      <option value="SP:SPX">S&P 500</option>
+      <option value="SP:SPX">S&P500</option>
       <option value="NASDAQ:NDX">Nasdaq 100</option>
       <option value="TVC:VIX">VIX</option>
     </select>
     <div class="tradingview-widget-container"><div id="tv_dxy"></div></div>
   </div>
 
+  <!-- PANEL CFD POLMILLONE -->
   <div class="panel" id="panel-cfd">
     <h2>CFD - Polmillone</h2>
     <select class="selector" onchange="updateWidget(this, 'tv_cfd')">
       <option value="SP:SPX">S&P500</option>
       <option value="FX:EURUSD">EUR/USD</option>
-      <option value="TVC:DE10Y">Bono Euro 10Y</option>
+      <option value="TVC:EU10Y">Bono Euro 10Y</option>
       <option value="OANDA:XAUUSD">Oro</option>
+      <option value="TVC:UKOIL">Petróleo Brent</option>
+      <option value="BINANCE:BTCUSDT">BTC</option>
+      <option value="NASDAQ:NDX">Nasdaq 100</option>
+      <option value="TVC:VIX">VIX</option>
+      <option value="TVC:DXY">DXY</option>
+      <option value="TVC:US10Y">Bono USA 10Y</option>
     </select>
     <div class="tradingview-widget-container"><div id="tv_cfd"></div></div>
     <div id="ia-console">Consola de IA activa...</div>
   </div>
 
+  <!-- TradingView JS -->
   <script src="https://s3.tradingview.com/tv.js"></script>
   <script>
     function crearWidget(symbol, containerId) {
@@ -126,8 +137,8 @@
       crearWidget(select.value, containerId);
     }
 
-    // Inicializamos los widgets
-    crearWidget("FX:EURUSD", "tv_eurusd");
+    // Inicializamos todos los widgets
+    crearWidget("FX:EURUSD", "tv_eurodolar");
     crearWidget("TVC:DXY", "tv_dxy");
     crearWidget("SP:SPX", "tv_cfd");
   </script>
