@@ -10,44 +10,45 @@
       display: flex;
       flex-wrap: wrap;
       height: 100vh;
-      background-color: #111;
-      color: #fff;
+      background-color: #121212;
+      color: white;
     }
     .panel {
       border: 1px solid #333;
       box-sizing: border-box;
       padding: 10px;
-      flex: 1 1 50%; /* dos columnas */
+      flex: 1 1 50%;
       height: 50%;
       display: flex;
       flex-direction: column;
-      margin: 0;
     }
-    h2 {
-      margin: 0 0 5px 0;
-      text-align: center;
-      font-size: 1em;
-    }
-    select {
-      margin-bottom: 5px;
-      width: 100%;
-      font-size: 0.9em;
-      padding: 2px;
-      background-color: #222;
+    h2 { margin: 0 0 5px 0; text-align: center; }
+    .tradingview-widget-container { flex: 1; margin-top: 5px; }
+    select { margin-bottom: 5px; background: #222; color: white; border: 1px solid #555; padding: 3px; }
+    #ia-console {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 150px;
+      background-color: #1e1e1e;
       color: #fff;
-      border: 1px solid #555;
+      padding: 10px;
+      font-family: monospace;
+      overflow-y: auto;
+      border-top: 2px solid #555;
     }
-    .tradingview-widget-container { flex: 1; }
   </style>
 </head>
 <body>
 
-  <!-- Panel EuroDólar -->
+  <!-- Panel Euro/Dólar -->
   <div class="panel" id="panel-eurodolar">
-    <h2>EuroDólar y Correlaciones</h2>
-    <select id="select_eurodolar">
+    <h2>Euro / Correlacionados</h2>
+    <select id="selector_eurodolar">
       <option value="FX:EURUSD">EUR/USD</option>
       <option value="TVC:EU10Y">Bono EU 10Y</option>
+      <option value="FX:EURJPY">EUR/JPY</option>
     </select>
     <div class="tradingview-widget-container">
       <div id="tv_eurodolar"></div>
@@ -56,20 +57,21 @@
 
   <!-- Panel Índice del Dólar -->
   <div class="panel" id="panel-dolar">
-    <h2>Índice Dólar y Correlaciones</h2>
-    <select id="select_dolar">
+    <h2>Índice Dólar / Correlacionados</h2>
+    <select id="selector_dolar">
       <option value="ICE:DX1!">DXY</option>
       <option value="TVC:US10Y">Bono US 10Y</option>
+      <option value="FX:USDJPY">USD/JPY</option>
     </select>
     <div class="tradingview-widget-container">
       <div id="tv_dolar"></div>
     </div>
   </div>
 
-  <!-- Panel Materias / Cripto -->
+  <!-- Panel Materias primas / Crypto -->
   <div class="panel" id="panel-materias">
-    <h2>Materias / Cripto</h2>
-    <select id="select_materias">
+    <h2>Oro / Petróleo / BTC</h2>
+    <select id="selector_materias">
       <option value="COMEX:GC1!">Oro</option>
       <option value="ICE:BRENT">Petróleo Brent</option>
       <option value="BINANCE:BTCUSDT">BTC</option>
@@ -79,24 +81,37 @@
     </div>
   </div>
 
-  <!-- Panel CFD Polmillone -->
-  <div class="panel" id="panel-polmillone">
-    <h2>CFD Polmillone (Euro vs Dólar)</h2>
-    <select id="select_polmillone">
+  <!-- Panel Índices -->
+  <div class="panel" id="panel-indices">
+    <h2>NASDAQ / SP500 / VIX</h2>
+    <select id="selector_indices">
+      <option value="NASDAQ:NDX">NASDAQ</option>
       <option value="SP:SPX">SP500</option>
-      <option value="NASDAQ:NASDAQ">Nasdaq</option>
       <option value="CBOE:VIX">VIX</option>
     </select>
     <div class="tradingview-widget-container">
-      <div id="tv_polmillone"></div>
+      <div id="tv_indices"></div>
     </div>
+  </div>
+
+  <!-- Panel CFD Polmillone -->
+  <div class="panel" id="panel-cfd">
+    <h2>CFD Polmillone (Euro vs Dólar Sintético)</h2>
+    <div class="tradingview-widget-container">
+      <div id="tv_cfd"></div>
+    </div>
+  </div>
+
+  <!-- Consola de IA -->
+  <div id="ia-console">
+    Consola IA: Aquí se mostrará el análisis basado en todos los gráficos y CFD.
   </div>
 
   <!-- TradingView JS -->
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-  <script>
+  <script type="text/javascript">
     function crearWidget(containerId, symbol) {
-      new TradingView.widget({
+      return new TradingView.widget({
         width: "100%",
         height: "100%",
         symbol: symbol,
@@ -110,29 +125,33 @@
       });
     }
 
-    // Inicializar todos los widgets
-    crearWidget("tv_eurodolar", document.getElementById("select_eurodolar").value);
-    crearWidget("tv_dolar", document.getElementById("select_dolar").value);
-    crearWidget("tv_materias", document.getElementById("select_materias").value);
-    crearWidget("tv_polmillone", document.getElementById("select_polmillone").value);
+    // Inicializar todos los gráficos
+    let tv_eurodolar = crearWidget("tv_eurodolar", "FX:EURUSD");
+    let tv_dolar = crearWidget("tv_dolar", "ICE:DX1!");
+    let tv_materias = crearWidget("tv_materias", "COMEX:GC1!");
+    let tv_indices = crearWidget("tv_indices", "SP:SPX");
+    let tv_cfd = crearWidget("tv_cfd", "FX:EURUSD"); // inicial: Euro/USD como placeholder
 
-    // Cambiar símbolo dinámicamente
-    document.getElementById("select_eurodolar").addEventListener("change", function() {
-      document.getElementById("tv_eurodolar").innerHTML = "";
-      crearWidget("tv_eurodolar", this.value);
+    // Función para cambiar símbolo
+    document.getElementById("selector_eurodolar").addEventListener("change", function() {
+      tv_eurodolar.remove();
+      tv_eurodolar = crearWidget("tv_eurodolar", this.value);
     });
-    document.getElementById("select_dolar").addEventListener("change", function() {
-      document.getElementById("tv_dolar").innerHTML = "";
-      crearWidget("tv_dolar", this.value);
+    document.getElementById("selector_dolar").addEventListener("change", function() {
+      tv_dolar.remove();
+      tv_dolar = crearWidget("tv_dolar", this.value);
     });
-    document.getElementById("select_materias").addEventListener("change", function() {
-      document.getElementById("tv_materias").innerHTML = "";
-      crearWidget("tv_materias", this.value);
+    document.getElementById("selector_materias").addEventListener("change", function() {
+      tv_materias.remove();
+      tv_materias = crearWidget("tv_materias", this.value);
     });
-    document.getElementById("select_polmillone").addEventListener("change", function() {
-      document.getElementById("tv_polmillone").innerHTML = "";
-      crearWidget("tv_polmillone", this.value);
+    document.getElementById("selector_indices").addEventListener("change", function() {
+      tv_indices.remove();
+      tv_indices = crearWidget("tv_indices", this.value);
     });
+
+    // CFD Polmillone: Aquí más adelante se calculará el valor sintético Euro vs Dólar
+    // Por ahora se pone EURUSD como ejemplo
   </script>
 
 </body>
