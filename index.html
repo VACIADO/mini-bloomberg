@@ -42,16 +42,6 @@ h2 {
   overflow: hidden;
 }
 
-.selector {
-  margin-bottom: 5px;
-  padding: 3px;
-  background: #333;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
 #ia-console {
   width: 100%;
   background: #000;
@@ -64,6 +54,21 @@ h2 {
   margin-top: 8px;
   border-radius: 4px;
   border: 1px solid #444;
+}
+
+.cfd-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.cfd-controls select {
+  background: #333;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 3px;
+  font-size: 0.9rem;
 }
 </style>
 </head>
@@ -91,38 +96,35 @@ h2 {
 
 <!-- PANEL CFD POLMILLONE -->
 <div class="panel" id="panel-cfd">
-<h2>CFD - Polmillone</h2>
-<select class="selector" id="intervalo_cfd" onchange="cambiarIntervalo()">
-  <option value="1">1min</option>
-  <option value="5">5min</option>
-  <option value="60">1h</option>
-  <option value="D">Diario</option>
-</select>
-<div class="tradingview-widget-container" id="tv_cfd"></div>
-<div id="ia-console">Consola IA activa... Analizando correlaciones Euro vs Dólar</div>
+<h2>CFD – Polmillone</h2>
+
+<!-- Controles del gráfico CFD -->
+<div class="cfd-controls">
+  <label>Tipo de vela:
+    <select id="cfd_style" onchange="updateCFDStyle()">
+      <option value="candles">Velas Japonesas</option>
+      <option value="bars">Barras</option>
+      <option value="line">Línea</option>
+    </select>
+  </label>
+  <label>Intervalo:
+    <select id="cfd_interval" onchange="updateCFDInterval()">
+      <option value="1">1 Min</option>
+      <option value="5">5 Min</option>
+      <option value="15">15 Min</option>
+      <option value="60">1 Hora</option>
+    </select>
+  </label>
 </div>
 
+<div class="tradingview-widget-container" id="tv_cfd"></div>
+<div id="ia-console">Consola de IA activa... Analizando correlaciones en tiempo real.</div>
+</div>
+
+<!-- TradingView JS -->
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-
-// Símbolos
-const widgets = {
-  tv_eurodolar: "FX:EURUSD",
-  tv_bono_eu: "TVC:EU10Y",
-  tv_oro: "OANDA:XAUUSD",
-  tv_brent: "TVC:UKOIL",
-  tv_btc: "BINANCE:BTCUSDT",
-
-  tv_dxy: "TVC:DXY",
-  tv_bono_us: "TVC:US10Y",
-  tv_nasdaq: "NASDAQ:NDX",
-  tv_sp500: "SP:SPX",
-  tv_vix: "TVC:VIX"
-};
-
-let intervaloCFD = "60"; // default 1h
-
-// Crear widgets normales
+// Función para crear widgets normales
 function crearWidget(symbol, containerId) {
   document.getElementById(containerId).innerHTML = "";
   new TradingView.widget({
@@ -139,78 +141,141 @@ function crearWidget(symbol, containerId) {
   });
 }
 
-// Inicializamos todos los gráficos
-for (const id in widgets) {
-  crearWidget(widgets[id], id);
-}
-
-// CFD Polmillone
-const cfdData = [];
-let cfdChart;
-
-function actualizarCFD() {
-  // Simular la "pelea" Euro vs Dólar
-  const euro = Math.random()*5 + 100;  // aquí luego conectaremos a valores reales
-  const dolar = Math.random()*5 + 100;
-  const valor = euro - dolar;
-  const fecha = new Date().toLocaleTimeString();
-  cfdData.push({time: fecha, value: valor});
-  if(cfdData.length > 50) cfdData.shift();
-  dibujarCFD();
-}
-
-function dibujarCFD() {
-  const container = document.getElementById("tv_cfd");
-  container.innerHTML = "";
-  const chart = document.createElement("canvas");
-  chart.id = "cfdCanvas";
-  container.appendChild(chart);
-  const ctx = chart.getContext("2d");
-  chart.width = container.clientWidth;
-  chart.height = container.clientHeight;
-
-  // Dibujar línea
-  ctx.clearRect(0,0,chart.width,chart.height);
-  ctx.beginPath();
-  ctx.strokeStyle = "#0f0";
-  ctx.lineWidth = 2;
-  cfdData.forEach((p,i)=>{
-    const x = (i/(cfdData.length-1)) * chart.width;
-    const y = chart.height/2 - p.value*5;
-    if(i===0) ctx.moveTo(x,y);
-    else ctx.lineTo(x,y);
-  });
-  ctx.stroke();
-}
-
-// Intervalo CFD
-setInterval(actualizarCFD, 2000);
-
-// Cambiar intervalo
-function cambiarIntervalo() {
-  const sel = document.getElementById("intervalo_cfd");
-  intervaloCFD = sel.value;
-  logConsole("Intervalo CFD cambiado a: "+intervaloCFD);
-}
-
-// Consola IA
+// Función para escribir en consola
 function logConsole(text) {
   const c = document.getElementById("ia-console");
   c.innerText += "\n" + text;
   c.scrollTop = c.scrollHeight;
 }
 
-// Mensajes de correlación
+// Inicialización de todos los gráficos normales
+const widgets = {
+  tv_eurodolar: "FX:EURUSD",
+  tv_bono_eu: "TVC:EU10Y",
+  tv_oro: "OANDA:XAUUSD",
+  tv_brent: "TVC:UKOIL",
+  tv_btc: "BINANCE:BTCUSDT",
+  tv_dxy: "TVC:DXY",
+  tv_bono_us: "TVC:US10Y",
+  tv_nasdaq: "NASDAQ:NDX",
+  tv_sp500: "SP:SPX",
+  tv_vix: "TVC:VIX"
+};
+
+for (const id in widgets) {
+  crearWidget(widgets[id], id);
+}
+
+// ✅ CFD – Polmillone (gráfico profesional simulado)
+let cfdData = [];
+let cfdPrice = 100; // precio inicial
+let cfdInterval = 1;
+let cfdStyle = 'candles';
+
+function initCFD() {
+  for (let i = 0; i < 50; i++) {
+    const change = (Math.random() - 0.5) * 2;
+    cfdPrice += change;
+    cfdData.push({ time: i, value: cfdPrice });
+  }
+  drawCFD();
+}
+
+function drawCFD() {
+  const container = document.getElementById("tv_cfd");
+  container.innerHTML = "";
+
+  const canvas = document.createElement("canvas");
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+  container.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+
+  const padding = 40;
+  const width = canvas.width - padding * 2;
+  const height = canvas.height - padding * 2;
+
+  const values = cfdData.map(d => d.value);
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+
+  // Dibujar líneas o velas
+  for (let i = 0; i < cfdData.length; i++) {
+    const x = padding + (i / (cfdData.length - 1)) * width;
+    const y = padding + ((max - cfdData[i].value) / (max - min)) * height;
+
+    if (cfdStyle === 'line') {
+      if (i > 0) {
+        ctx.beginPath();
+        const prevX = padding + ((i-1)/(cfdData.length-1))*width;
+        const prevY = padding + ((max - cfdData[i-1].value)/(max-min))*height;
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = "#00ff00";
+        ctx.stroke();
+      }
+    } else if (cfdStyle === 'bars' || cfdStyle === 'candles') {
+      const barWidth = width / cfdData.length * 0.6;
+      ctx.fillStyle = (i>0 && cfdData[i].value>cfdData[i-1].value) ? "#0f0" : "#f00";
+      ctx.fillRect(x - barWidth/2, y, barWidth, canvas.height - padding - y);
+      if (cfdStyle === 'candles') {
+        ctx.fillRect(x - barWidth/4, y, barWidth/2, 2); // mecha simulada
+      }
+    }
+  }
+
+  // Ejes
+  ctx.strokeStyle = "#888";
+  ctx.beginPath();
+  ctx.moveTo(padding, padding);
+  ctx.lineTo(padding, canvas.height - padding);
+  ctx.lineTo(canvas.width - padding, canvas.height - padding);
+  ctx.stroke();
+
+  // Escala precio lateral
+  ctx.fillStyle = "#fff";
+  ctx.font = "12px monospace";
+  ctx.fillText(max.toFixed(2), 5, padding);
+  ctx.fillText(min.toFixed(2), 5, canvas.height - padding);
+
+  // Escala tiempo
+  ctx.fillText("0", padding, canvas.height - 5);
+  ctx.fillText(cfdData.length-1, canvas.width - padding - 10, canvas.height - 5);
+}
+
+function updateCFD() {
+  const change = (Math.random() - 0.5) * 2;
+  cfdPrice += change;
+  cfdData.push({ time: cfdData.length, value: cfdPrice });
+  if (cfdData.length > 50) cfdData.shift();
+  drawCFD();
+}
+
+function updateCFDInterval() {
+  const sel = document.getElementById("cfd_interval");
+  cfdInterval = parseInt(sel.value);
+}
+
+function updateCFDStyle() {
+  const sel = document.getElementById("cfd_style");
+  cfdStyle = sel.value;
+  drawCFD();
+}
+
+initCFD();
+setInterval(updateCFD, 2000);
+
+// Simulación de IA
 setInterval(() => {
   const mensajes = [
-    "Euro equipo lidera la jornada",
-    "Dólar equipo presiona al Euro",
-    "BTC y Brent suben con fuerza",
-    "Nasdaq y S&P500 estabilizan el Dólar"
+    "EUR/USD y DXY correlación negativa detectada 📉",
+    "BTC sigue tendencia alcista con volatilidad alta 🚀",
+    "S&P500 y Nasdaq muestran movimientos sincronizados 📊",
+    "Brent y Oro sin correlación significativa ⚖️"
   ];
-  logConsole(mensajes[Math.floor(Math.random()*mensajes.length)]);
+  logConsole(mensajes[Math.floor(Math.random() * mensajes.length)]);
 }, 8000);
-
 </script>
+
 </body>
 </html>
