@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mini Bloomberg Pro – Polmillone</title>
+<title>Mini Bloomberg Pro</title>
 <style>
-body {
+body { 
   margin: 0;
   font-family: Arial, sans-serif;
   background-color: #121212;
@@ -15,6 +15,7 @@ body {
   padding: 10px;
   justify-content: center;
 }
+
 .panel {
   border: 1px solid #444;
   border-radius: 8px;
@@ -27,26 +28,30 @@ body {
   flex-direction: column;
   height: 420px;
 }
+
 h2 {
   margin: 0 0 5px 0;
   text-align: center;
   font-size: 1.1rem;
 }
-.selector {
-  margin-bottom: 5px;
-  padding: 4px;
-  background: #333;
-  color: #fff;
-  border: 1px solid #555;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-.tradingview-widget-container {
+
+.tradingview-widget-container, #cfd-chart {
   flex: 1;
   margin-top: 5px;
   border-radius: 6px;
   overflow: hidden;
 }
+
+.selector {
+  margin-bottom: 5px;
+  padding: 3px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
 #ia-console {
   width: 100%;
   background: #000;
@@ -60,51 +65,56 @@ h2 {
   border-radius: 4px;
   border: 1px solid #444;
 }
-#polmillone-chart {
-  flex: 1;
-  background-color: #111;
-  border-radius: 6px;
-}
 </style>
 </head>
 <body>
 
 <!-- PANEL EURO / CORRELADOS -->
-<div class="panel">
-  <h2>Euro / Correlados</h2>
-  <select class="selector" id="sel_eurodolar"></select>
-  <div class="tradingview-widget-container" id="tv_eurodolar"></div>
+<div class="panel" id="panel-eurodolar">
+<h2>Euro / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_eurodolar"></div>
+<div class="tradingview-widget-container" id="tv_bono_eu"></div>
+<div class="tradingview-widget-container" id="tv_oro"></div>
+<div class="tradingview-widget-container" id="tv_brent"></div>
+<div class="tradingview-widget-container" id="tv_btc"></div>
 </div>
 
 <!-- PANEL DXY / CORRELADOS -->
-<div class="panel">
-  <h2>DXY / Correlados</h2>
-  <select class="selector" id="sel_dxy"></select>
-  <div class="tradingview-widget-container" id="tv_dxy"></div>
+<div class="panel" id="panel-dxy">
+<h2>DXY / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_dxy"></div>
+<div class="tradingview-widget-container" id="tv_bono_us"></div>
+<div class="tradingview-widget-container" id="tv_nasdaq"></div>
+<div class="tradingview-widget-container" id="tv_sp500"></div>
+<div class="tradingview-widget-container" id="tv_vix"></div>
 </div>
 
 <!-- PANEL CFD POLMILLONE -->
-<div class="panel">
-  <h2>CFD – Polmillone</h2>
-  <canvas id="polmillone-chart"></canvas>
-  <div id="ia-console">Consola IA activa…</div>
+<div class="panel" id="panel-cfd">
+<h2>CFD - Polmillone</h2>
+<select class="selector" id="selector_cfd" onchange="updateCFD(this.value)">
+  <option value="EURUSD">EUR/USD</option>
+  <option value="EU10Y">Bono Euro 10Y</option>
+  <option value="US10Y">Bono USA 10Y</option>
+  <option value="XAUUSD">Oro</option>
+  <option value="UKOIL">Petróleo Brent</option>
+  <option value="BTCUSDT">BTC</option>
+  <option value="NDX">Nasdaq 100</option>
+  <option value="SPX">S&P500</option>
+  <option value="VIX">VIX</option>
+  <option value="DXY">DXY</option>
+</select>
+
+<div id="cfd-chart"></div>
+
+<div id="ia-console">Consola de IA activa... Analizando correlaciones en tiempo real</div>
 </div>
 
-<!-- TradingView -->
+<!-- TradingView JS -->
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-// 🔹 Símbolos disponibles
-const simbolosEuro = ["FX:EURUSD","TVC:EU10Y","OANDA:XAUUSD","TVC:UKOIL","BINANCE:BTCUSDT"];
-const simbolosDXY = ["TVC:DXY","TVC:US10Y","NASDAQ:NDX","SP:SPX","TVC:VIX"];
-
-// 🔹 Rellenar selectores
-const selEuro = document.getElementById("sel_eurodolar");
-const selDXY = document.getElementById("sel_dxy");
-simbolosEuro.forEach(s => { let o = document.createElement("option"); o.value = s; o.text = s; selEuro.appendChild(o); });
-simbolosDXY.forEach(s => { let o = document.createElement("option"); o.value = s; o.text = s; selDXY.appendChild(o); });
-
-// 🔹 Crear widget TradingView
-function crearWidget(symbol, containerId){
+// Widgets TradingView
+function crearWidget(symbol, containerId) {
   document.getElementById(containerId).innerHTML = "";
   new TradingView.widget({
     container_id: containerId,
@@ -120,64 +130,78 @@ function crearWidget(symbol, containerId){
   });
 }
 
-// 🔹 Inicializar
-crearWidget(selEuro.value, "tv_eurodolar");
-crearWidget(selDXY.value, "tv_dxy");
-
-// 🔹 Cambiar símbolos dinámicamente
-selEuro.addEventListener("change", ()=> crearWidget(selEuro.value,"tv_eurodolar"));
-selDXY.addEventListener("change", ()=> crearWidget(selDXY.value,"tv_dxy"));
-
-// 🔹 Consola IA
-const consoleDiv = document.getElementById("ia-console");
-function logConsole(msg){
-  consoleDiv.innerText += "\n" + msg;
+// Consola
+function logConsole(text) {
+  const consoleDiv = document.getElementById('ia-console');
+  consoleDiv.innerText += '\n' + text;
   consoleDiv.scrollTop = consoleDiv.scrollHeight;
 }
 
-// 🔹 CFD Polmillone: gráfico sintético
-const canvas = document.getElementById("polmillone-chart");
-const ctx = canvas.getContext("2d");
-canvas.width = canvas.offsetWidth;
-canvas.height = canvas.offsetHeight;
+// Inicializamos widgets TradingView
+const widgets = {
+  tv_eurodolar: "FX:EURUSD",
+  tv_bono_eu: "TVC:EU10Y",
+  tv_oro: "OANDA:XAUUSD",
+  tv_brent: "TVC:UKOIL",
+  tv_btc: "BINANCE:BTCUSDT",
+  tv_dxy: "TVC:DXY",
+  tv_bono_us: "TVC:US10Y",
+  tv_nasdaq: "NASDAQ:NDX",
+  tv_sp500: "SP:SPX",
+  tv_vix: "TVC:VIX",
+};
 
-let datos = [];
-function generarDato(){
-  // Simula Euro vs Dólar
-  let cambio = (Math.random()-0.5)*2; // -1 a +1
-  if(datos.length>canvas.width) datos.shift();
-  datos.push(cambio);
+for (const id in widgets) {
+  crearWidget(widgets[id], id);
 }
 
-// 🔹 Dibujar Polmillone
-function dibujarPolmillone(){
-  ctx.fillStyle = "#111";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.beginPath();
-  ctx.moveTo(0, canvas.height/2);
-  for(let i=0;i<datos.length;i++){
-    let y = canvas.height/2 - datos[i]*40;
-    ctx.lineTo(i, y);
-  }
-  ctx.strokeStyle = "#0f0";
-  ctx.lineWidth = 2;
-  ctx.stroke();
+// ----------------------
+// CFD Polmillone (gráfico propio)
+// ----------------------
+let cfdData = {
+  EURUSD: [1.07,1.072,1.071,1.073,1.074],
+  EU10Y: [2.1,2.12,2.11,2.13,2.14],
+  US10Y: [3.2,3.25,3.22,3.24,3.26],
+  XAUUSD: [1950,1955,1960,1962,1965],
+  UKOIL: [84,85,83,86,87],
+  BTCUSDT: [27800,28000,27950,28100,28200],
+  NDX: [14500,14600,14550,14650,14700],
+  SPX: [4100,4120,4110,4130,4140],
+  VIX: [20,19,21,22,20],
+  DXY: [102,102.5,102.2,102.7,103]
+};
+
+function updateCFD(symbol) {
+  const container = document.getElementById("cfd-chart");
+  container.innerHTML = "";
+
+  const data = cfdData[symbol];
+  if (!data) return;
+
+  // Creamos un gráfico sencillo usando HTML
+  let html = '<div style="display:flex;justify-content:space-around;height:100%;align-items:flex-end;">';
+  data.forEach(value => {
+    html += `<div style="width:15%;height:${value*3}px;background:#0f0;margin:0 2px;border-radius:2px;"></div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+
+  logConsole("CFD Polmillone actualizado: " + symbol);
 }
 
-// 🔹 Loop
-setInterval(()=>{
-  generarDato();
-  dibujarPolmillone();
-  // Consola aleatoria
+// Inicializamos el CFD por defecto
+updateCFD("EURUSD");
+
+// Simulación de lectura IA
+setInterval(() => {
   const mensajes = [
-    "Euro con ligera presión alcista",
-    "Dólar presiona fuerte",
-    "Correlación Euro/DXY estable",
-    "Bonos y Nasdaq sin movimientos"
+    "Presión USD detectada frente al Euro",
+    "Bonos USA suben → riesgo off",
+    "Nasdaq y SP500 sincronizados",
+    "Oro estable, sin confirmación"
   ];
-  logConsole(mensajes[Math.floor(Math.random()*mensajes.length)]);
-}, 1000);
+  logConsole(mensajes[Math.floor(Math.random() * mensajes.length)]);
+}, 8000);
 </script>
-
 </body>
 </html>
