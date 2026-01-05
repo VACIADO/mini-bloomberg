@@ -42,6 +42,16 @@ h2 {
   overflow: hidden;
 }
 
+.selector {
+  margin-bottom: 5px;
+  padding: 3px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
 #ia-console {
   width: 100%;
   background: #000;
@@ -61,35 +71,58 @@ h2 {
 
 <!-- PANEL EURO / CORRELADOS -->
 <div class="panel" id="panel-eurodolar">
-  <h2>Euro / Correlados</h2>
-  <div class="tradingview-widget-container" id="tv_eurodolar"></div>
-  <div class="tradingview-widget-container" id="tv_bono_eu"></div>
-  <div class="tradingview-widget-container" id="tv_oro"></div>
-  <div class="tradingview-widget-container" id="tv_brent"></div>
-  <div class="tradingview-widget-container" id="tv_btc"></div>
+<h2>Euro / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_eurodolar"></div>
+<div class="tradingview-widget-container" id="tv_bono_eu"></div>
+<div class="tradingview-widget-container" id="tv_oro"></div>
+<div class="tradingview-widget-container" id="tv_brent"></div>
+<div class="tradingview-widget-container" id="tv_btc"></div>
 </div>
 
 <!-- PANEL DXY / CORRELADOS -->
 <div class="panel" id="panel-dxy">
-  <h2>DXY / Correlados</h2>
-  <div class="tradingview-widget-container" id="tv_dxy"></div>
-  <div class="tradingview-widget-container" id="tv_bono_us"></div>
-  <div class="tradingview-widget-container" id="tv_nasdaq"></div>
-  <div class="tradingview-widget-container" id="tv_sp500"></div>
-  <div class="tradingview-widget-container" id="tv_vix"></div>
+<h2>DXY / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_dxy"></div>
+<div class="tradingview-widget-container" id="tv_bono_us"></div>
+<div class="tradingview-widget-container" id="tv_nasdaq"></div>
+<div class="tradingview-widget-container" id="tv_sp500"></div>
+<div class="tradingview-widget-container" id="tv_vix"></div>
 </div>
 
 <!-- PANEL CFD POLMILLONE -->
 <div class="panel" id="panel-cfd">
-  <h2>CFD - Polmillone</h2>
-  <div class="tradingview-widget-container" id="tv_cfd"></div>
-  <div id="ia-console">Consola de IA activa... Analizando correlaciones Euro vs Dólar</div>
+<h2>CFD - Polmillone</h2>
+<select class="selector" id="intervalo_cfd" onchange="cambiarIntervalo()">
+  <option value="1">1min</option>
+  <option value="5">5min</option>
+  <option value="60">1h</option>
+  <option value="D">Diario</option>
+</select>
+<div class="tradingview-widget-container" id="tv_cfd"></div>
+<div id="ia-console">Consola IA activa... Analizando correlaciones Euro vs Dólar</div>
 </div>
 
-<!-- TradingView JS -->
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-// Función para crear cada widget de TradingView
+
+// Símbolos
+const widgets = {
+  tv_eurodolar: "FX:EURUSD",
+  tv_bono_eu: "TVC:EU10Y",
+  tv_oro: "OANDA:XAUUSD",
+  tv_brent: "TVC:UKOIL",
+  tv_btc: "BINANCE:BTCUSDT",
+
+  tv_dxy: "TVC:DXY",
+  tv_bono_us: "TVC:US10Y",
+  tv_nasdaq: "NASDAQ:NDX",
+  tv_sp500: "SP:SPX",
+  tv_vix: "TVC:VIX"
+};
+
+let intervaloCFD = "60"; // default 1h
+
+// Crear widgets normales
 function crearWidget(symbol, containerId) {
   document.getElementById(containerId).innerHTML = "";
   new TradingView.widget({
@@ -106,82 +139,76 @@ function crearWidget(symbol, containerId) {
   });
 }
 
-// Función para escribir en la consola de IA
-function logConsole(text) {
-  const consoleDiv = document.getElementById('ia-console');
-  consoleDiv.innerText += '\n' + text;
-  consoleDiv.scrollTop = consoleDiv.scrollHeight;
-}
-
-// 🔥 Configuración de símbolos de todos los gráficos 🔥
-const widgets = {
-  // Equipo Euro
-  tv_eurodolar: "FX:EURUSD",
-  tv_bono_eu: "TVC:EU10Y",
-  tv_oro: "OANDA:XAUUSD",
-  tv_brent: "TVC:UKOIL",
-  tv_btc: "BINANCE:BTCUSDT",
-  // Equipo Dólar
-  tv_dxy: "TVC:DXY",
-  tv_bono_us: "TVC:US10Y",
-  tv_nasdaq: "NASDAQ:NDX",
-  tv_sp500: "SP:SPX",
-  tv_vix: "TVC:VIX"
-};
-
 // Inicializamos todos los gráficos
 for (const id in widgets) {
   crearWidget(widgets[id], id);
 }
 
-// CFD Polmillone automático: diferencia promedio Euro vs Dólar
+// CFD Polmillone
+const cfdData = [];
+let cfdChart;
+
 function actualizarCFD() {
-  // Simulación: calculamos un valor random para cada equipo
-  const euro = Math.random() * 100 + 100; // valor del equipo Euro
-  const dolar = Math.random() * 100 + 100; // valor del equipo Dólar
-  const diferencia = euro - dolar;
-  
-  // Creamos un gráfico simple tipo barra en canvas
-  const container = document.getElementById("tv_cfd");
-  container.innerHTML = '<canvas id="cfdChart" width="400" height="200"></canvas>';
-  const ctx = document.getElementById("cfdChart").getContext("2d");
-  ctx.clearRect(0,0,400,200);
-
-  // Fondo
-  ctx.fillStyle = "#1e1e1e";
-  ctx.fillRect(0,0,400,200);
-
-  // Euro barra
-  ctx.fillStyle = "#4CAF50";
-  ctx.fillRect(50,200 - euro, 50, euro);
-
-  // Dólar barra
-  ctx.fillStyle = "#F44336";
-  ctx.fillRect(150,200 - dolar, 50, dolar);
-
-  // Diferencia línea
-  ctx.strokeStyle = "#FFD700";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(0, 100 - diferencia/2);
-  ctx.lineTo(400, 100 - diferencia/2);
-  ctx.stroke();
-
-  logConsole(`CFD actualizado: Euro ${euro.toFixed(1)} vs Dólar ${dolar.toFixed(1)} → Dif ${diferencia.toFixed(1)}`);
+  // Simular la "pelea" Euro vs Dólar
+  const euro = Math.random()*5 + 100;  // aquí luego conectaremos a valores reales
+  const dolar = Math.random()*5 + 100;
+  const valor = euro - dolar;
+  const fecha = new Date().toLocaleTimeString();
+  cfdData.push({time: fecha, value: valor});
+  if(cfdData.length > 50) cfdData.shift();
+  dibujarCFD();
 }
 
-// Actualizamos el CFD cada 5 segundos
-setInterval(actualizarCFD, 5000);
+function dibujarCFD() {
+  const container = document.getElementById("tv_cfd");
+  container.innerHTML = "";
+  const chart = document.createElement("canvas");
+  chart.id = "cfdCanvas";
+  container.appendChild(chart);
+  const ctx = chart.getContext("2d");
+  chart.width = container.clientWidth;
+  chart.height = container.clientHeight;
 
-// Simulación de mensajes de IA cada 8 segundos
+  // Dibujar línea
+  ctx.clearRect(0,0,chart.width,chart.height);
+  ctx.beginPath();
+  ctx.strokeStyle = "#0f0";
+  ctx.lineWidth = 2;
+  cfdData.forEach((p,i)=>{
+    const x = (i/(cfdData.length-1)) * chart.width;
+    const y = chart.height/2 - p.value*5;
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+}
+
+// Intervalo CFD
+setInterval(actualizarCFD, 2000);
+
+// Cambiar intervalo
+function cambiarIntervalo() {
+  const sel = document.getElementById("intervalo_cfd");
+  intervaloCFD = sel.value;
+  logConsole("Intervalo CFD cambiado a: "+intervaloCFD);
+}
+
+// Consola IA
+function logConsole(text) {
+  const c = document.getElementById("ia-console");
+  c.innerText += "\n" + text;
+  c.scrollTop = c.scrollHeight;
+}
+
+// Mensajes de correlación
 setInterval(() => {
   const mensajes = [
-    "EUR/USD y DXY correlación negativa detectada 📉",
-    "BTC sigue tendencia alcista con volatilidad alta 🚀",
-    "S&P500 y Nasdaq muestran movimientos sincronizados 📊",
-    "Brent y Oro sin correlación significativa ⚖️"
+    "Euro equipo lidera la jornada",
+    "Dólar equipo presiona al Euro",
+    "BTC y Brent suben con fuerza",
+    "Nasdaq y S&P500 estabilizan el Dólar"
   ];
-  logConsole(mensajes[Math.floor(Math.random() * mensajes.length)]);
+  logConsole(mensajes[Math.floor(Math.random()*mensajes.length)]);
 }, 8000);
 
 </script>
