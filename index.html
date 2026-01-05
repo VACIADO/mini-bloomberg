@@ -1,8 +1,9 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <title>Mini Bloomberg Pro</title>
+
 <style>
 body {
   margin: 0;
@@ -44,10 +45,10 @@ h2 {
 
 .selector {
   margin-bottom: 5px;
-  padding: 3px;
+  padding: 4px;
   background: #333;
   color: #fff;
-  border: none;
+  border: 1px solid #555;
   border-radius: 4px;
   font-size: 0.9rem;
 }
@@ -67,49 +68,57 @@ h2 {
 }
 </style>
 </head>
+
 <body>
 
 <!-- PANEL EURO / CORRELADOS -->
-<div class="panel" id="panel-eurodolar">
-<h2>Euro / Correlados</h2>
-<div class="tradingview-widget-container" id="tv_eurodolar"></div>
-<div class="tradingview-widget-container" id="tv_bono_eu"></div>
-<div class="tradingview-widget-container" id="tv_oro"></div>
-<div class="tradingview-widget-container" id="tv_brent"></div>
-<div class="tradingview-widget-container" id="tv_btc"></div>
+<div class="panel">
+  <h2>Euro / Correlados</h2>
+  <div class="tradingview-widget-container" id="tv_eurodolar"></div>
+  <div class="tradingview-widget-container" id="tv_bono_eu"></div>
+  <div class="tradingview-widget-container" id="tv_oro"></div>
+  <div class="tradingview-widget-container" id="tv_brent"></div>
+  <div class="tradingview-widget-container" id="tv_btc"></div>
 </div>
 
 <!-- PANEL DXY / CORRELADOS -->
-<div class="panel" id="panel-dxy">
-<h2>DXY / Correlados</h2>
-<div class="tradingview-widget-container" id="tv_dxy"></div>
-<div class="tradingview-widget-container" id="tv_bono_us"></div>
-<div class="tradingview-widget-container" id="tv_nasdaq"></div>
-<div class="tradingview-widget-container" id="tv_sp500"></div>
-<div class="tradingview-widget-container" id="tv_vix"></div>
+<div class="panel">
+  <h2>DXY / Correlados</h2>
+  <div class="tradingview-widget-container" id="tv_dxy"></div>
+  <div class="tradingview-widget-container" id="tv_bono_us"></div>
+  <div class="tradingview-widget-container" id="tv_nasdaq"></div>
+  <div class="tradingview-widget-container" id="tv_sp500"></div>
+  <div class="tradingview-widget-container" id="tv_vix"></div>
 </div>
 
 <!-- PANEL CFD POLMILLONE -->
-<div class="panel" id="panel-cfd">
-<h2>CFD - Polmillone</h2>
-<select class="selector" id="selector_cfd" onchange="updateWidget(this, 'tv_cfd')">
-  <option value="FX:EURUSD">EUR/USD</option>
-  <option value="TVC:EU10Y">Bono Euro 10Y</option>
-  <option value="TVC:US10Y">Bono USA 10Y</option>
-  <option value="OANDA:XAUUSD">Oro</option>
-  <option value="TVC:UKOIL">Petróleo Brent</option>
-  <option value="BINANCE:BTCUSDT">BTC</option>
-  <option value="NASDAQ:NDX">Nasdaq 100</option>
-  <option value="SP:SPX">S&P500</option>
-  <option value="TVC:VIX">VIX</option>
-  <option value="TVC:DXY">DXY</option>
-</select>
-<div class="tradingview-widget-container" id="tv_cfd"></div>
-<div id="ia-console">Consola de IA activa... Analizando correlaciones en tiempo real.</div>
+<div class="panel">
+  <h2>CFD – Polmillone</h2>
+
+  <select class="selector" id="selector_cfd" onchange="updateWidget(this, 'tv_cfd')">
+    <option value="FX:EURUSD">EUR/USD</option>
+    <option value="TVC:EU10Y">Bono Euro 10Y</option>
+    <option value="TVC:US10Y">Bono USA 10Y</option>
+    <option value="OANDA:XAUUSD">Oro</option>
+    <option value="TVC:UKOIL">Petróleo Brent</option>
+    <option value="BINANCE:BTCUSDT">BTC</option>
+    <option value="NASDAQ:NDX">Nasdaq 100</option>
+    <option value="SP:SPX">S&P500</option>
+    <option value="TVC:VIX">VIX</option>
+    <option value="TVC:DXY">DXY</option>
+  </select>
+
+  <div class="tradingview-widget-container" id="tv_cfd"></div>
+
+  <div id="ia-console">
+    Consola IA activa…
+    Analizando correlaciones Euro vs Dólar
+  </div>
 </div>
 
-<!-- TradingView JS -->
+<!-- TradingView -->
 <script src="https://s3.tradingview.com/tv.js"></script>
+
 <script>
 function crearWidget(symbol, containerId) {
   document.getElementById(containerId).innerHTML = "";
@@ -129,28 +138,29 @@ function crearWidget(symbol, containerId) {
 
 function updateWidget(select, containerId) {
   crearWidget(select.value, containerId);
-  logConsole(`Gráfico CFD actualizado a: ${select.value}`);
+  logConsole("CFD Polmillone cambiado a: " + select.value);
 }
 
-// Función para escribir en la consola de IA
 function logConsole(text) {
-  const consoleDiv = document.getElementById('ia-console');
-  consoleDiv.innerText += '\n' + text;
-  consoleDiv.scrollTop = consoleDiv.scrollHeight;
+  const c = document.getElementById("ia-console");
+  c.innerText += "\n" + text;
+  c.scrollTop = c.scrollHeight;
 }
 
-// Inicializamos todos los widgets por defecto
+/* 🔥 AQUÍ CAMBIAS LOS SÍMBOLOS CUANDO QUIERAS 🔥 */
 const widgets = {
   tv_eurodolar: "FX:EURUSD",
-  tv_bono_eu: "EU10Y",
+  tv_bono_eu: "TVC:EU10Y",
   tv_oro: "OANDA:XAUUSD",
   tv_brent: "TVC:UKOIL",
-  tv_EXY: "EXY",
-  tv_dxy: "DXY",
-  tv_bono_us: "US10Y",
+  tv_btc: "BINANCE:BTCUSDT",
+
+  tv_dxy: "TVC:DXY",
+  tv_bono_us: "TVC:US10Y",
   tv_nasdaq: "NASDAQ:NDX",
-  tv_sp500: "SPX",
-  tv_vix: "VIX",
+  tv_sp500: "SP:SPX",
+  tv_vix: "TVC:VIX",
+
   tv_cfd: "SP:SPX"
 };
 
@@ -158,16 +168,15 @@ for (const id in widgets) {
   crearWidget(widgets[id], id);
 }
 
-// Simulación de análisis de correlaciones (ejemplo)
+/* Simulación de lectura IA */
 setInterval(() => {
   const mensajes = [
-    "EUR/USD y DXY correlación negativa detectada 📉",
-    "BTC sigue tendencia alcista con volatilidad alta 🚀",
-    "S&P500 y Nasdaq muestran movimientos sincronizados 📊",
-    "Brent y Oro sin correlación significativa ⚖️"
+    "Presión USD detectada frente al Euro",
+    "Bonos USA suben → riesgo off",
+    "Nasdaq y SP500 sincronizados",
+    "Oro estable, sin confirmación"
   ];
-  const mensaje = mensajes[Math.floor(Math.random() * mensajes.length)];
-  logConsole(mensaje);
+  logConsole(mensajes[Math.floor(Math.random() * mensajes.length)]);
 }, 8000);
 </script>
 
