@@ -15,7 +15,6 @@ body {
   padding: 10px;
   justify-content: center;
 }
-
 .panel {
   border: 1px solid #444;
   border-radius: 8px;
@@ -28,20 +27,17 @@ body {
   flex-direction: column;
   height: 420px;
 }
-
 h2 {
   margin: 0 0 5px 0;
   text-align: center;
   font-size: 1.1rem;
 }
-
 .tradingview-widget-container {
   flex: 1;
   margin-top: 5px;
   border-radius: 6px;
   overflow: hidden;
 }
-
 #ia-console {
   width: 100%;
   background: #000;
@@ -55,13 +51,11 @@ h2 {
   border-radius: 4px;
   border: 1px solid #444;
 }
-
 .cfd-controls {
   display: flex;
   justify-content: space-between;
   margin-bottom: 5px;
 }
-
 .cfd-controls select {
   background: #333;
   color: #fff;
@@ -72,63 +66,53 @@ h2 {
 }
 </style>
 </head>
+
 <body>
 
-<!-- PANEL EURO / CORRELADOS -->
-<div class="panel" id="panel-eurodolar">
+<!-- PANEL EURO -->
+<div class="panel">
 <h2>Euro / Correlados</h2>
-<div class="tradingview-widget-container" id="tv_eurodolar"></div>
-<div class="tradingview-widget-container" id="tv_bono_eu"></div>
-<div class="tradingview-widget-container" id="tv_oro"></div>
-<div class="tradingview-widget-container" id="tv_brent"></div>
-<div class="tradingview-widget-container" id="tv_btc"></div>
+<div id="tv_eurodolar" class="tradingview-widget-container"></div>
+<div id="tv_bono_eu" class="tradingview-widget-container"></div>
+<div id="tv_oro" class="tradingview-widget-container"></div>
+<div id="tv_brent" class="tradingview-widget-container"></div>
+<div id="tv_btc" class="tradingview-widget-container"></div>
 </div>
 
-<!-- PANEL DXY / CORRELADOS -->
-<div class="panel" id="panel-dxy">
-<h2>DXY / Correlados</h2>
-<div class="tradingview-widget-container" id="tv_dxy"></div>
-<div class="tradingview-widget-container" id="tv_bono_us"></div>
-<div class="tradingview-widget-container" id="tv_nasdaq"></div>
-<div class="tradingview-widget-container" id="tv_sp500"></div>
-<div class="tradingview-widget-container" id="tv_vix"></div>
+<!-- PANEL DÓLAR -->
+<div class="panel">
+<h2>Dólar / Correlados</h2>
+<div id="tv_dxy" class="tradingview-widget-container"></div>
+<div id="tv_bono_us" class="tradingview-widget-container"></div>
+<div id="tv_nasdaq" class="tradingview-widget-container"></div>
+<div id="tv_sp500" class="tradingview-widget-container"></div>
+<div id="tv_vix" class="tradingview-widget-container"></div>
 </div>
 
-<!-- PANEL CFD POLMILLONE -->
-<div class="panel" id="panel-cfd">
+<!-- PANEL CFD -->
+<div class="panel">
 <h2>CFD – Polmillone</h2>
 
-<!-- Controles del gráfico CFD -->
 <div class="cfd-controls">
-  <label>Tipo de vela:
-    <select id="cfd_style" onchange="updateCFDStyle()">
-      <option value="candles">Velas Japonesas</option>
-      <option value="bars">Barras</option>
-      <option value="line">Línea</option>
-    </select>
-  </label>
-  <label>Intervalo:
-    <select id="cfd_interval" onchange="updateCFDInterval()">
-      <option value="1">1 Min</option>
-      <option value="5">5 Min</option>
-      <option value="15">15 Min</option>
-      <option value="60">1 Hora</option>
-    </select>
-  </label>
+  <select id="cfd_style" onchange="updateCFDStyle()">
+    <option value="candles">Velas</option>
+    <option value="bars">Barras</option>
+    <option value="line">Línea</option>
+  </select>
 </div>
 
-<div class="tradingview-widget-container" id="tv_cfd"></div>
-<div id="ia-console">Consola de IA activa... Analizando correlaciones en tiempo real.</div>
+<div id="tv_cfd" class="tradingview-widget-container"></div>
+<div id="ia-console">Filtro activo...</div>
 </div>
 
-<!-- TradingView JS -->
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-// Función para crear widgets normales
-function crearWidget(symbol, containerId) {
-  document.getElementById(containerId).innerHTML = "";
+// =====================
+// TRADINGVIEW WIDGETS
+// =====================
+function crearWidget(symbol, id) {
   new TradingView.widget({
-    container_id: containerId,
+    container_id: id,
     symbol: symbol,
     interval: "60",
     timezone: "Europe/Madrid",
@@ -141,42 +125,78 @@ function crearWidget(symbol, containerId) {
   });
 }
 
-// Función para escribir en consola
-function logConsole(text) {
-  const c = document.getElementById("ia-console");
-  c.innerText += "\n" + text;
-  c.scrollTop = c.scrollHeight;
-}
-
-// Inicialización de todos los gráficos normales
 const widgets = {
   tv_eurodolar: "FX:EURUSD",
   tv_bono_eu: "INDEX:EXY",
-  tv_oro: "OANDA:XAUUSD",  
+  tv_oro: "OANDA:XAUUSD",
   tv_brent: "TVC:UKOIL",
   tv_btc: "BINANCE:BTCUSDT",
   tv_dxy: "INDEX:DXY",
-tv_bono_us: "US10Y",
+  tv_bono_us: "US10Y",
   tv_nasdaq: "NASDAQ:NDX",
-tv_sp500: "OANDA:SPX500USD",
-tv_vix: "CAPITALCOM:VIX",
+  tv_sp500: "OANDA:SPX500USD",
+  tv_vix: "CAPITALCOM:VIX"
 };
 
-for (const id in widgets) {
-  crearWidget(widgets[id], id);
+Object.keys(widgets).forEach(id => crearWidget(widgets[id], id));
+
+// =====================
+// CONSOLA
+// =====================
+function logConsole(txt) {
+  const c = document.getElementById("ia-console");
+  c.innerText += "\n" + txt;
+  c.scrollTop = c.scrollHeight;
 }
 
-// ✅ CFD – Polmillone (gráfico profesional simulado)
+// =====================
+// FILTRO DE PRESIÓN
+// =====================
+const filterConfig = {
+  euro: {
+    eurusd: 1.5,
+    bono: 1.0,
+    oro: 1.2,
+    brent: 0.8,
+    btc: 0.6
+  },
+  dolar: {
+    dxy: 1.5,
+    bono: 1.0,
+    nasdaq: 1.0,
+    sp: 1.0,
+    vix: -1.3
+  }
+};
+
+function readDirection() {
+  return (Math.random() - 0.5) * 2;
+}
+
+function runFilter() {
+  let euro = 0;
+  let dolar = 0;
+
+  Object.values(filterConfig.euro).forEach(w => euro += readDirection() * w);
+  Object.values(filterConfig.dolar).forEach(w => dolar += readDirection() * w);
+
+  const delta = euro - dolar;
+
+  logConsole(`EURO ${euro.toFixed(2)} | USD ${dolar.toFixed(2)} | Δ ${delta.toFixed(2)}`);
+  return delta;
+}
+
+// =====================
+// CFD GRÁFICO
+// =====================
 let cfdData = [];
-let cfdPrice = 100; // precio inicial
-let cfdInterval = 1;
-let cfdStyle = 'candles';
+let cfdPrice = 100;
+let cfdStyle = "candles";
 
 function initCFD() {
   for (let i = 0; i < 50; i++) {
-    const change = (Math.random() - 0.5) * 2;
-    cfdPrice += change;
-    cfdData.push({ time: i, value: cfdPrice });
+    cfdPrice += (Math.random() - 0.5);
+    cfdData.push(cfdPrice);
   }
   drawCFD();
 }
@@ -184,97 +204,51 @@ function initCFD() {
 function drawCFD() {
   const container = document.getElementById("tv_cfd");
   container.innerHTML = "";
-
   const canvas = document.createElement("canvas");
   canvas.width = container.clientWidth;
   canvas.height = container.clientHeight;
   container.appendChild(canvas);
   const ctx = canvas.getContext("2d");
 
-  const padding = 40;
-  const width = canvas.width - padding * 2;
-  const height = canvas.height - padding * 2;
+  const pad = 30;
+  const max = Math.max(...cfdData);
+  const min = Math.min(...cfdData);
 
-  const values = cfdData.map(d => d.value);
-  const max = Math.max(...values);
-  const min = Math.min(...values);
+  cfdData.forEach((v, i) => {
+    const x = pad + i * (canvas.width - pad * 2) / cfdData.length;
+    const y = pad + (max - v) / (max - min) * (canvas.height - pad * 2);
+    const prev = cfdData[i - 1] || v;
 
-  // Dibujar líneas o velas
-  for (let i = 0; i < cfdData.length; i++) {
-    const x = padding + (i / (cfdData.length - 1)) * width;
-    const y = padding + ((max - cfdData[i].value) / (max - min)) * height;
-
-    if (cfdStyle === 'line') {
+    if (cfdStyle === "line") {
       if (i > 0) {
+        ctx.strokeStyle = "#0f0";
         ctx.beginPath();
-        const prevX = padding + ((i-1)/(cfdData.length-1))*width;
-        const prevY = padding + ((max - cfdData[i-1].value)/(max-min))*height;
-        ctx.moveTo(prevX, prevY);
+        ctx.moveTo(x - 10, pad + (max - prev) / (max - min) * (canvas.height - pad * 2));
         ctx.lineTo(x, y);
-        ctx.strokeStyle = "#00ff00";
         ctx.stroke();
       }
-    } else if (cfdStyle === 'bars' || cfdStyle === 'candles') {
-      const barWidth = width / cfdData.length * 0.6;
-      ctx.fillStyle = (i>0 && cfdData[i].value>cfdData[i-1].value) ? "#0f0" : "#f00";
-      ctx.fillRect(x - barWidth/2, y, barWidth, canvas.height - padding - y);
-      if (cfdStyle === 'candles') {
-        ctx.fillRect(x - barWidth/4, y, barWidth/2, 2); // mecha simulada
-      }
+    } else {
+      ctx.fillStyle = v >= prev ? "#0f0" : "#f00";
+      ctx.fillRect(x, y, 4, canvas.height - pad - y);
     }
-  }
-
-  // Ejes
-  ctx.strokeStyle = "#888";
-  ctx.beginPath();
-  ctx.moveTo(padding, padding);
-  ctx.lineTo(padding, canvas.height - padding);
-  ctx.lineTo(canvas.width - padding, canvas.height - padding);
-  ctx.stroke();
-
-  // Escala precio lateral
-  ctx.fillStyle = "#fff";
-  ctx.font = "12px monospace";
-  ctx.fillText(max.toFixed(2), 5, padding);
-  ctx.fillText(min.toFixed(2), 5, canvas.height - padding);
-
-  // Escala tiempo
-  ctx.fillText("0", padding, canvas.height - 5);
-  ctx.fillText(cfdData.length-1, canvas.width - padding - 10, canvas.height - 5);
+  });
 }
 
 function updateCFD() {
-  const change = (Math.random() - 0.5) * 2;
-  cfdPrice += change;
-  cfdData.push({ time: cfdData.length, value: cfdPrice });
-  if (cfdData.length > 50) cfdData.shift();
+  const delta = runFilter();
+  cfdPrice += delta * 0.6;
+  cfdData.push(cfdPrice);
+  if (cfdData.length > 60) cfdData.shift();
   drawCFD();
 }
 
-function updateCFDInterval() {
-  const sel = document.getElementById("cfd_interval");
-  cfdInterval = parseInt(sel.value);
-}
-
 function updateCFDStyle() {
-  const sel = document.getElementById("cfd_style");
-  cfdStyle = sel.value;
+  cfdStyle = document.getElementById("cfd_style").value;
   drawCFD();
 }
 
 initCFD();
 setInterval(updateCFD, 2000);
-
-// Simulación de IA
-setInterval(() => {
-  const mensajes = [
-    "EUR/USD y DXY correlación negativa detectada 📉",
-    "BTC sigue tendencia alcista con volatilidad alta 🚀",
-    "S&P500 y Nasdaq muestran movimientos sincronizados 📊",
-    "Brent y Oro sin correlación significativa ⚖️"
-  ];
-  logConsole(mensajes[Math.floor(Math.random() * mensajes.length)]);
-}, 8000);
 </script>
 
 </body>
