@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mini Bloomberg Pro</title>
+<title>Mini Bloomberg Pro – CFD Ponderado</title>
 <style>
 body { 
   margin: 0;
@@ -121,9 +121,9 @@ h2 {
 <div id="ia-console">Consola de IA activa... Analizando correlaciones en tiempo real.</div>
 </div>
 
-<!-- TradingView JS -->
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
+
 // Función para crear widgets normales
 function crearWidget(symbol, containerId) {
   document.getElementById(containerId).innerHTML = "";
@@ -141,14 +141,14 @@ function crearWidget(symbol, containerId) {
   });
 }
 
-// Función para escribir en consola
+// Consola IA
 function logConsole(text) {
   const c = document.getElementById("ia-console");
   c.innerText += "\n" + text;
   c.scrollTop = c.scrollHeight;
 }
 
-// Inicialización de todos los gráficos normales
+// Widgets
 const widgets = {
   tv_eurodolar: "FX:EURUSD",
   tv_bono_eu: "INDEX:EXY",
@@ -156,35 +156,66 @@ const widgets = {
   tv_brent: "TVC:UKOIL",
   tv_btc: "BINANCE:BTCUSDT",
   tv_dxy: "INDEX:DXY",
-tv_bono_us: "US10Y",
+  tv_bono_us: "US10Y",
   tv_nasdaq: "NASDAQ:NDX",
-tv_sp500: "OANDA:SPX500USD",
-tv_vix: "CAPITALCOM:VIX",
+  tv_sp500: "OANDA:SPX500USD",
+  tv_vix: "CAPITALCOM:VIX",
 };
+for (const id in widgets) crearWidget(widgets[id], id);
 
-for (const id in widgets) {
-  crearWidget(widgets[id], id);
-}
-
-// ✅ CFD – Polmillone (gráfico profesional simulado)
+// ✅ CFD Ponderado
 let cfdData = [];
-let cfdPrice = 100; // precio inicial
+let cfdPrice = 100;
 let cfdInterval = 1;
 let cfdStyle = 'candles';
 
+const euroActivos = ["tv_eurodolar","tv_bono_eu","tv_oro","tv_brent","tv_btc"];
+const dolarActivos = ["tv_dxy","tv_bono_us","tv_nasdaq","tv_sp500","tv_vix"];
+
+// Pesos configurables
+let pesosEuro = { tv_eurodolar: 1, tv_bono_eu: 0.8, tv_oro: 0.5, tv_brent: 0.3, tv_btc: 0.2 };
+let pesosDolar = { tv_dxy: 1, tv_bono_us: 0.8, tv_nasdaq: 0.6, tv_sp500: 0.6, tv_vix: 0.4 };
+
+// Precios iniciales
+let precios = {};
+for (const id of [...euroActivos, ...dolarActivos]) precios[id] = 100 + Math.random()*10;
+
+// Calcula CFD con pesos
+function calcularCFD() {
+  let sumEuro = 0, totalPesoEuro = 0;
+  for (const id of euroActivos) {
+    precios[id] += (Math.random()-0.5)*2;
+    sumEuro += precios[id]*pesosEuro[id];
+    totalPesoEuro += pesosEuro[id];
+  }
+  let sumDolar = 0, totalPesoDolar = 0;
+  for (const id of dolarActivos) {
+    precios[id] += (Math.random()-0.5)*2;
+    sumDolar += precios[id]*pesosDolar[id];
+    totalPesoDolar += pesosDolar[id];
+  }
+  return (sumEuro/totalPesoEuro - sumDolar/totalPesoDolar) + 100;
+}
+
 function initCFD() {
   for (let i = 0; i < 50; i++) {
-    const change = (Math.random() - 0.5) * 2;
-    cfdPrice += change;
+    cfdPrice = calcularCFD();
     cfdData.push({ time: i, value: cfdPrice });
   }
   drawCFD();
 }
 
+function updateCFD() {
+  cfdPrice = calcularCFD();
+  cfdData.push({ time: cfdData.length, value: cfdPrice });
+  if (cfdData.length > 50) cfdData.shift();
+  drawCFD();
+}
+
+// Dibujar CFD
 function drawCFD() {
   const container = document.getElementById("tv_cfd");
   container.innerHTML = "";
-
   const canvas = document.createElement("canvas");
   canvas.width = container.clientWidth;
   canvas.height = container.clientHeight;
@@ -192,90 +223,60 @@ function drawCFD() {
   const ctx = canvas.getContext("2d");
 
   const padding = 40;
-  const width = canvas.width - padding * 2;
-  const height = canvas.height - padding * 2;
-
-  const values = cfdData.map(d => d.value);
+  const width = canvas.width - padding*2;
+  const height = canvas.height - padding*2;
+  const values = cfdData.map(d=>d.value);
   const max = Math.max(...values);
   const min = Math.min(...values);
 
-  // Dibujar líneas o velas
-  for (let i = 0; i < cfdData.length; i++) {
-    const x = padding + (i / (cfdData.length - 1)) * width;
-    const y = padding + ((max - cfdData[i].value) / (max - min)) * height;
-
-    if (cfdStyle === 'line') {
-      if (i > 0) {
-        ctx.beginPath();
-        const prevX = padding + ((i-1)/(cfdData.length-1))*width;
-        const prevY = padding + ((max - cfdData[i-1].value)/(max-min))*height;
-        ctx.moveTo(prevX, prevY);
-        ctx.lineTo(x, y);
-        ctx.strokeStyle = "#00ff00";
-        ctx.stroke();
-      }
-    } else if (cfdStyle === 'bars' || cfdStyle === 'candles') {
-      const barWidth = width / cfdData.length * 0.6;
-      ctx.fillStyle = (i>0 && cfdData[i].value>cfdData[i-1].value) ? "#0f0" : "#f00";
-      ctx.fillRect(x - barWidth/2, y, barWidth, canvas.height - padding - y);
-      if (cfdStyle === 'candles') {
-        ctx.fillRect(x - barWidth/4, y, barWidth/2, 2); // mecha simulada
-      }
+  for (let i=0;i<cfdData.length;i++){
+    const x = padding + i/(cfdData.length-1)*width;
+    const y = padding + (max-cfdData[i].value)/(max-min)*height;
+    if(cfdStyle==='line' && i>0){
+      ctx.beginPath();
+      const prevX = padding + (i-1)/(cfdData.length-1)*width;
+      const prevY = padding + (max-cfdData[i-1].value)/(max-min)*height;
+      ctx.moveTo(prevX, prevY);
+      ctx.lineTo(x,y);
+      ctx.strokeStyle="#00ff00"; ctx.stroke();
+    } else {
+      const barWidth = width/cfdData.length*0.6;
+      ctx.fillStyle = (i>0 && cfdData[i].value>cfdData[i-1].value)?"#0f0":"#f00";
+      ctx.fillRect(x-barWidth/2,y,barWidth,canvas.height-padding-y);
+      if(cfdStyle==='candles') ctx.fillRect(x-barWidth/4,y,barWidth/2,2);
     }
   }
-
-  // Ejes
-  ctx.strokeStyle = "#888";
+  ctx.strokeStyle="#888";
   ctx.beginPath();
-  ctx.moveTo(padding, padding);
-  ctx.lineTo(padding, canvas.height - padding);
-  ctx.lineTo(canvas.width - padding, canvas.height - padding);
+  ctx.moveTo(padding,padding);
+  ctx.lineTo(padding,canvas.height-padding);
+  ctx.lineTo(canvas.width-padding,canvas.height-padding);
   ctx.stroke();
-
-  // Escala precio lateral
-  ctx.fillStyle = "#fff";
-  ctx.font = "12px monospace";
-  ctx.fillText(max.toFixed(2), 5, padding);
-  ctx.fillText(min.toFixed(2), 5, canvas.height - padding);
-
-  // Escala tiempo
-  ctx.fillText("0", padding, canvas.height - 5);
-  ctx.fillText(cfdData.length-1, canvas.width - padding - 10, canvas.height - 5);
+  ctx.fillStyle="#fff"; ctx.font="12px monospace";
+  ctx.fillText(max.toFixed(2),5,padding);
+  ctx.fillText(min.toFixed(2),5,canvas.height-padding);
+  ctx.fillText("0",padding,canvas.height-5);
+  ctx.fillText(cfdData.length-1,canvas.width-padding-10,canvas.height-5);
 }
 
-function updateCFD() {
-  const change = (Math.random() - 0.5) * 2;
-  cfdPrice += change;
-  cfdData.push({ time: cfdData.length, value: cfdPrice });
-  if (cfdData.length > 50) cfdData.shift();
-  drawCFD();
-}
-
-function updateCFDInterval() {
-  const sel = document.getElementById("cfd_interval");
-  cfdInterval = parseInt(sel.value);
-}
-
-function updateCFDStyle() {
-  const sel = document.getElementById("cfd_style");
-  cfdStyle = sel.value;
-  drawCFD();
-}
+// Controles
+function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
+function updateCFDStyle(){cfdStyle=document.getElementById("cfd_style").value;drawCFD();}
 
 initCFD();
-setInterval(updateCFD, 2000);
+setInterval(updateCFD,2000);
 
-// Simulación de IA
-setInterval(() => {
-  const mensajes = [
+// Simulación IA
+setInterval(()=>{
+  const mensajes=[
     "EUR/USD y DXY correlación negativa detectada 📉",
     "BTC sigue tendencia alcista con volatilidad alta 🚀",
     "S&P500 y Nasdaq muestran movimientos sincronizados 📊",
     "Brent y Oro sin correlación significativa ⚖️"
   ];
-  logConsole(mensajes[Math.floor(Math.random() * mensajes.length)]);
-}, 8000);
-</script>
+  logConsole(mensajes[Math.floor(Math.random()*mensajes.length)]);
+},8000);
 
+</script>
 </body>
-</html> 
+</html>
