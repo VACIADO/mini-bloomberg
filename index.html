@@ -1,139 +1,175 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Mini Bloomberg - Panel</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-wrap: wrap;
-      height: 100vh;
-      background-color: #111;
-      color: #fff;
-    }
-    .panel {
-      border: 1px solid #333;
-      box-sizing: border-box;
-      padding: 10px;
-      flex: 1 1 50%; /* dos columnas */
-      height: 50%;
-      display: flex;
-      flex-direction: column;
-      margin: 0;
-    }
-    h2 {
-      margin: 0 0 5px 0;
-      text-align: center;
-      font-size: 1em;
-    }
-    select {
-      margin-bottom: 5px;
-      width: 100%;
-      font-size: 0.9em;
-      padding: 2px;
-      background-color: #222;
-      color: #fff;
-      border: 1px solid #555;
-    }
-    .tradingview-widget-container { flex: 1; }
-  </style>
+<meta charset="UTF-8">
+<title>Mini Bloomberg Pro</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #121212;
+  color: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+  justify-content: center;
+}
+
+.panel {
+  border: 1px solid #444;
+  border-radius: 8px;
+  background-color: #1e1e1e;
+  box-sizing: border-box;
+  padding: 10px;
+  flex: 1 1 45%;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  height: 420px;
+}
+
+h2 {
+  margin: 0 0 5px 0;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.tradingview-widget-container {
+  flex: 1;
+  margin-top: 5px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.selector {
+  margin-bottom: 5px;
+  padding: 3px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+#ia-console {
+  width: 100%;
+  background: #000;
+  color: #0f0;
+  font-family: monospace;
+  padding: 6px;
+  height: 120px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+  margin-top: 8px;
+  border-radius: 4px;
+  border: 1px solid #444;
+}
+</style>
 </head>
 <body>
 
-  <!-- Panel EuroDólar -->
-  <div class="panel" id="panel-eurodolar">
-    <h2>EuroDólar y Correlaciones</h2>
-    <select id="select_eurodolar">
-      <option value="FX:EURUSD">EUR/USD</option>
-      <option value="TVC:EU10Y">Bono EU 10Y</option>
-    </select>
-    <div class="tradingview-widget-container">
-      <div id="tv_eurodolar"></div>
-    </div>
-  </div>
+<!-- PANEL EURO / CORRELADOS -->
+<div class="panel" id="panel-eurodolar">
+<h2>Euro / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_eurodolar"></div>
+<div class="tradingview-widget-container" id="tv_bono_eu"></div>
+<div class="tradingview-widget-container" id="tv_oro"></div>
+<div class="tradingview-widget-container" id="tv_brent"></div>
+<div class="tradingview-widget-container" id="tv_btc"></div>
+</div>
 
-  <!-- Panel Índice del Dólar -->
-  <div class="panel" id="panel-dolar">
-    <h2>Índice Dólar y Correlaciones</h2>
-    <select id="select_dolar">
-      <option value="ICE:DX1!">DXY</option>
-      <option value="TVC:US10Y">Bono US 10Y</option>
-    </select>
-    <div class="tradingview-widget-container">
-      <div id="tv_dolar"></div>
-    </div>
-  </div>
+<!-- PANEL DXY / CORRELADOS -->
+<div class="panel" id="panel-dxy">
+<h2>DXY / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_dxy"></div>
+<div class="tradingview-widget-container" id="tv_bono_us"></div>
+<div class="tradingview-widget-container" id="tv_nasdaq"></div>
+<div class="tradingview-widget-container" id="tv_sp500"></div>
+<div class="tradingview-widget-container" id="tv_vix"></div>
+</div>
 
-  <!-- Panel Materias / Cripto -->
-  <div class="panel" id="panel-materias">
-    <h2>Materias / Cripto</h2>
-    <select id="select_materias">
-      <option value="COMEX:GC1!">Oro</option>
-      <option value="ICE:BRENT">Petróleo Brent</option>
-      <option value="BINANCE:BTCUSDT">BTC</option>
-    </select>
-    <div class="tradingview-widget-container">
-      <div id="tv_materias"></div>
-    </div>
-  </div>
+<!-- PANEL CFD POLMILLONE -->
+<div class="panel" id="panel-cfd">
+<h2>CFD - Polmillone</h2>
+<select class="selector" id="selector_cfd" onchange="updateWidget(this, 'tv_cfd')">
+  <option value="FX:EURUSD">EUR/USD</option>
+  <option value="TVC:EU10Y">Bono Euro 10Y</option>
+  <option value="TVC:US10Y">Bono USA 10Y</option>
+  <option value="OANDA:XAUUSD">Oro</option>
+  <option value="TVC:UKOIL">Petróleo Brent</option>
+  <option value="BINANCE:BTCUSDT">BTC</option>
+  <option value="NASDAQ:NDX">Nasdaq 100</option>
+  <option value="SP:SPX">S&P500</option>
+  <option value="TVC:VIX">VIX</option>
+  <option value="TVC:DXY">DXY</option>
+</select>
+<div class="tradingview-widget-container" id="tv_cfd"></div>
+<div id="ia-console">Consola de IA activa... Analizando correlaciones en tiempo real.</div>
+</div>
 
-  <!-- Panel CFD Polmillone -->
-  <div class="panel" id="panel-polmillone">
-    <h2>CFD Polmillone (Euro vs Dólar)</h2>
-    <select id="select_polmillone">
-      <option value="SP:SPX">SP500</option>
-      <option value="NASDAQ:NASDAQ">Nasdaq</option>
-      <option value="CBOE:VIX">VIX</option>
-    </select>
-    <div class="tradingview-widget-container">
-      <div id="tv_polmillone"></div>
-    </div>
-  </div>
+<!-- TradingView JS -->
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+function crearWidget(symbol, containerId) {
+  document.getElementById(containerId).innerHTML = "";
+  new TradingView.widget({
+    container_id: containerId,
+    symbol: symbol,
+    interval: "60",
+    timezone: "Europe/Madrid",
+    theme: "dark",
+    style: "1",
+    locale: "es",
+    hide_top_toolbar: true,
+    width: "100%",
+    height: "100%"
+  });
+}
 
-  <!-- TradingView JS -->
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-  <script>
-    function crearWidget(containerId, symbol) {
-      new TradingView.widget({
-        width: "100%",
-        height: "100%",
-        symbol: symbol,
-        interval: "60",
-        timezone: "Europe/Madrid",
-        theme: "dark",
-        style: "1",
-        locale: "es",
-        hide_top_toolbar: true,
-        container_id: containerId
-      });
-    }
+function updateWidget(select, containerId) {
+  crearWidget(select.value, containerId);
+  logConsole(`Gráfico CFD actualizado a: ${select.value}`);
+}
 
-    // Inicializar todos los widgets
-    crearWidget("tv_eurodolar", document.getElementById("select_eurodolar").value);
-    crearWidget("tv_dolar", document.getElementById("select_dolar").value);
-    crearWidget("tv_materias", document.getElementById("select_materias").value);
-    crearWidget("tv_polmillone", document.getElementById("select_polmillone").value);
+// Función para escribir en la consola de IA
+function logConsole(text) {
+  const consoleDiv = document.getElementById('ia-console');
+  consoleDiv.innerText += '\n' + text;
+  consoleDiv.scrollTop = consoleDiv.scrollHeight;
+}
 
-    // Cambiar símbolo dinámicamente
-    document.getElementById("select_eurodolar").addEventListener("change", function() {
-      document.getElementById("tv_eurodolar").innerHTML = "";
-      crearWidget("tv_eurodolar", this.value);
-    });
-    document.getElementById("select_dolar").addEventListener("change", function() {
-      document.getElementById("tv_dolar").innerHTML = "";
-      crearWidget("tv_dolar", this.value);
-    });
-    document.getElementById("select_materias").addEventListener("change", function() {
-      document.getElementById("tv_materias").innerHTML = "";
-      crearWidget("tv_materias", this.value);
-    });
-    document.getElementById("select_polmillone").addEventListener("change", function() {
-      document.getElementById("tv_polmillone").innerHTML = "";
-      crearWidget("tv_polmillone", this.value);
-    });
-  </script>
+// Inicializamos todos los widgets por defecto
+const widgets = {
+  tv_eurodolar: "FX:EURUSD",
+  tv_bono_eu: "TVC:EU10Y",
+  tv_oro: "OANDA:XAUUSD",
+  tv_brent: "TVC:UKOIL",
+  tv_btc: "BINANCE:BTCUSDT",
+  tv_dxy: "TVC:DXY",
+  tv_bono_us: "TVC:US10Y",
+  tv_nasdaq: "NASDAQ:NDX",
+  tv_sp500: "SP:SPX",
+  tv_vix: "TVC:VIX",
+  tv_cfd: "SP:SPX"
+};
+
+for (const id in widgets) {
+  crearWidget(widgets[id], id);
+}
+
+// Simulación de análisis de correlaciones (ejemplo)
+setInterval(() => {
+  const mensajes = [
+    "EUR/USD y DXY correlación negativa detectada 📉",
+    "BTC sigue tendencia alcista con volatilidad alta 🚀",
+    "S&P500 y Nasdaq muestran movimientos sincronizados 📊",
+    "Brent y Oro sin correlación significativa ⚖️"
+  ];
+  const mensaje = mensajes[Math.floor(Math.random() * mensajes.length)];
+  logConsole(mensaje);
+}, 8000);
+</script>
 
 </body>
 </html>
