@@ -2,222 +2,230 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mini Bloomberg | CFD Sintético EUR vs USD</title>
-
-<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-
+<title>Mini Bloomberg Pro – CFD Real Time</title>
 <style>
-body {
+body { 
   margin: 0;
-  background: #0b0f14;
-  color: #e5e7eb;
   font-family: Arial, sans-serif;
-}
-header {
-  padding: 10px;
-  text-align: center;
-  background: #111827;
-  border-bottom: 1px solid #1f2937;
-}
-#container {
+  background-color: #121212;
+  color: #fff;
   display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-#chart {
-  flex: 1;
-}
-footer {
-  padding: 6px;
-  font-size: 12px;
-  background: #111827;
-  border-top: 1px solid #1f2937;
-  text-align: center;
-  color: #9ca3af;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+  justify-content: center;
 }
 .panel {
+  border: 1px solid #444;
+  border-radius: 8px;
+  background-color: #1e1e1e;
+  box-sizing: border-box;
+  padding: 10px;
+  flex: 1 1 45%;
+  min-width: 300px;
   display: flex;
-  gap: 15px;
-  padding: 8px;
-  background: #020617;
-  font-size: 13px;
+  flex-direction: column;
+  height: 420px;
 }
-.panel div {
-  opacity: 0.9;
-}
-.up { color: #22c55e; }
-.down { color: #ef4444; }
+h2 { margin: 0 0 5px 0; text-align: center; font-size: 1.1rem; }
+.tradingview-widget-container { flex: 1; margin-top: 5px; border-radius: 6px; overflow: hidden; }
+#ia-console { width: 100%; background: #000; color: #0f0; font-family: monospace; padding: 6px; height: 120px; overflow-y: auto; font-size: 0.8rem; margin-top: 8px; border-radius: 4px; border: 1px solid #444; }
+.cfd-controls { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.cfd-controls select { background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 3px; font-size: 0.9rem; }
+.news-panel{ flex:1 1 45%; background:#121921; padding:10px; border-radius:6px; max-height:30vh; overflow-y:auto; }
+.news-panel h3{ margin:0 0 5px 0; font-size:14px; }
+.news{margin-bottom:6px;} .news span{font-weight:bold;} .alert{background:#7c2d12;color:#fff;padding:6px;text-align:center;font-weight:bold;margin:4px 0;border-radius:4px;}
+canvas{image-rendering:pixelated;}
 </style>
 </head>
-
 <body>
-<header>
-  🔥 MINI BLOOMBERG — CFD SINTÉTICO (EUR vs USD)
-</header>
 
-<div class="panel">
-  <div>CFD: <span id="cfdPrice">100.00</span></div>
-  <div>Sesión: <span id="session">EU</span></div>
-  <div>Bias: <span id="bias">Neutral</span></div>
+<!-- PANEL EURO / CORRELADOS -->
+<div class="panel" id="panel-eurodolar">
+<h2>Euro / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_eurodolar"></div>
+<div class="tradingview-widget-container" id="tv_bono_eu"></div>
+<div class="tradingview-widget-container" id="tv_oro"></div>
+<div class="tradingview-widget-container" id="tv_brent"></div>
+<div class="tradingview-widget-container" id="tv_btc"></div>
 </div>
 
-<div id="container">
-  <div id="chart"></div>
+<!-- PANEL DXY / CORRELADOS -->
+<div class="panel" id="panel-dxy">
+<h2>DXY / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_dxy"></div>
+<div class="tradingview-widget-container" id="tv_bono_us"></div>
+<div class="tradingview-widget-container" id="tv_nasdaq"></div>
+<div class="tradingview-widget-container" id="tv_sp500"></div>
+<div class="tradingview-widget-container" id="tv_vix"></div>
 </div>
 
-<footer>
-  CFD sintético propio · Velas dinámicas · Base IA + Noticias
-</footer>
+<!-- PANEL CFD REAL-TIME -->
+<div class="panel" id="panel-cfd">
+<h2>CFD Sintético – Real Time</h2>
+<div class="cfd-controls">
+  <label>Intervalo:
+    <select id="cfd_interval" onchange="updateCFDInterval()">
+      <option value="1">1 Min</option>
+      <option value="5">5 Min</option>
+      <option value="15">15 Min</option>
+      <option value="60">1 Hora</option>
+    </select>
+  </label>
+</div>
+<div class="tradingview-widget-container" id="tv_cfd"></div>
+<div id="ia-console">Consola de IA activa...</div>
+<div class="news-panel" id="news-before"><h3>Noticias Antes</h3></div>
+<div class="news-panel" id="news-after"><h3>Noticias Después</h3></div>
+<div id="alertBox"></div>
+</div>
 
+<script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-/* ================================
-   CONFIGURACIÓN GENERAL
-================================ */
-
-const BASE_PRICE = 100;
-let currentPrice = BASE_PRICE;
-let lastClose = BASE_PRICE;
-
-const weights = {
-  EUR: {
-    bondsEU: 0.3,
-    exy: 0.3,
-    gold: 0.2,
-    btc: 0.2
-  },
-  USD: {
-    dxy: 0.35,
-    us10y: 0.25,
-    sp500: 0.2,
-    vix: 0.2
-  }
+// ==== TRADINGVIEW ORIGINAL ====
+function crearWidget(symbol, containerId){
+  document.getElementById(containerId).innerHTML="";
+  new TradingView.widget({
+    container_id: containerId,
+    symbol: symbol,
+    interval: "60",
+    timezone: "Europe/Madrid",
+    theme: "dark",
+    style: "1",
+    locale: "es",
+    hide_top_toolbar: true,
+    width: "100%",
+    height: "100%"
+  });
+}
+const widgets={
+  tv_eurodolar:"FX:EURUSD",
+  tv_bono_eu:"INDEX:EXY",
+  tv_oro:"OANDA:XAUUSD",  
+  tv_brent:"TVC:UKOIL",
+  tv_btc:"BINANCE:BTCUSDT",
+  tv_dxy:"INDEX:DXY",
+  tv_bono_us:"US10Y",
+  tv_nasdaq:"NASDAQ:NDX",
+  tv_sp500:"OANDA:SPX500USD",
+  tv_vix:"CAPITALCOM:VIX",
 };
+for(const id in widgets) crearWidget(widgets[id],id);
 
-/* ================================
-   CHART PRO (TradingView Style)
-================================ */
+// ==== CFD REAL-TIME ====
+let cfdData=[], lastClose=100, cfdInterval=1, animationFrame;
 
-const chart = LightweightCharts.createChart(document.getElementById('chart'), {
-  layout: {
-    background: { color: '#0b0f14' },
-    textColor: '#e5e7eb',
-  },
-  grid: {
-    vertLines: { color: '#1f2937' },
-    horzLines: { color: '#1f2937' },
-  },
-  crosshair: {
-    mode: LightweightCharts.CrosshairMode.Normal,
-  },
-  timeScale: {
-    timeVisible: true,
-    secondsVisible: true,
-  },
-  rightPriceScale: {
-    borderColor: '#374151',
-  },
-});
-
-const candleSeries = chart.addCandlestickSeries({
-  upColor: '#22c55e',
-  downColor: '#ef4444',
-  borderUpColor: '#22c55e',
-  borderDownColor: '#ef4444',
-  wickUpColor: '#22c55e',
-  wickDownColor: '#ef4444',
-});
-
-/* ================================
-   CFD SINTÉTICO (LÓGICA)
-================================ */
-
-function randomMove(strength = 1) {
-  return (Math.random() - 0.5) * strength;
+// Traer precios reales desde tu API
+async function fetchCFDPrice(){
+  try{
+    const res=await fetch("https://api.publink.com/cfd?symbol=EURUSD&key=pub_b272af150959422caa98464f57f2f31b");
+    const data=await res.json();
+    return parseFloat(data.price) || lastClose;
+  }catch(e){ console.error(e); return lastClose; }
 }
 
-function calcEURPower() {
-  return (
-    randomMove(weights.EUR.bondsEU) +
-    randomMove(weights.EUR.exy) +
-    randomMove(weights.EUR.gold) +
-    randomMove(weights.EUR.btc)
-  );
+// Crear vela real
+async function generarVelaReal(){
+  const close=await fetchCFDPrice();
+  const open=lastClose;
+  const max=Math.max(open,close)+(Math.random()*0.1);
+  const min=Math.min(open,close)-(Math.random()*0.1);
+  lastClose=close;
+  return {open,high:max,low:min,close};
 }
 
-function calcUSDPower() {
-  return (
-    randomMove(weights.USD.dxy) +
-    randomMove(weights.USD.us10y) +
-    randomMove(weights.USD.sp500) +
-    randomMove(weights.USD.vix)
-  );
+// Inicializar CFD
+async function initCFD(){
+  for(let i=0;i<50;i++) cfdData.push(await generarVelaReal());
+  drawCFD();
 }
 
-function generateCandle() {
-  const eurPower = calcEURPower();
-  const usdPower = calcUSDPower();
+// Dibujar CFD en canvas
+function drawCFD(){
+  const container=document.getElementById("tv_cfd");
+  container.innerHTML="";
+  const canvas=document.createElement("canvas");
+  canvas.width=container.clientWidth; canvas.height=container.clientHeight;
+  container.appendChild(canvas);
+  const ctx=canvas.getContext("2d");
+  const padding=50;
 
-  const delta = eurPower - usdPower;
+  function render(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const width=canvas.width-padding*2;
+    const height=canvas.height-padding*2;
+    const max=Math.max(...cfdData.map(v=>v.high));
+    const min=Math.min(...cfdData.map(v=>v.low));
 
-  const open = lastClose;
-  const close = open + delta;
-  const high = Math.max(open, close) + Math.random();
-  const low = Math.min(open, close) - Math.random();
+    for(let i=0;i<cfdData.length;i++){
+      const v=cfdData[i];
+      const x=padding+i/(cfdData.length-1)*width;
+      const yOpen=padding+(max-v.open)/(max-min)*height;
+      const yClose=padding+(max-v.close)/(max-min)*height;
+      const yHigh=padding+(max-v.high)/(max-min)*height;
+      const yLow=padding+(max-v.low)/(max-min)*height;
 
-  lastClose = close;
+      ctx.strokeStyle="#888"; ctx.beginPath();
+      ctx.moveTo(x,yHigh); ctx.lineTo(x,yLow); ctx.stroke();
+      ctx.fillStyle=(v.close>=v.open)?"#0f0":"#f00";
+      ctx.fillRect(x-5,Math.min(yOpen,yClose),10,Math.max(2,Math.abs(yClose-yOpen)));
+    }
 
-  currentPrice = close;
-  updatePanel(delta);
+    ctx.strokeStyle="#888"; ctx.beginPath();
+    ctx.moveTo(padding,padding); ctx.lineTo(padding,canvas.height-padding); ctx.lineTo(canvas.width-padding,canvas.height-padding); ctx.stroke();
 
-  return {
-    time: Math.floor(Date.now() / 1000),
-    open,
-    high,
-    low,
-    close
-  };
-}
-
-/* ================================
-   PANEL INFO
-================================ */
-
-function updatePanel(delta) {
-  const priceEl = document.getElementById('cfdPrice');
-  priceEl.textContent = currentPrice.toFixed(2);
-  priceEl.className = delta >= 0 ? 'up' : 'down';
-
-  document.getElementById('bias').textContent =
-    delta > 0.2 ? 'EUR fuerte' :
-    delta < -0.2 ? 'USD fuerte' :
-    'Neutral';
-}
-
-/* ================================
-   LOOP DE MERCADO (VELAS VIVAS)
-================================ */
-
-setInterval(() => {
-  const candle = generateCandle();
-  candleSeries.update(candle);
-}, 2000);
-
-/* ================================
-   BASE PARA ALERTAS / IA
-================================ */
-
-// EJEMPLO: rotura simple
-function checkBreakout() {
-  if (currentPrice > BASE_PRICE + 5) {
-    console.log('🚨 Posible ruptura alcista EUR');
+    animationFrame=requestAnimationFrame(render);
   }
-  if (currentPrice < BASE_PRICE - 5) {
-    console.log('🚨 Posible ruptura bajista USD');
-  }
+  animationFrame=requestAnimationFrame(render);
 }
 
-setInterval(checkBreakout, 5000);
+// Actualizar CFD cada intervalo
+async function updateCFD(){
+  cfdData.push(await generarVelaReal());
+  if(cfdData.length>50) cfdData.shift();
+}
+initCFD();
+setInterval(updateCFD,2000);
 
+// ==== SIMULACIÓN IA ====
+function logConsole(text){ const c=document.getElementById("ia-console"); c.innerText+="\n"+text; c.scrollTop=c.scrollHeight; }
+setInterval(()=>{
+  const msgs=["EUR/USD y DXY correlación negativa 📉","BTC alcista 🚀","S&P500 y Nasdaq sincronizados 📊","Brent y Oro sin correlación ⚖️","Analizando soportes EUR/USD..."];
+  logConsole(msgs[Math.floor(Math.random()*msgs.length)]);
+},8000);
+
+// ==== ALERTAS ====
+function showAlert(msg){ const box=document.getElementById("alertBox"); const div=document.createElement("div"); div.className="alert"; div.innerText=msg; box.appendChild(div); setTimeout(()=>div.remove(),5000);}
+setInterval(()=>{ if(Math.random()<0.2) showAlert("⚡ Alerta CFD rompe soporte/resistencia!"); },7000);
+
+// ==== NOTICIAS ====
+async function fetchNewsRealtime(query="EUR/USD"){
+  try{
+    const url=`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=es&sortBy=publishedAt&apiKey=pub_b272af150959422caa98464f57f2f31b`;
+    const res=await fetch(url);
+    const json=await res.json();
+    return json.articles||[];
+  }catch(e){console.error(e); return [];}
+}
+function displayNews(beforeAfter, articles){
+  const container=document.getElementById(beforeAfter==="before"?"news-before":"news-after");
+  container.innerHTML=`<h3>Noticias ${beforeAfter==="before"?"Antes":"Después"}</h3>`;
+  articles.forEach(a=>{
+    const div=document.createElement("div"); div.className="news";
+    div.innerHTML=`<span>${new Date(a.publishedAt).toLocaleTimeString()}:</span> ${a.title}<br><small>${a.source.name}</small>`;
+    container.appendChild(div);
+  });
+}
+async function updateNewsPanels(){
+  const news=await fetchNewsRealtime("EUR/USD");
+  displayNews("before",news.slice(0,5));
+  displayNews("after",news.slice(5,10));
+}
+updateNewsPanels();
+setInterval(updateNewsPanels,30000);
+
+// ==== CONTROLES ====
+function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
 </script>
 </body>
 </html>
