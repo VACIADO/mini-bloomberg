@@ -85,11 +85,11 @@ input, button { padding:4px; border-radius:4px; border:none; background:#333; co
 </div>
 
 <div id="ia-news-container">
-  <div id="ia-console">IA activa, Pol Millone...</div>
-  <div class="news-panel" id="news-panel">
-    <h3>Noticias / Alertas Importantes</h3>
-    <input type="text" id="manual-news" placeholder="Introduce noticia manual">
-    <button onclick="submitManualNews()">Enviar Noticia</button>
+  <div id="ia-console"></div>
+  <div class="news-panel">
+    <h3>Mini Chat IA / Noticias</h3>
+    <input type="text" id="chat-input" placeholder="Escribe noticia o pregunta">
+    <button onclick="sendMessage()">Enviar</button>
   </div>
 </div>
 
@@ -198,12 +198,38 @@ initCFD();
 setInterval(updateCFD,2000);
 function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
 
-// ==== IA CONSOLA ====
-const iaConsole=document.getElementById("ia-console");
-function logConsole(text){
+// ==== MINI CHAT IA ====
+const iaConsole = document.getElementById("ia-console");
+let chatHistory = [];
+
+function logConsole(user, text){
   const timestamp = new Date().toLocaleTimeString();
-  const newLine = `[${timestamp}] ${text}`;
-  iaConsole.innerText = newLine + "\n" + iaConsole.innerText; 
+  const newLine = `[${timestamp}] ${user}: ${text}`;
+  chatHistory.push(newLine);
+  iaConsole.innerText = chatHistory.slice(-20).reverse().join("\n");
+}
+
+function sendMessage(){
+  const input = document.getElementById("chat-input");
+  const msg = input.value.trim();
+  if(!msg) return;
+  input.value = "";
+  logConsole("Tú", msg);
+  processMessage(msg);
+}
+
+function processMessage(msg){
+  let response = "";
+  if(msg.toLowerCase().includes("precio del oro")){
+    response = `El precio del oro es aproximadamente ${(1800 + Math.random()*50).toFixed(2)} USD/onza 🪙`;
+  } else if(msg.toLowerCase().includes("eur/usd")){
+    response = `EUR/USD está en ${(1.08 + Math.random()*0.01).toFixed(4)}`;
+  } else if(msg.toLowerCase().includes("noticia")){
+    response = "Noticia recibida y analizada ⚡";
+  } else {
+    response = "Pol Millone responde: Entendido ✔️";
+  }
+  setTimeout(()=> logConsole("IA", response), 500);
 }
 
 // ==== ALERTAS ====
@@ -216,34 +242,14 @@ function showAlert(msg){
   setTimeout(()=>div.remove(),7000);
 }
 
-// ==== MINI CHAT NOTICIAS ====
-function submitManualNews(){
-  const input=document.getElementById("manual-news");
-  if(!input.value) return;
-  const news=input.value;
-  input.value="";
-  displayNews([{title:news, publishedAt:new Date(), source:{name:"Manual"}}]);
-  // IA procesa la noticia
-  logConsole(`Pol Millone, la IA analiza: "${news}" - posible impacto detectado ⚡`);
-}
-
-// ==== MOSTRAR SOLO NOTICIAS IMPORTANTES ====
-function displayNews(articles){
-  const container=document.getElementById("news-panel");
-  container.innerHTML=`<h3>Noticias / Alertas Importantes</h3>`;
-  articles.forEach(a=>{
-    const div=document.createElement("div"); div.className="news";
-    div.innerHTML=`<span>${new Date(a.publishedAt).toLocaleTimeString()}:</span> ${a.title} <br><small>${a.source.name}</small>`;
-    container.appendChild(div);
-  });
-}
-
-// ==== EJEMPLO DE NOTICIAS EXTERNAS (se pueden reemplazar con API FRED / Alpha) ====
+// ==== NOTICIAS EXTERNAS ====
 async function updateExternalNews(){
-  // placeholder demo
-  const demoArticles=[{title:"EUR/USD rompe soporte diario", publishedAt:new Date(), source:{name:"Demo News"}}];
-  displayNews(demoArticles);
-  logConsole("IA actualiza noticias externas importantes 🔔");
+  const demoArticles=[
+    {title:"EUR/USD rompe soporte diario", publishedAt:new Date(), source:{name:"Demo News"}}
+  ];
+  demoArticles.forEach(a=>{
+    logConsole("Noticia", `${a.title} (${a.source.name})`);
+  });
 }
 setInterval(updateExternalNews,30000);
 
