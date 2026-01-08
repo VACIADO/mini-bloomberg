@@ -1,1 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mini Bloomberg PRO – EUR/USD Focus Multi-Timeframe</title>
 
+<style>
+body{
+  margin:0;
+  background:#0f1115;
+  color:#fff;
+  font-family:Arial, sans-serif;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  padding:10px;
+  justify-content:center;
+}
+.panel{
+  background:#1a1d24;
+  border:1px solid #333;
+  border-radius:8px;
+  padding:8px;
+  flex:1 1 45%;
+  min-width:320px;
+  height:420px;
+  display:flex;
+  flex-direction:column;
+}
+h2{font-size:15px;text-align:center;margin:0 0 5px;}
+.tradingview-widget-container{flex:1;border-radius:6px;overflow:hidden;}
+#cfd-canvas{width:100%;height:100%;}
+#ia-console{
+  background:#000;
+  color:#0f0;
+  font-family:monospace;
+  font-size:12px;
+  padding:6px;
+  border-radius:4px;
+  height:120px;
+  overflow-y:auto;
+}
+.news-panel{
+  background:#111826;
+  padding:6px;
+  border-radius:4px;
+  height:120px;
+  overflow-y:auto;
+  font-size:13px;
+}
+textarea{
+  width:100%;
+  height:60px;
+  background:#000;
+  color:#fff;
+  border:1px solid #444;
+  border-radius:4px;
+  padding:4px;
+}
+button{
+  background:#2563eb;
+  border:none;
+  color:#fff;
+  padding:6px;
+  border-radius:4px;
+  cursor:pointer;
+  margin-top:4px;
+}
+.alert{
+  background:#7c2d12;
+  padding:6px;
+  margin:4px 0;
+  border-radius:4px;
+  text-align:center;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<!-- EUR/USD -->
+<div class="panel">
+<h2>EUR/USD Multi-Timeframe</h2>
+<div class="tradingview-widget-container" id="tv_eurusd_5m"></div>
+<div class="tradingview-widget-container" id="tv_eurusd_15m"></div>
+<div class="tradingview-widget-container" id="tv_eurusd_1h"></div>
+</div>
+
+<!-- DXY -->
+<div class="panel">
+<h2>DXY Multi-Timeframe</h2>
+<div class="tradingview-widget-container" id="tv_dxy_5m"></div>
+<div class="tradingview-widget-container" id="tv_dxy_15m"></div>
+<div class="tradingview-widget-container" id="tv_dxy_1h"></div>
+</div>
+
+<!-- CFD -->
+<div class="panel">
+<h2>CFD Sintético (EUR vs USD)</h2>
+<canvas id="cfd-canvas"></canvas>
+</div>
+
+<!-- IA + Noticias -->
+<div class="panel">
+<h2>IA · Señales · Noticias</h2>
+<div id="ia-console">IA inicializada…</div>
+<div class="news-panel" id="news-panel"><b>Conclusiones IA</b><br></div>
+<textarea id="manualNews" placeholder="Pega aquí la noticia (antes / durante / después del dato)…"></textarea>
+<button onclick="analizarNoticia()">Analizar Noticia</button>
+</div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+// ================= TRADINGVIEW MULTI-TIMEFRAME =================
+function crearWidget(symbol, container, intervalo){
+  new TradingView.widget({
+    container_id: container,
+    symbol: symbol,
+    interval: intervalo,
+    theme:"dark",
+    locale:"es",
+    hide_top_toolbar:true,
+    width:"100%",
+    height:"100%"
+  });
+}
+
+const tf=["5","15","60"];
+tf.forEach(t=>{
+  crearWidget("FX:EURUSD","tv_eurusd_"+t+"m",t);
+  crearWidget("INDEX:DXY","tv_dxy_"+t+"m",t);
+});
+
+// ================= CFD =================
+const canvas=document.getElementById("cfd-canvas");
+const ctx=canvas.getContext("2d");
+canvas.width=canvas.parentElement.clientWidth;
+canvas.height=canvas.parentElement.clientHeight;
+let price=100;
+let data=[];
+for(let i=0;i<40;i++) data.push(price+=Math.random()-0.5);
+
+function drawCFD(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let max=Math.max(...data), min=Math.min(...data);
+  data.forEach((v,i)=>{
+    let x=i*(canvas.width/data.length);
+    let y=(max-v)/(max-min)*canvas.height;
+    ctx.fillStyle="#22c55e";
+    ctx.fillRect(x,y,4,canvas.height-y);
+  });
+}
+setInterval(()=>{
+  data.push(price+=Math.random()-0.5);
+  if(data.length>40) data.shift();
+  drawCFD();
+},2000);
+drawCFD();
+
+// ================= IA CORE =================
+function logIA(msg){
+  const c=document.getElementById("ia-console");
+  c.innerText=`[${new Date().toLocaleTimeString()}] ${msg}\n`+c.innerText;
+}
+function emitirAlerta(msg){
+  const n=document.getElementById("news-panel");
+  n.innerHTML+=`<div class="alert">${msg}</div>`;
+}
+
+// Señal técnica multi-timeframe EUR/USD vs DXY
+setInterval(()=>{
+  const eur5=Math.random(), eur15=Math.random(), eur60=Math.random();
+  const dxy5=Math.random(), dxy15=Math.random(), dxy60=Math.random();
+
+  // Solo alerta si hay confluencia en varios TF
+  const eurSignal=(eur5>0.7 && eur15>0.7 && eur60>0.7)? "BUY":
+                  (eur5<0.3 && eur15<0.3 && eur60<0.3)? "SELL": "NONE";
+
+  const dxySignal=(dxy5>0.7 && dxy15>0.7 && dxy60>0.7)? "STRONG":
+                  (dxy5<0.3 && dxy15<0.3 && dxy60<0.3)? "WEAK": "NONE";
+
+  if(eurSignal==="BUY" && dxySignal==="WEAK"){
+    logIA("Confluencia multi-TF: EUR/USD BUY vs DXY débil");
+    emitirAlerta("🟢 BUY EUR/USD | Stop corto | TP 25–35 pips");
+  } else if(eurSignal==="SELL" && dxySignal==="STRONG"){
+    logIA("Confluencia multi-TF: EUR/USD SELL vs DXY fuerte");
+    emitirAlerta("🔴 SELL EUR/USD | Stop corto | TP 25–35 pips");
+  }
+},10000);
+
+// ================= NOTICIAS MANUALES =================
+function analizarNoticia(){
+  const text=document.getElementById("manualNews").value.toLowerCase();
+  if(!text) return;
+
+  logIA("Noticia introducida manualmente");
+
+  if(text.includes("inflación") || text.includes("ipc")){
+    emitirAlerta("⚠️ Noticia de alto impacto: posible ruptura de estructura");
+  }
+  if(text.includes("mejor") || text.includes("positivo")){
+    emitirAlerta("📈 Sesgo RISK-ON → favorece BUY EUR/USD");
+  }
+  if(text.includes("peor") || text.includes("negativo")){
+    emitirAlerta("📉 Sesgo USD fuerte → favorece SELL EUR/USD");
+  }
+
+  document.getElementById("manualNews").value="";
+}
+</script>
+</body>
+</html>
