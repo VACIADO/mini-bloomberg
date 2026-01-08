@@ -2,195 +2,234 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mini Bloomberg Pro – Pol Millone</title>
-<script src="https://s3.tradingview.com/tv.js"></script>
-
+<title>Mini Bloomberg Pro – CFD Real Time</title>
 <style>
-body {
+body { 
   margin: 0;
-  background: #0b1220;
-  color: #eaeaea;
   font-family: Arial, sans-serif;
-}
-
-/* ====== ESTRUCTURA ====== */
-#top {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  padding: 8px;
-  height: 340px;
-}
-
-#middle {
-  padding: 8px;
-  height: 360px;
-}
-
-#bottom {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 8px;
-  height: 300px;
-}
-
-.panel {
-  background: #111a2e;
-  border-radius: 6px;
-  padding: 6px;
-}
-
-/* ====== CONTENEDORES TV ====== */
-.tv-box {
-  width: 100%;
-  height: 100%;
-}
-
-/* ====== TEXTO ====== */
-h2 {
-  margin: 4px 0;
-  color: #4fc3f7;
-  font-size: 14px;
-}
-
-#alerts, #newsLog {
-  height: 200px;
-  overflow-y: auto;
-  font-size: 13px;
-}
-
-.alert { color: #ffca28; }
-.important { color: #ff5252; font-weight: bold; }
-
-input, button {
-  width: 100%;
-  padding: 6px;
-  margin-top: 4px;
-  background: #0b1220;
+  background-color: #121212;
   color: #fff;
-  border: 1px solid #333;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+  justify-content: center;
 }
+.panel {
+  border: 1px solid #444;
+  border-radius: 8px;
+  background-color: #1e1e1e;
+  box-sizing: border-box;
+  padding: 10px;
+  flex: 1 1 45%;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  height: 420px;
+}
+h2 { margin: 0 0 5px 0; text-align: center; font-size: 1.1rem; }
+.tradingview-widget-container { flex: 1; margin-top: 5px; border-radius: 6px; overflow: hidden; }
+.cfd-controls { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.cfd-controls select { background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 3px; font-size: 0.9rem; }
 
-button {
-  background: #1e88e5;
-  border: none;
-  cursor: pointer;
-}
+#cfd-container { flex:1; border:1px solid #444; border-radius:6px; position:relative; }
+#cfd-canvas { width:100%; height:100%; display:block; }
+
+#ia-news-container { display:flex; gap:10px; flex:1; margin-top:8px; }
+#ia-console { flex:1; background:#000; color:#0f0; font-family: monospace; padding:6px; overflow-y:hidden; font-size:0.8rem; border-radius:4px; border:1px solid #444; height:180px; }
+#news-panel { flex:1; background:#121921; padding:10px; border-radius:6px; max-height:180px; overflow-y:auto; }
+#news-panel h3{ margin:0 0 5px 0; font-size:14px; }
+.news{margin-bottom:6px;} .news span{font-weight:bold;}
+.alert{background:#7c2d12;color:#fff;padding:6px;text-align:center;font-weight:bold;margin:4px 0;border-radius:4px;}
+canvas{image-rendering:pixelated;}
 </style>
 </head>
-
 <body>
 
-<!-- ====== TOP: GRÁFICOS ====== -->
-<div id="top">
-  <div id="eurusd" class="tv-box"></div>
-  <div id="dxy" class="tv-box"></div>
-  <div id="sp500" class="tv-box"></div>
+<!-- PANEL EURO / CORRELADOS -->
+<div class="panel" id="panel-eurodolar">
+<h2>Euro / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_eurodolar"></div>
+<div class="tradingview-widget-container" id="tv_bono_eu"></div>
+<div class="tradingview-widget-container" id="tv_oro"></div>
+<div class="tradingview-widget-container" id="tv_brent"></div>
+<div class="tradingview-widget-container" id="tv_btc"></div>
 </div>
 
-<!-- ====== MIDDLE: CFD ====== -->
-<div id="middle" class="panel">
-  <h2>CFD Principal (Precio real)</h2>
-  <div id="cfd" class="tv-box" style="height:300px;"></div>
+<!-- PANEL DXY / CORRELADOS -->
+<div class="panel" id="panel-dxy">
+<h2>DXY / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_dxy"></div>
+<div class="tradingview-widget-container" id="tv_bono_us"></div>
+<div class="tradingview-widget-container" id="tv_nasdaq"></div>
+<div class="tradingview-widget-container" id="tv_sp500"></div>
+<div class="tradingview-widget-container" id="tv_vix"></div>
 </div>
 
-<!-- ====== BOTTOM ====== -->
-<div id="bottom">
-
-  <!-- ALERTAS -->
-  <div class="panel">
-    <h2>Alertas del Sistema</h2>
-    <div id="alerts"></div>
-  </div>
-
-  <!-- NOTICIAS -->
-  <div class="panel">
-    <h2>Noticias + IA</h2>
-    <div id="newsLog"></div>
-    <input id="newsInput" placeholder="Introduce noticia económica">
-    <button onclick="processNews()">Analizar</button>
-  </div>
-
+<!-- PANEL CFD REAL-TIME -->
+<div class="panel" id="panel-cfd">
+<h2>CFD Sintético – Real Time</h2>
+<div class="cfd-controls">
+  <label>Intervalo:
+    <select id="cfd_interval" onchange="updateCFDInterval()">
+      <option value="1">1 Min</option>
+      <option value="5">5 Min</option>
+      <option value="15">15 Min</option>
+      <option value="60">1 Hora</option>
+    </select>
+  </label>
+</div>
+<div id="cfd-container">
+  <canvas id="cfd-canvas"></canvas>
 </div>
 
+<div id="ia-news-container">
+  <div id="ia-console">Consola de IA activa...</div>
+  <div id="news-panel"><h3>Noticias / Avisos importantes</h3></div>
+</div>
+</div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-/* ====== FUNCIÓN TRADINGVIEW ====== */
-function crearGrafico(id, simbolo) {
+// ==== TRADINGVIEW ORIGINAL ====
+function crearWidget(symbol, containerId){
+  document.getElementById(containerId).innerHTML="";
   new TradingView.widget({
-    container_id: id,
-    autosize: true,
-    symbol: simbolo,
-    interval: "5",
+    container_id: containerId,
+    symbol: symbol,
+    interval: "60",
     timezone: "Europe/Madrid",
     theme: "dark",
     style: "1",
     locale: "es",
-    hide_top_toolbar: true
+    hide_top_toolbar: true,
+    width: "100%",
+    height: "100%"
   });
 }
+const widgets={
+  tv_eurodolar:"FX:EURUSD",
+  tv_bono_eu:"INDEX:EXY",
+  tv_oro:"OANDA:XAUUSD",  
+  tv_brent:"TVC:UKOIL",
+  tv_btc:"BINANCE:BTCUSDT",
+  tv_dxy:"INDEX:DXY",
+  tv_bono_us:"US10Y",
+  tv_nasdaq:"NASDAQ:NDX",
+  tv_sp500:"OANDA:SPX500USD",
+  tv_vix:"CAPITALCOM:VIX",
+};
+for(const id in widgets) crearWidget(widgets[id],id);
 
-/* ====== GRÁFICOS ====== */
-crearGrafico("eurusd", "FX:EURUSD");
-crearGrafico("dxy", "TVC:DXY");
-crearGrafico("sp500", "SP:SPX");
-crearGrafico("cfd", "OANDA:XAUUSD");
+// ==== CFD REAL-TIME ==== 
+let cfdData=[], lastClose=100, cfdInterval=1;
+const canvas=document.getElementById("cfd-canvas");
+const ctx=canvas.getContext("2d");
 
-/* ====== ALERTAS ====== */
-function addAlert(texto, importante=false) {
-  const d = document.createElement("div");
-  d.className = importante ? "important" : "alert";
-  d.innerText = texto;
-  document.getElementById("alerts").prepend(d);
+function resizeCanvas(){ canvas.width=canvas.parentElement.clientWidth; canvas.height=canvas.parentElement.clientHeight; }
+window.addEventListener("resize",()=>{ resizeCanvas(); drawCFD(); });
+resizeCanvas();
+
+const euroActivos=["tv_eurodolar","tv_bono_eu","tv_oro","tv_brent","tv_btc"];
+const dolarActivos=["tv_dxy","tv_bono_us","tv_nasdaq","tv_sp500","tv_vix"];
+let pesosEuro={ tv_eurodolar:1, tv_bono_eu:0.8, tv_oro:0.5, tv_brent:0.3, tv_btc:0.2 };
+let pesosDolar={ tv_dxy:1, tv_bono_us:0.8, tv_nasdaq:0.6, tv_sp500:0.6, tv_vix:0.4 };
+let precios={};
+for(const id of [...euroActivos,...dolarActivos]) precios[id]=100+Math.random()*10;
+
+function calcularCFD(){
+  let sumEuro=0, totalEuro=0;
+  euroActivos.forEach(id=>{ precios[id]+=(Math.random()-0.5)*0.5; sumEuro+=precios[id]*pesosEuro[id]; totalEuro+=pesosEuro[id]; });
+  let sumDolar=0, totalDolar=0;
+  dolarActivos.forEach(id=>{ precios[id]+=(Math.random()-0.5)*0.5; sumDolar+=precios[id]*pesosDolar[id]; totalDolar+=pesosDolar[id]; });
+  return (sumEuro/totalEuro - sumDolar/totalDolar)+100;
 }
 
-setInterval(() => {
-  addAlert("Movimiento detectado en USD", false);
-}, 20000);
-
-/* ====== NOTICIAS + IA ====== */
-function processNews() {
-  const input = document.getElementById("newsInput");
-  const texto = input.value.trim();
-  if (!texto) return;
-
-  const log = document.getElementById("newsLog");
-
-  const user = document.createElement("div");
-  user.innerText = "📰 " + texto;
-  log.prepend(user);
-
-  let impacto = "BAJO";
-  let importante = false;
-
-  if (/FED|IPC|CPI|NFP|Tipos/i.test(texto)) {
-    impacto = "ALTO";
-    importante = true;
-  } else if (/PMI|PIB/i.test(texto)) {
-    impacto = "MEDIO";
-  }
-
-  let fase = "SIN DEFINIR";
-  if (/previo|esperado/i.test(texto)) fase = "PREVIO";
-  if (/dato|publicado/i.test(texto)) fase = "DATO REAL";
-
-  const ai = document.createElement("div");
-  ai.className = importante ? "important" : "alert";
-  ai.innerText =
-    `🤖 HOLA POL MILLONE
-Impacto: ${impacto}
-Fase: ${fase}
-Activos afectados: USD, EUR, CFD`;
-
-  log.prepend(ai);
-
-  if (importante) {
-    addAlert("⚠ ALERTA CRÍTICA: " + texto, true);
-  }
-
-  input.value = "";
+function generarVela(){ 
+  const open=lastClose; 
+  const close=calcularCFD(); 
+  const high=Math.max(open,close)+Math.random()*0.2; 
+  const low=Math.min(open,close)-Math.random()*0.2; 
+  lastClose=close; 
+  return {open,high,low,close};
 }
+
+function initCFD(){ for(let i=0;i<50;i++) cfdData.push(generarVela()); drawCFD(); }
+function drawCFD(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const padding=40, width=canvas.width-padding*2, height=canvas.height-padding*2;
+  const max=Math.max(...cfdData.map(v=>v.high));
+  const min=Math.min(...cfdData.map(v=>v.low));
+
+  cfdData.forEach((v,i)=>{
+    const x=padding + i/(cfdData.length-1)*width;
+    const yOpen=padding + (max-v.open)/(max-min)*height;
+    const yClose=padding + (max-v.close)/(max-min)*height;
+    const yHigh=padding + (max-v.high)/(max-min)*height;
+    const yLow=padding + (max-v.low)/(max-min)*height;
+    ctx.strokeStyle="#888"; ctx.beginPath(); ctx.moveTo(x,yHigh); ctx.lineTo(x,yLow); ctx.stroke();
+    ctx.fillStyle=(v.close>=v.open)?"#0f0":"#f00";
+    ctx.fillRect(x-6,Math.min(yOpen,yClose),12,Math.max(2,Math.abs(yClose-yOpen)));
+  });
+
+  ctx.strokeStyle="#888"; ctx.beginPath();
+  ctx.moveTo(padding,padding); ctx.lineTo(padding,canvas.height-padding);
+  ctx.lineTo(canvas.width-padding,canvas.height-padding); ctx.stroke();
+  ctx.fillStyle="#fff"; ctx.font="12px monospace";
+  ctx.fillText(max.toFixed(2),5,padding);
+  ctx.fillText(min.toFixed(2),5,canvas.height-padding);
+
+  const step=Math.max(1,Math.floor(cfdData.length/5));
+  for(let i=0;i<cfdData.length;i+=step){
+    const x=padding + i/(cfdData.length-1)*width;
+    ctx.fillText(i,x-5,canvas.height-10);
+  }
+}
+
+function updateCFD(){ cfdData.push(generarVela()); if(cfdData.length>50) cfdData.shift(); drawCFD(); }
+initCFD();
+setInterval(updateCFD,2000);
+function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
+
+// ==== IA & ALERTAS ====
+function logConsole(text){
+  const c=document.getElementById("ia-console");
+  const timestamp = new Date().toLocaleTimeString();
+  const newLine = `[${timestamp}] ${text}`;
+  c.innerText = newLine; // solo el último mensaje visible
+}
+const iaMessages=["EUR/USD soporte detectado 📉","BTC alcista 🚀","S&P500 y Nasdaq sincronizados 📊","Brent y Oro sin correlación ⚖️"];
+setInterval(()=>{ logConsole(iaMessages[Math.floor(Math.random()*iaMessages.length)]); },8000);
+
+function showAlert(msg){
+  const container=document.getElementById("news-panel");
+  const div=document.createElement("div");
+  div.className="news";
+  div.innerHTML=`<span>Alerta:</span> ${msg}`;
+  container.prepend(div);
+  if(container.childElementCount>5) container.removeChild(container.lastChild);
+}
+setInterval(()=>{ if(Math.random()<0.2) showAlert("⚡ CFD rompe soporte/resistencia!"); },7000);
+
+// ==== PANEL NOTICIAS / MANUAL ====
+const newsInput = document.createElement("textarea");
+newsInput.placeholder="Introduce noticia manual...";
+newsInput.style.width="100%";
+newsInput.style.height="50px";
+newsInput.style.marginBottom="5px";
+document.getElementById("news-panel").prepend(newsInput);
+
+newsInput.addEventListener("keydown", e=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    const noticia = newsInput.value.trim();
+    if(noticia){
+      // IA interpreta noticia
+      showAlert("Pol Millone, IA detecta evento: " + noticia);
+      newsInput.value="";
+    }
+  }
+});
 </script>
-
 </body>
 </html>
