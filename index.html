@@ -42,7 +42,9 @@ h2 { margin: 0 0 5px 0; text-align: center; font-size: 1.1rem; }
 .news{margin-bottom:6px;} .news span{font-weight:bold;}
 .alert{background:#7c2d12;color:#fff;padding:6px;text-align:center;font-weight:bold;margin:4px 0;border-radius:4px;}
 canvas{image-rendering:pixelated;}
-input[type="text"]{width:100%;padding:4px;border-radius:4px;border:1px solid #555;background:#222;color:#fff;margin-top:4px;}
+#manual-news {margin-top:5px; display:flex; gap:5px;}
+#manual-news input {flex:1; padding:4px; border-radius:4px; border:1px solid #555; background:#333; color:#fff;}
+#manual-news button {padding:4px 8px; border-radius:4px; border:none; background:#0a84ff; color:#fff; cursor:pointer;}
 </style>
 </head>
 <body>
@@ -85,20 +87,20 @@ input[type="text"]{width:100%;padding:4px;border-radius:4px;border:1px solid #55
 </div>
 
 <div id="ia-news-container">
-  <div id="ia-console">Consola de IA activa...</div>
-  <div class="news-panel" id="news-panel"><h3>Noticias importantes</h3></div>
+  <div id="ia-console">Hola Polmillone! IA lista...</div>
+  <div class="news-panel" id="news-panel"><h3>Noticias Importantes</h3></div>
 </div>
 
-<input type="text" id="manual-news" placeholder="Introduce noticia manual..." onkeydown="if(event.key==='Enter'){addManualNews();}">
+<div id="manual-news">
+  <input type="text" id="manual-news-input" placeholder="Añadir noticia manual...">
+  <button onclick="addManualNews()">Añadir</button>
+</div>
 
 <div id="alertBox"></div>
 </div>
 
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-const ALPHA_KEY = 'A30F845C596CE7B0BDD9866A0C5A2EE4';
-const FRED_KEY = '72RR8SF3PVVBOT6A';
-
 // ==== TRADINGVIEW ORIGINAL ====
 function crearWidget(symbol, containerId){
   document.getElementById(containerId).innerHTML="";
@@ -138,11 +140,37 @@ function resizeCanvas(){ canvas.width=canvas.parentElement.clientWidth; canvas.h
 window.addEventListener("resize",()=>{ resizeCanvas(); drawCFD(); });
 resizeCanvas();
 
+const euroActivos=["tv_eurodolar","tv_bono_eu","tv_oro","tv_brent","tv_btc"];
+const dolarActivos=["tv_dxy","tv_bono_us","tv_nasdaq","tv_sp500","tv_vix"];
+let pesosEuro={ tv_eurodolar:1, tv_bono_eu:0.8, tv_oro:0.5, tv_brent:0.3, tv_btc:0.2 };
+let pesosDolar={ tv_dxy:1, tv_bono_us:0.8, tv_nasdaq:0.6, tv_sp500:0.6, tv_vix:0.4 };
+let precios={};
+for(const id of [...euroActivos,...dolarActivos]) precios[id]=100+Math.random()*10;
+
+function calcularCFD(){
+  let sumEuro=0, totalEuro=0;
+  euroActivos.forEach(id=>{ precios[id]+=(Math.random()-0.5)*0.5; sumEuro+=precios[id]*pesosEuro[id]; totalEuro+=pesosEuro[id]; });
+  let sumDolar=0, totalDolar=0;
+  dolarActivos.forEach(id=>{ precios[id]+=(Math.random()-0.5)*0.5; sumDolar+=precios[id]*pesosDolar[id]; totalDolar+=pesosDolar[id]; });
+  return (sumEuro/totalEuro - sumDolar/totalDolar)+100;
+}
+
+function generarVela(){ 
+  const open=lastClose; 
+  const close=calcularCFD(); 
+  const high=Math.max(open,close)+Math.random()*0.2; 
+  const low=Math.min(open,close)-Math.random()*0.2; 
+  lastClose=close; 
+  return {open,high,low,close};
+}
+
+function initCFD(){ for(let i=0;i<50;i++) cfdData.push(generarVela()); drawCFD(); }
 function drawCFD(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   const padding=40, width=canvas.width-padding*2, height=canvas.height-padding*2;
   const max=Math.max(...cfdData.map(v=>v.high));
   const min=Math.min(...cfdData.map(v=>v.low));
+
   cfdData.forEach((v,i)=>{
     const x=padding + i/(cfdData.length-1)*width;
     const yOpen=padding + (max-v.open)/(max-min)*height;
@@ -153,68 +181,106 @@ function drawCFD(){
     ctx.fillStyle=(v.close>=v.open)?"#0f0":"#f00";
     ctx.fillRect(x-6,Math.min(yOpen,yClose),12,Math.max(2,Math.abs(yClose-yOpen)));
   });
+
   ctx.strokeStyle="#888"; ctx.beginPath();
   ctx.moveTo(padding,padding); ctx.lineTo(padding,canvas.height-padding);
   ctx.lineTo(canvas.width-padding,canvas.height-padding); ctx.stroke();
   ctx.fillStyle="#fff"; ctx.font="12px monospace";
   ctx.fillText(max.toFixed(2),5,padding);
   ctx.fillText(min.toFixed(2),5,canvas.height-padding);
-}
-function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
 
-// ==== IA & NEWS ====
-function logConsole(text){
-  const c=document.getElementById("ia-console");
-  const timestamp = new Date().toLocaleTimeString();
-  c.innerText=`[${timestamp}] ${text}\n` + c.innerText; 
-}
-function processNews(msg){
-  logConsole(msg); 
-  const container=document.getElementById("news-panel");
-  const div=document.createElement("div");
-  div.className="news";
-  div.innerHTML=`<span>${new Date().toLocaleTimeString()}:</span> ${msg}`;
-  container.prepend(div);
-  if(container.childNodes.length>20) container.removeChild(container.lastChild);
-}
-function addManualNews(){
-  const val=document.getElementById("manual-news").value;
-  if(val){ processNews("Manual: "+val); document.getElementById("manual-news").value=""; }
-}
-
-// ==== DATOS REALES ====
-async function fetchAlpha(symbol="EURUSD", interval="5min") {
-  try{
-    const url=`https://www.alphavantage.co/query?function=FX_INTRADAY&from_symbol=EUR&to_symbol=USD&interval=${interval}&apikey=${ALPHA_KEY}`;
-    const res=await fetch(url); const data=await res.json();
-    return data["Time Series FX ("+interval+")"];
-  }catch(e){console.error("Alpha Error:",e); return {}; }
-}
-async function fetchFRED(series_id="DTWEXBGS", observation_start="2025-01-01"){
-  try{
-    const url=`https://api.stlouisfed.org/fred/series/observations?series_id=${series_id}&api_key=${FRED_KEY}&file_type=json&observation_start=${observation_start}`;
-    const res=await fetch(url); const data=await res.json();
-    return data.observations;
-  }catch(e){console.error("FRED Error:",e); return []; }
-}
-
-// ==== ACTUALIZACIÓN CFD REAL ====
-async function updateCFDReal(){
-  const eurData = await fetchAlpha("EURUSD","5min");
-  const dxyData = await fetchFRED("DTWEXBGS");
-  let lastEUR = Object.values(eurData||{})[0];
-  let lastDXY = parseFloat(dxyData[dxyData.length-1]?.value||0);
-  if(lastEUR && lastDXY){
-    let close=parseFloat(lastEUR["4. close"]);
-    lastClose=close;
-    cfdData.push({open:lastClose, high:lastClose+0.2, low:lastClose-0.2, close:lastClose});
-    if(cfdData.length>50) cfdData.shift();
-    drawCFD();
-    if(close>lastDXY) processNews("Señal COMPRA EUR/USD (5min)");
-    else processNews("Señal VENTA EUR/USD (5min)");
+  const step=Math.max(1,Math.floor(cfdData.length/5));
+  for(let i=0;i<cfdData.length;i+=step){
+    const x=padding + i/(cfdData.length-1)*width;
+    ctx.fillText(i,x-5,canvas.height-10);
   }
 }
-setInterval(updateCFDReal,20000);
+
+function updateCFD(){ 
+  cfdData.push(generarVela()); 
+  if(cfdData.length>50) cfdData.shift(); 
+  drawCFD(); 
+  checkSignals(); // Indicador integrado
+}
+initCFD();
+setInterval(updateCFD,2000);
+function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
+
+// ==== IA & ALERTAS ====
+const iaConsole=document.getElementById("ia-console");
+function logConsole(text){
+  const timestamp = new Date().toLocaleTimeString();
+  const newLine = `[${timestamp}] ${text}\n`;
+  iaConsole.innerText = newLine + iaConsole.innerText; // últimos arriba
+}
+
+// ==== PANEL DE NOTICIAS IMPORTANTES ====
+const newsPanel=document.getElementById("news-panel");
+function addNews(text){
+  const div=document.createElement("div");
+  div.className="news";
+  div.innerHTML=`<span>${new Date().toLocaleTimeString()}:</span> ${text}`;
+  newsPanel.appendChild(div);
+}
+
+// Manual news input
+function addManualNews(){
+  const input=document.getElementById("manual-news-input");
+  if(input.value.trim()==="") return;
+  const newsText=input.value.trim();
+  addNews("Manual: "+newsText);
+  analyzeManualNews(newsText);
+  input.value="";
+}
+
+// ==== LÓGICA DEL INDICADOR ====
+function checkSignals(){
+  const lastVela=cfdData[cfdData.length-1];
+  if(lastVela.close>lastVela.open+0.1){
+    logConsole("EUR/USD 📈 Compra detectada (Polmillone) en " + cfdInterval + "m");
+    addNews("Señal Compra EUR/USD en "+cfdInterval+"m");
+  } else if(lastVela.close<lastVela.open-0.1){
+    logConsole("EUR/USD 📉 Venta detectada (Polmillone) en " + cfdInterval + "m");
+    addNews("Señal Venta EUR/USD en "+cfdInterval+"m");
+  }
+}
+
+// ==== ANALISIS DE NOTICIAS MANUALES ====
+function analyzeManualNews(text){
+  // Aquí puedes poner tu lógica AI para interpretar noticia
+  if(text.toLowerCase().includes("subida")) logConsole("IA: Posible impulso alcista detectado (Polmillone)");
+  if(text.toLowerCase().includes("bajada")) logConsole("IA: Posible corrección bajista detectada (Polmillone)");
+}
+
+// ==== ALERTAS ====
+function showAlert(msg){
+  const box=document.getElementById("alertBox");
+  const div=document.createElement("div");
+  div.className="alert";
+  div.innerText=msg;
+  box.appendChild(div);
+  setTimeout(()=>div.remove(),7000);
+}
+
+// ==== SIMULACION DE MENSAJES DE IA ====
+const iaMessages=["BTC alcista 🚀","S&P500 y Nasdaq sincronizados 📊","Brent y Oro sin correlación ⚖️"];
+setInterval(()=>{ logConsole("Polmillone: "+iaMessages[Math.floor(Math.random()*iaMessages.length)]); },12000);
+setInterval(()=>{ if(Math.random()<0.2) showAlert("⚡ Alerta CFD rompe soporte/resistencia!"); },7000);
+
+// ==== NOTICIAS AUTOMÁTICAS (FRED / Alpha Vantage) ====
+async function fetchNewsRealtime(query="EUR/USD"){
+  try{
+    const url=`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=es&sortBy=publishedAt&apiKey=pub_b272af150959422caa98464f57f2f31b`;
+    const res=await fetch(url); 
+    const json=await res.json(); 
+    (json.articles||[]).slice(0,5).forEach(a=>{
+      addNews(a.title + " (" + a.source.name + ")");
+    });
+  }catch(e){console.error(e);}
+}
+fetchNewsRealtime();
+setInterval(fetchNewsRealtime,30000);
+
 </script>
 </body>
 </html>
