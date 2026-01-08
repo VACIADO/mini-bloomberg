@@ -2,212 +2,289 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mini Bloomberg PRO – EUR/USD Focus Multi-Timeframe</title>
-
+<title>Mini Bloomberg Pro – CFD Real Time</title>
 <style>
-body{
-  margin:0;
-  background:#0f1115;
-  color:#fff;
-  font-family:Arial, sans-serif;
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  padding:10px;
-  justify-content:center;
+body { 
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #121212;
+  color: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+  justify-content: center;
 }
-.panel{
-  background:#1a1d24;
-  border:1px solid #333;
-  border-radius:8px;
-  padding:8px;
-  flex:1 1 45%;
-  min-width:320px;
-  height:420px;
-  display:flex;
-  flex-direction:column;
+.panel {
+  border: 1px solid #444;
+  border-radius: 8px;
+  background-color: #1e1e1e;
+  box-sizing: border-box;
+  padding: 10px;
+  flex: 1 1 45%;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  height: 420px;
 }
-h2{font-size:15px;text-align:center;margin:0 0 5px;}
-.tradingview-widget-container{flex:1;border-radius:6px;overflow:hidden;}
-#cfd-canvas{width:100%;height:100%;}
-#ia-console{
-  background:#000;
-  color:#0f0;
-  font-family:monospace;
-  font-size:12px;
-  padding:6px;
-  border-radius:4px;
-  height:120px;
-  overflow-y:auto;
-}
-.news-panel{
-  background:#111826;
-  padding:6px;
-  border-radius:4px;
-  height:120px;
-  overflow-y:auto;
-  font-size:13px;
-}
-textarea{
-  width:100%;
-  height:60px;
-  background:#000;
-  color:#fff;
-  border:1px solid #444;
-  border-radius:4px;
-  padding:4px;
-}
-button{
-  background:#2563eb;
-  border:none;
-  color:#fff;
-  padding:6px;
-  border-radius:4px;
-  cursor:pointer;
-  margin-top:4px;
-}
-.alert{
-  background:#7c2d12;
-  padding:6px;
-  margin:4px 0;
-  border-radius:4px;
-  text-align:center;
-  font-weight:bold;
-}
+h2 { margin: 0 0 5px 0; text-align: center; font-size: 1.1rem; }
+.tradingview-widget-container { flex: 1; margin-top: 5px; border-radius: 6px; overflow: hidden; }
+.cfd-controls { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.cfd-controls select { background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 3px; font-size: 0.9rem; }
+
+#cfd-container { flex:1; border:1px solid #444; border-radius:6px; position:relative; }
+#cfd-canvas { width:100%; height:100%; display:block; }
+
+#ia-news-container { display:flex; gap:10px; flex:1; margin-top:8px; }
+#ia-console { flex:1; background:#000; color:#0f0; font-family: monospace; padding:6px; overflow-y:auto; font-size:0.8rem; border-radius:4px; border:1px solid #444; height:180px; } 
+.news-panel{ flex:1; background:#121921; padding:10px; border-radius:6px; max-height:180px; overflow-y:auto; }
+.news-panel h3{ margin:0 0 5px 0; font-size:14px; }
+.news{margin-bottom:6px;} .news span{font-weight:bold;}
+.alert{background:#7c2d12;color:#fff;padding:6px;text-align:center;font-weight:bold;margin:4px 0;border-radius:4px;}
+canvas{image-rendering:pixelated;}
+
+#manual-news { margin-top:6px; padding:4px; border-radius:4px; border:1px solid #555; background:#222; color:#fff; }
+#manual-news textarea{ width:100%; height:50px; background:#333; color:#fff; border:none; border-radius:4px; padding:4px; resize:none; }
+#manual-news button{ margin-top:4px; padding:4px 6px; background:#0f0; color:#000; border:none; border-radius:4px; cursor:pointer; }
 </style>
 </head>
-
 <body>
 
-<!-- EUR/USD -->
-<div class="panel">
-<h2>EUR/USD Multi-Timeframe</h2>
-<div class="tradingview-widget-container" id="tv_eurusd_5m"></div>
-<div class="tradingview-widget-container" id="tv_eurusd_15m"></div>
-<div class="tradingview-widget-container" id="tv_eurusd_1h"></div>
+<!-- PANEL EURO / CORRELADOS -->
+<div class="panel" id="panel-eurodolar">
+<h2>Euro / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_eurodolar"></div>
+<div class="tradingview-widget-container" id="tv_bono_eu"></div>
+<div class="tradingview-widget-container" id="tv_oro"></div>
+<div class="tradingview-widget-container" id="tv_brent"></div>
+<div class="tradingview-widget-container" id="tv_btc"></div>
 </div>
 
-<!-- DXY -->
-<div class="panel">
-<h2>DXY Multi-Timeframe</h2>
-<div class="tradingview-widget-container" id="tv_dxy_5m"></div>
-<div class="tradingview-widget-container" id="tv_dxy_15m"></div>
-<div class="tradingview-widget-container" id="tv_dxy_1h"></div>
+<!-- PANEL DXY / CORRELADOS -->
+<div class="panel" id="panel-dxy">
+<h2>DXY / Correlados</h2>
+<div class="tradingview-widget-container" id="tv_dxy"></div>
+<div class="tradingview-widget-container" id="tv_bono_us"></div>
+<div class="tradingview-widget-container" id="tv_nasdaq"></div>
+<div class="tradingview-widget-container" id="tv_sp500"></div>
+<div class="tradingview-widget-container" id="tv_vix"></div>
 </div>
 
-<!-- CFD -->
-<div class="panel">
-<h2>CFD Sintético (EUR vs USD)</h2>
-<canvas id="cfd-canvas"></canvas>
+<!-- PANEL CFD REAL-TIME -->
+<div class="panel" id="panel-cfd">
+<h2>CFD Sintético – Real Time</h2>
+<div class="cfd-controls">
+  <label>Intervalo:
+    <select id="cfd_interval" onchange="updateCFDInterval()">
+      <option value="1">1 Min</option>
+      <option value="5">5 Min</option>
+      <option value="15">15 Min</option>
+      <option value="60">1 Hora</option>
+    </select>
+  </label>
+</div>
+<div id="cfd-container">
+  <canvas id="cfd-canvas"></canvas>
 </div>
 
-<!-- IA + Noticias -->
-<div class="panel">
-<h2>IA · Señales · Noticias</h2>
-<div id="ia-console">IA inicializada…</div>
-<div class="news-panel" id="news-panel"><b>Conclusiones IA</b><br></div>
-<textarea id="manualNews" placeholder="Pega aquí la noticia (antes / durante / después del dato)…"></textarea>
-<button onclick="analizarNoticia()">Analizar Noticia</button>
+<div id="ia-news-container">
+  <div id="ia-console">Consola de IA activa...</div>
+  <div class="news-panel" id="news-panel"><h3>Noticias</h3></div>
+</div>
+
+<div id="manual-news">
+<h4>Agregar noticia manual:</h4>
+<textarea id="manual-news-input" placeholder="Escribe la noticia aquí..."></textarea>
+<button onclick="addManualNews()">Añadir y analizar</button>
+</div>
+
+<div id="alertBox"></div>
 </div>
 
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-// ================= TRADINGVIEW MULTI-TIMEFRAME =================
-function crearWidget(symbol, container, intervalo){
+// ==== TRADINGVIEW ORIGINAL ====
+function crearWidget(symbol, containerId){
+  document.getElementById(containerId).innerHTML="";
   new TradingView.widget({
-    container_id: container,
+    container_id: containerId,
     symbol: symbol,
-    interval: intervalo,
-    theme:"dark",
-    locale:"es",
-    hide_top_toolbar:true,
-    width:"100%",
-    height:"100%"
+    interval: "60",
+    timezone: "Europe/Madrid",
+    theme: "dark",
+    style: "1",
+    locale: "es",
+    hide_top_toolbar: true,
+    width: "100%",
+    height: "100%"
   });
 }
+const widgets={
+  tv_eurodolar:"FX:EURUSD",
+  tv_bono_eu:"INDEX:EXY",
+  tv_oro:"OANDA:XAUUSD",  
+  tv_brent:"TVC:UKOIL",
+  tv_btc:"BINANCE:BTCUSDT",
+  tv_dxy:"INDEX:DXY",
+  tv_bono_us:"US10Y",
+  tv_nasdaq:"NASDAQ:NDX",
+  tv_sp500:"OANDA:SPX500USD",
+  tv_vix:"CAPITALCOM:VIX",
+};
+for(const id in widgets) crearWidget(widgets[id],id);
 
-const tf=["5","15","60"];
-tf.forEach(t=>{
-  crearWidget("FX:EURUSD","tv_eurusd_"+t+"m",t);
-  crearWidget("INDEX:DXY","tv_dxy_"+t+"m",t);
-});
-
-// ================= CFD =================
+// ==== CFD REAL-TIME ==== 
+let cfdData=[], lastClose=100, cfdInterval=1;
 const canvas=document.getElementById("cfd-canvas");
 const ctx=canvas.getContext("2d");
-canvas.width=canvas.parentElement.clientWidth;
-canvas.height=canvas.parentElement.clientHeight;
-let price=100;
-let data=[];
-for(let i=0;i<40;i++) data.push(price+=Math.random()-0.5);
 
+function resizeCanvas(){ canvas.width=canvas.parentElement.clientWidth; canvas.height=canvas.parentElement.clientHeight; }
+window.addEventListener("resize",()=>{ resizeCanvas(); drawCFD(); });
+resizeCanvas();
+
+const euroActivos=["tv_eurodolar","tv_bono_eu","tv_oro","tv_brent","tv_btc"];
+const dolarActivos=["tv_dxy","tv_bono_us","tv_nasdaq","tv_sp500","tv_vix"];
+let pesosEuro={ tv_eurodolar:1, tv_bono_eu:0.8, tv_oro:0.5, tv_brent:0.3, tv_btc:0.2 };
+let pesosDolar={ tv_dxy:1, tv_bono_us:0.8, tv_nasdaq:0.6, tv_sp500:0.6, tv_vix:0.4 };
+let precios={};
+for(const id of [...euroActivos,...dolarActivos]) precios[id]=100+Math.random()*10;
+
+// ==== CFD GENERADOR ====
+function calcularCFD(){
+  let sumEuro=0, totalEuro=0;
+  euroActivos.forEach(id=>{ precios[id]+=(Math.random()-0.5)*0.5; sumEuro+=precios[id]*pesosEuro[id]; totalEuro+=pesosEuro[id]; });
+  let sumDolar=0, totalDolar=0;
+  dolarActivos.forEach(id=>{ precios[id]+=(Math.random()-0.5)*0.5; sumDolar+=precios[id]*pesosDolar[id]; totalDolar+=pesosDolar[id]; });
+  return (sumEuro/totalEuro - sumDolar/totalDolar)+100;
+}
+
+function generarVela(){ 
+  const open=lastClose; 
+  const close=calcularCFD(); 
+  const high=Math.max(open,close)+Math.random()*0.2; 
+  const low=Math.min(open,close)-Math.random()*0.2; 
+  lastClose=close; 
+  return {open,high,low,close};
+}
+
+function initCFD(){ for(let i=0;i<50;i++) cfdData.push(generarVela()); drawCFD(); }
 function drawCFD(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  let max=Math.max(...data), min=Math.min(...data);
-  data.forEach((v,i)=>{
-    let x=i*(canvas.width/data.length);
-    let y=(max-v)/(max-min)*canvas.height;
-    ctx.fillStyle="#22c55e";
-    ctx.fillRect(x,y,4,canvas.height-y);
+  const padding=40, width=canvas.width-padding*2, height=canvas.height-padding*2;
+  const max=Math.max(...cfdData.map(v=>v.high));
+  const min=Math.min(...cfdData.map(v=>v.low));
+
+  cfdData.forEach((v,i)=>{
+    const x=padding + i/(cfdData.length-1)*width;
+    const yOpen=padding + (max-v.open)/(max-min)*height;
+    const yClose=padding + (max-v.close)/(max-min)*height;
+    const yHigh=padding + (max-v.high)/(max-min)*height;
+    const yLow=padding + (max-v.low)/(max-min)*height;
+    ctx.strokeStyle="#888"; ctx.beginPath(); ctx.moveTo(x,yHigh); ctx.lineTo(x,yLow); ctx.stroke();
+    ctx.fillStyle=(v.close>=v.open)?"#0f0":"#f00";
+    ctx.fillRect(x-6,Math.min(yOpen,yClose),12,Math.max(2,Math.abs(yClose-yOpen)));
+  });
+
+  ctx.strokeStyle="#888"; ctx.beginPath();
+  ctx.moveTo(padding,padding); ctx.lineTo(padding,canvas.height-padding);
+  ctx.lineTo(canvas.width-padding,canvas.height-padding); ctx.stroke();
+  ctx.fillStyle="#fff"; ctx.font="12px monospace";
+  ctx.fillText(max.toFixed(2),5,padding);
+  ctx.fillText(min.toFixed(2),5,canvas.height-padding);
+
+  const step=Math.max(1,Math.floor(cfdData.length/5));
+  for(let i=0;i<cfdData.length;i+=step){
+    const x=padding + i/(cfdData.length-1)*width;
+    ctx.fillText(i,x-5,canvas.height-10);
+  }
+}
+
+function updateCFD(){ cfdData.push(generarVela()); if(cfdData.length>50) cfdData.shift(); drawCFD(); analyzeSignals(); }
+initCFD();
+setInterval(updateCFD,2000);
+function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
+
+// ==== IA & ALERTAS CON NOTICIAS ====
+const iaConsole=document.getElementById("ia-console");
+let manualNews="";
+
+function logConsole(text){
+  const timestamp = new Date().toLocaleTimeString();
+  const newLine = `[${timestamp}] ${text}\n`;
+  iaConsole.innerText = newLine + iaConsole.innerText;
+}
+
+function showAlert(msg){
+  const box=document.getElementById("alertBox");
+  const div=document.createElement("div");
+  div.className="alert";
+  div.innerText=msg;
+  box.appendChild(div);
+  setTimeout(()=>div.remove(),7000);
+}
+
+// ==== AÑADIR NOTICIA MANUAL ====
+function addManualNews(){
+  manualNews=document.getElementById("manual-news-input").value;
+  if(manualNews.trim()!==""){
+    logConsole("Noticia manual agregada: " + manualNews);
+    analyzeSignals();
+    document.getElementById("manual-news-input").value="";
+  }
+}
+
+// ==== SEÑALES PRO ====
+function analyzeSignals(){
+  // Indicador simple de ejemplo: compara últimos cierres
+  const last = cfdData[cfdData.length-1].close;
+  const prev = cfdData[cfdData.length-2]?.close || last;
+  let signal="Neutra";
+
+  // Correlaciones simples: si EUR/USD sube y DXY baja => compra fuerte
+  const eurClose = precios["tv_eurodolar"];
+  const dxyClose = precios["tv_dxy"];
+
+  if(eurClose>prev && dxyClose<prev){
+    signal="Fuerte Compra";
+  }else if(eurClose<prev && dxyClose>prev){
+    signal="Fuerte Venta";
+  }else if(eurClose>prev){
+    signal="Compra";
+  }else if(eurClose<prev){
+    signal="Venta";
+  }
+
+  // Ajuste por noticia manual
+  if(manualNews.toLowerCase().includes("sube") && signal.includes("Venta")) signal="Neutral por noticia";
+  if(manualNews.toLowerCase().includes("baja") && signal.includes("Compra")) signal="Neutral por noticia";
+
+  logConsole("Señal CFD: " + signal);
+  if(signal==="Fuerte Compra" || signal==="Fuerte Venta") showAlert("⚡ " + signal + " detectada!");
+}
+
+// ==== NOTICIAS AUTOMÁTICAS ====
+async function fetchNewsRealtime(query="EUR/USD"){
+  try{
+    const url=`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=es&sortBy=publishedAt&apiKey=pub_b272af150959422caa98464f57f2f31b`;
+    const res=await fetch(url); const json=await res.json(); return json.articles||[];
+  }catch(e){console.error(e); return [];}
+}
+function displayNews(articles){
+  const container=document.getElementById("news-panel");
+  container.innerHTML=`<h3>Noticias</h3>`;
+  articles.forEach(a=>{
+    const div=document.createElement("div"); div.className="news";
+    div.innerHTML=`<span>${new Date(a.publishedAt).toLocaleTimeString()}:</span> ${a.title}<br><small>${a.source.name}</small>`;
+    container.appendChild(div);
   });
 }
-setInterval(()=>{
-  data.push(price+=Math.random()-0.5);
-  if(data.length>40) data.shift();
-  drawCFD();
-},2000);
-drawCFD();
-
-// ================= IA CORE =================
-function logIA(msg){
-  const c=document.getElementById("ia-console");
-  c.innerText=`[${new Date().toLocaleTimeString()}] ${msg}\n`+c.innerText;
+async function updateNewsPanels(){
+  const news=await fetchNewsRealtime("EUR/USD");
+  displayNews(news.slice(0,10));
 }
-function emitirAlerta(msg){
-  const n=document.getElementById("news-panel");
-  n.innerHTML+=`<div class="alert">${msg}</div>`;
-}
+updateNewsPanels();
+setInterval(updateNewsPanels,30000);
 
-// Señal técnica multi-timeframe EUR/USD vs DXY
-setInterval(()=>{
-  const eur5=Math.random(), eur15=Math.random(), eur60=Math.random();
-  const dxy5=Math.random(), dxy15=Math.random(), dxy60=Math.random();
-
-  // Solo alerta si hay confluencia en varios TF
-  const eurSignal=(eur5>0.7 && eur15>0.7 && eur60>0.7)? "BUY":
-                  (eur5<0.3 && eur15<0.3 && eur60<0.3)? "SELL": "NONE";
-
-  const dxySignal=(dxy5>0.7 && dxy15>0.7 && dxy60>0.7)? "STRONG":
-                  (dxy5<0.3 && dxy15<0.3 && dxy60<0.3)? "WEAK": "NONE";
-
-  if(eurSignal==="BUY" && dxySignal==="WEAK"){
-    logIA("Confluencia multi-TF: EUR/USD BUY vs DXY débil");
-    emitirAlerta("🟢 BUY EUR/USD | Stop corto | TP 25–35 pips");
-  } else if(eurSignal==="SELL" && dxySignal==="STRONG"){
-    logIA("Confluencia multi-TF: EUR/USD SELL vs DXY fuerte");
-    emitirAlerta("🔴 SELL EUR/USD | Stop corto | TP 25–35 pips");
-  }
-},10000);
-
-// ================= NOTICIAS MANUALES =================
-function analizarNoticia(){
-  const text=document.getElementById("manualNews").value.toLowerCase();
-  if(!text) return;
-
-  logIA("Noticia introducida manualmente");
-
-  if(text.includes("inflación") || text.includes("ipc")){
-    emitirAlerta("⚠️ Noticia de alto impacto: posible ruptura de estructura");
-  }
-  if(text.includes("mejor") || text.includes("positivo")){
-    emitirAlerta("📈 Sesgo RISK-ON → favorece BUY EUR/USD");
-  }
-  if(text.includes("peor") || text.includes("negativo")){
-    emitirAlerta("📉 Sesgo USD fuerte → favorece SELL EUR/USD");
-  }
-
-  document.getElementById("manualNews").value="";
-}
 </script>
 </body>
 </html>
