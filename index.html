@@ -1,36 +1,4 @@
-[13:00, 8/1/2026] Klp: <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Mini Bloomberg Pro – CFD Real Time</title>
-<style>
-body { 
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #121212;
-  color: #fff;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px;
-  justify-content: center;
-}
-.panel {
-  border: 1px solid #444;
-  border-radius: 8px;
-  background-color: #1e1e1e;
-  box-sizing: border-box;
-  padding: 10px;
-  flex: 1 1 45%;
-  min-width: 300px;
-  display: flex;
-  flex-direction: column;
-  height: 420px;
-}
-h2 { margin: 0 0 5px 0; text-align: center; font-size: 1.1rem; }
-.tradingview-widget-container { flex: 1; margin-top: 5px; border-radius: 6px; overflow: hidden; }
-.cfd-controls { display: flex; justify-content: space-between;…
-[13:10, 8/1/2026] Klp: <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -62,7 +30,7 @@ body {
 h2 { margin: 0 0 5px 0; text-align: center; font-size: 1.1rem; }
 .tradingview-widget-container { flex: 1; margin-top: 5px; border-radius: 6px; overflow: hidden; }
 .cfd-controls { display: flex; justify-content: space-between; margin-bottom: 5px; }
-.cfd-controls select, .cfd-controls input, .cfd-controls button { background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 3px; font-size: 0.9rem; }
+.cfd-controls select { background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 3px; font-size: 0.9rem; }
 
 #cfd-container { flex:1; border:1px solid #444; border-radius:6px; position:relative; }
 #cfd-canvas { width:100%; height:100%; display:block; }
@@ -74,6 +42,8 @@ h2 { margin: 0 0 5px 0; text-align: center; font-size: 1.1rem; }
 .news{margin-bottom:6px;} .news span{font-weight:bold;}
 .alert{background:#7c2d12;color:#fff;padding:6px;text-align:center;font-weight:bold;margin:4px 0;border-radius:4px;}
 canvas{image-rendering:pixelated;}
+textarea { width:100%; height:50px; border-radius:4px; background:#222; color:#fff; border:1px solid #555; padding:4px; margin-top:4px; }
+button { background:#0f0; color:#000; border:none; border-radius:4px; padding:4px 6px; margin-top:2px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -116,8 +86,12 @@ canvas{image-rendering:pixelated;}
 </div>
 
 <div id="ia-news-container">
-  <div id="ia-console">Consola de IA activa...</div>
-  <div class="news-panel" id="news-panel"><h3>Noticias importantes</h3></div>
+  <div id="ia-console">Hola Polmillone! Consola IA activa...</div>
+  <div class="news-panel" id="news-panel">
+    <h3>Noticias Importantes</h3>
+    <textarea id="manual-news" placeholder="Introduce noticia manual..."></textarea>
+    <button onclick="analizarNoticia()">Analizar Noticia</button>
+  </div>
 </div>
 
 <div id="alertBox"></div>
@@ -159,6 +133,7 @@ for(const id in widgets) crearWidget(widgets[id],id);
 let cfdData=[], lastClose=100, cfdInterval=1;
 const canvas=document.getElementById("cfd-canvas");
 const ctx=canvas.getContext("2d");
+
 function resizeCanvas(){ canvas.width=canvas.parentElement.clientWidth; canvas.height=canvas.parentElement.clientHeight; }
 window.addEventListener("resize",()=>{ resizeCanvas(); drawCFD(); });
 resizeCanvas();
@@ -193,6 +168,7 @@ function drawCFD(){
   const padding=40, width=canvas.width-padding*2, height=canvas.height-padding*2;
   const max=Math.max(...cfdData.map(v=>v.high));
   const min=Math.min(...cfdData.map(v=>v.low));
+
   cfdData.forEach((v,i)=>{
     const x=padding + i/(cfdData.length-1)*width;
     const yOpen=padding + (max-v.open)/(max-min)*height;
@@ -203,77 +179,74 @@ function drawCFD(){
     ctx.fillStyle=(v.close>=v.open)?"#0f0":"#f00";
     ctx.fillRect(x-6,Math.min(yOpen,yClose),12,Math.max(2,Math.abs(yClose-yOpen)));
   });
+
   ctx.strokeStyle="#888"; ctx.beginPath();
   ctx.moveTo(padding,padding); ctx.lineTo(padding,canvas.height-padding);
   ctx.lineTo(canvas.width-padding,canvas.height-padding); ctx.stroke();
   ctx.fillStyle="#fff"; ctx.font="12px monospace";
   ctx.fillText(max.toFixed(2),5,padding);
   ctx.fillText(min.toFixed(2),5,canvas.height-padding);
+
   const step=Math.max(1,Math.floor(cfdData.length/5));
   for(let i=0;i<cfdData.length;i+=step){
     const x=padding + i/(cfdData.length-1)*width;
     ctx.fillText(i,x-5,canvas.height-10);
   }
 }
-function updateCFD(){ cfdData.push(generarVela()); if(cfdData.length>50) cfdData.shift(); drawCFD(); }
+
+function updateCFD(){ 
+  cfdData.push(generarVela()); 
+  if(cfdData.length>50) cfdData.shift(); 
+  drawCFD(); 
+}
 initCFD();
 setInterval(updateCFD,2000);
 function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
 
 // ==== IA & ALERTAS ====
-const iaConsole=document.getElementById("ia-console");
 function logConsole(text){
+  const c=document.getElementById("ia-console");
   const timestamp = new Date().toLocaleTimeString();
-  const newLine = [${timestamp}] ${text};
-  iaConsole.innerText = newLine; // siempre último mensaje arriba
+  const newLine = [${timestamp}] ${text}\n;
+  c.innerText = newLine + c.innerText;
 }
 const iaMessages=[
-  "Hola Polmillone! 📊 EUR/USD muestra oportunidad",
+  "EUR/USD soporte detectado 📉",
   "BTC alcista 🚀",
-  "S&P500 y Nasdaq sincronizados 📈",
-  "Brent y Oro en correlación ⚖️"
+  "S&P500 y Nasdaq sincronizados 📊",
+  "Brent y Oro sin correlación ⚖️"
 ];
-setInterval(()=>{ logConsole(iaMessages[Math.floor(Math.random()*iaMessages.length)]); },8000);
+setInterval(()=>{ 
+  logConsole(iaMessages[Math.floor(Math.random()*iaMessages.length)]); 
+},8000);
 
-const newsPanel=document.getElementById("news-panel");
-function showImportantAlert(msg){
+function showAlert(msg){
+  const box=document.getElementById("alertBox");
+  const div=document.createElement("div");
+  div.className="alert";
+  div.innerText=msg;
+  box.appendChild(div);
+  setTimeout(()=>div.remove(),7000);
+}
+setInterval(()=>{ if(Math.random()<0.2) showAlert("⚡ Alerta CFD rompe soporte/resistencia!"); },7000);
+
+// ==== NOTICIAS MANUALES & IA ====
+function analizarNoticia(){
+  const text = document.getElementById("manual-news").value;
+  if(!text) return;
+  const panel=document.getElementById("news-panel");
   const div=document.createElement("div");
   div.className="news";
-  div.innerHTML=<span>⚡ ${new Date().toLocaleTimeString()}:</span> ${msg};
-  newsPanel.appendChild(div);
-  newsPanel.scrollTop = newsPanel.scrollHeight; // se ve el último
+  // Simulación de análisis IA: detecta palabras clave
+  let aviso = "";
+  if(/compra/i.test(text)) aviso = "⚡ Polmillone: Señal de COMPRA detectada";
+  else if(/venta/i.test(text)) aviso = "⚡ Polmillone: Señal de VENTA detectada";
+  else aviso = "ℹ Polmillone: IA analiza noticia";
+  div.innerHTML = <span>${new Date().toLocaleTimeString()}:</span> ${aviso} <br> "${text}";
+  panel.appendChild(div);
+  document.getElementById("manual-news").value="";
+  panel.scrollTop = panel.scrollHeight;
 }
-
-// ==== NOTICIAS MANUALES ====
-const manualInput=document.createElement("input");
-manualInput.placeholder="Introduce noticia aquí...";
-manualInput.style.flex="1";
-manualInput.style.marginRight="5px";
-const manualBtn=document.createElement("button");
-manualBtn.innerText="Enviar";
-manualBtn.onclick=()=>{
-  const text=manualInput.value.trim();
-  if(text!==""){
-    showImportantAlert(IA analiza: "${text}" y detecta posible impacto en EUR/USD);
-    manualInput.value="";
-  }
-};
-const newsContainer=document.getElementById("news-panel");
-const controlsDiv=document.createElement("div");
-controlsDiv.style.display="flex"; controlsDiv.style.marginBottom="5px";
-controlsDiv.appendChild(manualInput);
-controlsDiv.appendChild(manualBtn);
-newsContainer.insertBefore(controlsDiv, newsContainer.firstChild);
-
-// ==== INDICADOR SIMPLIFICADO (ejemplo) ====
-function checkSignals(){
-  const lastVela=cfdData[cfdData.length-1];
-  if(!lastVela) return;
-  if(lastVela.close>lastVela.open) showImportantAlert("Señal COMPRA EUR/USD en temporalidad actual 📈");
-  else showImportantAlert("Señal VENTA EUR/USD en temporalidad actual 📉");
-}
-setInterval(checkSignals,5000);
-
 </script>
 </body>
 </html>
