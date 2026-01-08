@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mini Bloomberg Pro - Pol Millone</title>
+<title>Mini Bloomberg Pro – Pol Millone</title>
 <script src="https://s3.tradingview.com/tv.js"></script>
+
 <style>
 body {
   margin: 0;
@@ -11,38 +12,57 @@ body {
   color: #eaeaea;
   font-family: Arial, sans-serif;
 }
-h2 {
-  margin: 6px 0;
-  color: #4fc3f7;
-}
-#top, #middle, #bottom {
-  padding: 8px;
-}
+
+/* ====== ESTRUCTURA ====== */
 #top {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
+  padding: 8px;
+  height: 340px;
 }
+
 #middle {
-  height: 320px;
+  padding: 8px;
+  height: 360px;
 }
+
 #bottom {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  height: 260px;
+  padding: 8px;
+  height: 300px;
 }
+
 .panel {
   background: #111a2e;
   border-radius: 6px;
   padding: 6px;
-  overflow: hidden;
 }
+
+/* ====== CONTENEDORES TV ====== */
+.tv-box {
+  width: 100%;
+  height: 100%;
+}
+
+/* ====== TEXTO ====== */
+h2 {
+  margin: 4px 0;
+  color: #4fc3f7;
+  font-size: 14px;
+}
+
 #alerts, #newsLog {
-  height: 190px;
+  height: 200px;
   overflow-y: auto;
   font-size: 13px;
 }
+
+.alert { color: #ffca28; }
+.important { color: #ff5252; font-weight: bold; }
+
 input, button {
   width: 100%;
   padding: 6px;
@@ -51,122 +71,121 @@ input, button {
   color: #fff;
   border: 1px solid #333;
 }
+
 button {
-  cursor: pointer;
   background: #1e88e5;
   border: none;
-}
-.alert {
-  color: #ffca28;
-}
-.important {
-  color: #ff5252;
-  font-weight: bold;
+  cursor: pointer;
 }
 </style>
 </head>
 
 <body>
 
-<!-- ================= TOP: GRÁFICOS ================= -->
+<!-- ====== TOP: GRÁFICOS ====== -->
 <div id="top">
-  <div id="eurusd"></div>
-  <div id="dxy"></div>
-  <div id="sp500"></div>
+  <div id="eurusd" class="tv-box"></div>
+  <div id="dxy" class="tv-box"></div>
+  <div id="sp500" class="tv-box"></div>
 </div>
 
-<!-- ================= MIDDLE: CFD ================= -->
+<!-- ====== MIDDLE: CFD ====== -->
 <div id="middle" class="panel">
   <h2>CFD Principal (Precio real)</h2>
-  <div id="cfd"></div>
+  <div id="cfd" class="tv-box" style="height:300px;"></div>
 </div>
 
-<!-- ================= BOTTOM ================= -->
+<!-- ====== BOTTOM ====== -->
 <div id="bottom">
 
   <!-- ALERTAS -->
   <div class="panel">
-    <h2>Alertas Automáticas</h2>
+    <h2>Alertas del Sistema</h2>
     <div id="alerts"></div>
   </div>
 
-  <!-- NOTICIAS + IA -->
+  <!-- NOTICIAS -->
   <div class="panel">
-    <h2>Noticias / IA</h2>
+    <h2>Noticias + IA</h2>
     <div id="newsLog"></div>
-    <input id="newsInput" placeholder="Introduce noticia económica...">
-    <button onclick="processNews()">Analizar Noticia</button>
+    <input id="newsInput" placeholder="Introduce noticia económica">
+    <button onclick="processNews()">Analizar</button>
   </div>
 
 </div>
 
 <script>
-/* ================== TRADINGVIEW ================== */
-function tv(id, symbol) {
+/* ====== FUNCIÓN TRADINGVIEW ====== */
+function crearGrafico(id, simbolo) {
   new TradingView.widget({
+    container_id: id,
     autosize: true,
-    symbol: symbol,
+    symbol: simbolo,
     interval: "5",
     timezone: "Europe/Madrid",
     theme: "dark",
     style: "1",
     locale: "es",
-    container_id: id
+    hide_top_toolbar: true
   });
 }
 
-tv("eurusd", "FX:EURUSD");
-tv("dxy", "TVC:DXY");
-tv("sp500", "SP:SPX");
-tv("cfd", "OANDA:XAUUSD"); // CFD con precio y escala
+/* ====== GRÁFICOS ====== */
+crearGrafico("eurusd", "FX:EURUSD");
+crearGrafico("dxy", "TVC:DXY");
+crearGrafico("sp500", "SP:SPX");
+crearGrafico("cfd", "OANDA:XAUUSD");
 
-/* ================== ALERTAS SIMPLES ================== */
-function addAlert(text, important=false) {
-  const div = document.createElement("div");
-  div.className = important ? "important" : "alert";
-  div.innerText = text;
-  document.getElementById("alerts").prepend(div);
+/* ====== ALERTAS ====== */
+function addAlert(texto, importante=false) {
+  const d = document.createElement("div");
+  d.className = importante ? "important" : "alert";
+  d.innerText = texto;
+  document.getElementById("alerts").prepend(d);
 }
 
 setInterval(() => {
-  addAlert("Volatilidad detectada en USD", false);
-}, 15000);
+  addAlert("Movimiento detectado en USD", false);
+}, 20000);
 
-/* ================== IA NOTICIAS ================== */
+/* ====== NOTICIAS + IA ====== */
 function processNews() {
   const input = document.getElementById("newsInput");
-  const text = input.value.trim();
-  if (!text) return;
+  const texto = input.value.trim();
+  if (!texto) return;
 
   const log = document.getElementById("newsLog");
 
-  const userMsg = document.createElement("div");
-  userMsg.innerText = "📰 Noticia: " + text;
-  log.prepend(userMsg);
+  const user = document.createElement("div");
+  user.innerText = "📰 " + texto;
+  log.prepend(user);
 
-  let impact = "bajo";
-  let important = false;
+  let impacto = "BAJO";
+  let importante = false;
 
-  if (/CPI|IPC|FED|NFP|Tipos|Inflación/i.test(text)) {
-    impact = "ALTO";
-    important = true;
-  } else if (/PMI|PIB|Confianza/i.test(text)) {
-    impact = "MEDIO";
+  if (/FED|IPC|CPI|NFP|Tipos/i.test(texto)) {
+    impacto = "ALTO";
+    importante = true;
+  } else if (/PMI|PIB/i.test(texto)) {
+    impacto = "MEDIO";
   }
 
-  let timing = "indeterminado";
-  if (/previo|esperado/i.test(text)) timing = "PREVIO";
-  if (/dato|publicado/i.test(text)) timing = "DATO REAL";
+  let fase = "SIN DEFINIR";
+  if (/previo|esperado/i.test(texto)) fase = "PREVIO";
+  if (/dato|publicado/i.test(texto)) fase = "DATO REAL";
 
-  const aiMsg = document.createElement("div");
-  aiMsg.innerText =
-    `🤖 HOLA POL MILLONE\nImpacto: ${impact}\nFase: ${timing}\nRelación probable: USD, índices y CFD`;
-  aiMsg.className = important ? "important" : "alert";
+  const ai = document.createElement("div");
+  ai.className = importante ? "important" : "alert";
+  ai.innerText =
+    `🤖 HOLA POL MILLONE
+Impacto: ${impacto}
+Fase: ${fase}
+Activos afectados: USD, EUR, CFD`;
 
-  log.prepend(aiMsg);
+  log.prepend(ai);
 
-  if (important) {
-    addAlert("ALERTA CRÍTICA: " + text, true);
+  if (importante) {
+    addAlert("⚠ ALERTA CRÍTICA: " + texto, true);
   }
 
   input.value = "";
