@@ -42,9 +42,9 @@ h2 { margin: 0 0 5px 0; text-align: center; font-size: 1.1rem; }
 .news{margin-bottom:6px;} .news span{font-weight:bold;}
 .alert{background:#7c2d12;color:#fff;padding:6px;text-align:center;font-weight:bold;margin:4px 0;border-radius:4px;}
 canvas{image-rendering:pixelated;}
-#manual-news { margin-top:5px; display:flex; gap:5px; }
-#manual-news input { flex:1; padding:4px; border-radius:4px; border:1px solid #555; background:#222; color:#fff; }
-#manual-news button { padding:4px 8px; border-radius:4px; border:none; background:#0f0; color:#000; cursor:pointer; }
+
+#manual-news { width:100%; padding:4px; margin-bottom:4px; border-radius:4px; border:1px solid #555; background:#222; color:#fff; }
+#add-news-btn { padding:4px 8px; border-radius:4px; border:none; background:#0a74da; color:#fff; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -86,17 +86,13 @@ canvas{image-rendering:pixelated;}
   <canvas id="cfd-canvas"></canvas>
 </div>
 
+<!-- Noticia manual -->
+<input type="text" id="manual-news" placeholder="Añadir noticia manual...">
+<button id="add-news-btn">Añadir noticia</button>
+
 <div id="ia-news-container">
   <div id="ia-console">Consola de IA activa...</div>
-  <div class="news-panel" id="news-panel">
-    <h3>Noticias Importantes</h3>
-  </div>
-</div>
-
-<!-- Añadir noticia manual -->
-<div id="manual-news">
-  <input type="text" id="manual-news-input" placeholder="Añadir noticia manual...">
-  <button onclick="addManualNews()">Enviar</button>
+  <div class="news-panel" id="news-panel"><h3>Noticias</h3></div>
 </div>
 
 <div id="alertBox"></div>
@@ -204,85 +200,39 @@ initCFD();
 setInterval(updateCFD,2000);
 function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
 
-// ==== IA & ALERTAS ==== 
+// ==== IA & ALERTAS ====
+let manualNewsQueue=[];
 function logConsole(text){
   const c=document.getElementById("ia-console");
   const timestamp = new Date().toLocaleTimeString();
   const newLine = `[${timestamp}] ${text}\n`;
-  c.innerText += newLine; 
-  c.scrollTop = c.scrollHeight; // siempre va al último mensaje
+  c.innerText = newLine + c.innerText;
 }
 
-// Simulación de señales del indicador EUR/USD
-function generarSenal(){
-  const senales=["COMPRA EUR/USD","VENTA EUR/USD"];
-  const temporalidades=["1M","5M","15M","1H"];
-  const senal = senales[Math.floor(Math.random()*senales.length)];
-  const temp = temporalidades[Math.floor(Math.random()*temporalidades.length)];
-  const mensaje = `${senal} (${temp}) - Señal detectada por indicador`;
-  // Mostrar en noticias
-  const container=document.getElementById("news-panel");
-  const div=document.createElement("div"); div.className="news";
-  div.innerHTML=`<span>${new Date().toLocaleTimeString()}:</span> ${mensaje} <br><small>indicador</small>`;
-  container.insertBefore(div, container.children[1]);
-  // También en la consola IA
-  logConsole(mensaje);
-}
-setInterval(generarSenal,15000); // cada 15s simulando señal
-
-// Mensajes IA automáticos
-const iaMessages=[
-  "BTC alcista 🚀 (15M)",
-  "S&P500 y Nasdaq sincronizados 📊 (5M)",
-  "Brent y Oro sin correlación ⚖️ (1H)"
-];
-setInterval(()=>{
-  logConsole(iaMessages[Math.floor(Math.random()*iaMessages.length)]);
-},8000);
-
-// ==== NOTICIAS ====
-async function fetchNewsRealtime(query="EUR/USD"){
-  try{
-    const url=`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=es&sortBy=publishedAt&apiKey=pub_b272af150959422caa98464f57f2f31b`;
-    const res=await fetch(url); 
-    const json=await res.json(); 
-    return json.articles||[];
-  }catch(e){console.error(e); return [];}
+// Indicador simplificado: compara EUR/USD y DXY
+function checkSignals(){
+  const eurPrice=precios["tv_eurodolar"];
+  const dxyPrice=precios["tv_dxy"];
+  // señal simple: si EURUSD sube y DXY baja, compra EUR
+  if(eurPrice>100.5 && dxyPrice<99.5) return "Comprar EUR/USD 💹";
+  if(eurPrice<99.5 && dxyPrice>100.5) return "Vender EUR/USD 📉";
+  return null;
 }
 
-function displayNews(articles){
-  const container=document.getElementById("news-panel");
-  container.innerHTML=`<h3>Noticias Importantes</h3>`;
-  articles.forEach(a=>{
-    const div=document.createElement("div"); div.className="news";
-    div.innerHTML=`<span>${new Date(a.publishedAt).toLocaleTimeString()}:</span> ${a.title}<br><small>${a.source.name}</small>`;
-    container.appendChild(div);
-  });
-}
-
-async function updateNewsPanels(){
-  const news=await fetchNewsRealtime("EUR/USD");
-  displayNews(news.slice(0,10));
-}
-updateNewsPanels();
-setInterval(updateNewsPanels,30000);
-
-// Añadir noticia manual y que la IA la interprete
-function addManualNews(){
-  const input = document.getElementById("manual-news-input");
-  const newsText = input.value.trim();
-  if(newsText){
-    const container=document.getElementById("news-panel");
-    const div=document.createElement("div"); div.className="news";
-    div.innerHTML=`<span>${new Date().toLocaleTimeString()}:</span> ${newsText} <br><small>manual</small>`;
-    container.insertBefore(div, container.children[1]);
-    input.value="";
-    // Interpretación simple de IA
-    logConsole(`IA: Analizando noticia -> "${newsText}". Posible impacto en EUR/USD: ${Math.random()<0.5?'Alcista 📈':'Bajista 📉'}`);
+// Alertas combinadas con noticias manuales
+function processSignals(){
+  const signal=checkSignals();
+  if(signal) logConsole(signal);
+  if(signal && manualNewsQueue.length>0){
+    logConsole("Analizando noticia manual: "+manualNewsQueue[0]);
+    showAlert(signal+" – NOTICIA: "+manualNewsQueue.shift());
   }
 }
 
-// Alertas aleatorias CFD
+// Mensajes aleatorios IA
+const iaMessages=["EUR/USD soporte detectado 📉","BTC alcista 🚀","S&P500 y Nasdaq sincronizados 📊","Brent y Oro sin correlación ⚖️"];
+setInterval(()=>{ logConsole(iaMessages[Math.floor(Math.random()*iaMessages.length)]); processSignals(); },8000);
+
 function showAlert(msg){
   const box=document.getElementById("alertBox");
   const div=document.createElement("div");
@@ -291,8 +241,37 @@ function showAlert(msg){
   box.appendChild(div);
   setTimeout(()=>div.remove(),7000);
 }
-setInterval(()=>{ if(Math.random()<0.2) showAlert("⚡ Alerta CFD rompe soporte/resistencia!"); },7000);
 
+// ==== NOTICIAS EXTERNAS ====
+async function fetchNewsRealtime(query="EUR/USD"){
+  try{
+    const url=`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=es&sortBy=publishedAt&apiKey=pub_b272af150959422caa98464f57f2f31b`;
+    const res=await fetch(url); const json=await res.json(); return json.articles||[];
+  }catch(e){console.error(e); return [];}
+}
+function displayNews(articles){
+  const container=document.getElementById("news-panel");
+  container.innerHTML=`<h3>Noticias</h3>`;
+  articles.forEach(a=>{
+    const div=document.createElement("div"); div.className="news";
+    div.innerHTML=`<span>${new Date(a.publishedAt).toLocaleTimeString()}:</span> ${a.title}<br><small>${a.source.name}</small>`;
+    container.appendChild(div);
+  });
+}
+async function updateNewsPanels(){
+  const news=await fetchNewsRealtime("EUR/USD");
+  displayNews(news.slice(0,10));
+}
+updateNewsPanels();
+setInterval(updateNewsPanels,30000);
+
+// ==== Añadir noticia manual ====
+document.getElementById("add-news-btn").addEventListener("click", ()=>{
+  const newsText=document.getElementById("manual-news").value.trim();
+  if(newsText) manualNewsQueue.push(newsText);
+  document.getElementById("manual-news").value="";
+  logConsole("Noticia manual añadida.");
+});
 </script>
 </body>
 </html>
