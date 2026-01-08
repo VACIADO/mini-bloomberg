@@ -42,8 +42,8 @@ h2 { margin: 0 0 5px 0; text-align: center; font-size: 1.1rem; }
 .news{margin-bottom:6px;} .news span{font-weight:bold;}
 .alert{background:#7c2d12;color:#fff;padding:6px;text-align:center;font-weight:bold;margin:4px 0;border-radius:4px;}
 canvas{image-rendering:pixelated;}
-input.news-input{ width:100%; padding:4px; margin-top:4px; border-radius:4px; border:none; background:#222; color:#fff; }
-button.news-btn{ margin-top:4px; padding:4px; border:none; border-radius:4px; background:#0f0; color:#000; cursor:pointer; }
+textarea{width:100%; margin-top:5px; border-radius:4px; padding:4px; background:#222; color:#fff; border:1px solid #555;}
+button{margin-top:4px; padding:4px; border:none; border-radius:4px; background:#0a84ff; color:#fff; cursor:pointer;}
 </style>
 </head>
 <body>
@@ -86,11 +86,11 @@ button.news-btn{ margin-top:4px; padding:4px; border:none; border-radius:4px; ba
 </div>
 
 <div id="ia-news-container">
-  <div id="ia-console">Hola Polmillone! IA lista...</div>
+  <div id="ia-console">Hola Polmillone, IA lista...</div>
   <div class="news-panel" id="news-panel">
-    <h3>Noticias importantes</h3>
-    <input class="news-input" id="manual-news" placeholder="Añadir noticia manual..." />
-    <button class="news-btn" onclick="addManualNews()">Enviar noticia</button>
+    <h3>Noticias Importantes</h3>
+    <textarea id="manual-news" placeholder="Introduce tu noticia aquí..."></textarea>
+    <button onclick="processManualNews()">Analizar noticia</button>
   </div>
 </div>
 
@@ -129,15 +129,13 @@ const widgets={
 };
 for(const id in widgets) crearWidget(widgets[id],id);
 
-// ==== CFD REAL-TIME ==== 
+// ==== CFD REAL-TIME ====
 let cfdData=[], lastClose=100, cfdInterval=1;
 const canvas=document.getElementById("cfd-canvas");
 const ctx=canvas.getContext("2d");
-
 function resizeCanvas(){ canvas.width=canvas.parentElement.clientWidth; canvas.height=canvas.parentElement.clientHeight; }
 window.addEventListener("resize",()=>{ resizeCanvas(); drawCFD(); });
 resizeCanvas();
-
 const euroActivos=["tv_eurodolar","tv_bono_eu","tv_oro","tv_brent","tv_btc"];
 const dolarActivos=["tv_dxy","tv_bono_us","tv_nasdaq","tv_sp500","tv_vix"];
 let pesosEuro={ tv_eurodolar:1, tv_bono_eu:0.8, tv_oro:0.5, tv_brent:0.3, tv_btc:0.2 };
@@ -168,7 +166,6 @@ function drawCFD(){
   const padding=40, width=canvas.width-padding*2, height=canvas.height-padding*2;
   const max=Math.max(...cfdData.map(v=>v.high));
   const min=Math.min(...cfdData.map(v=>v.low));
-
   cfdData.forEach((v,i)=>{
     const x=padding + i/(cfdData.length-1)*width;
     const yOpen=padding + (max-v.open)/(max-min)*height;
@@ -179,47 +176,29 @@ function drawCFD(){
     ctx.fillStyle=(v.close>=v.open)?"#0f0":"#f00";
     ctx.fillRect(x-6,Math.min(yOpen,yClose),12,Math.max(2,Math.abs(yClose-yOpen)));
   });
-
   ctx.strokeStyle="#888"; ctx.beginPath();
   ctx.moveTo(padding,padding); ctx.lineTo(padding,canvas.height-padding);
   ctx.lineTo(canvas.width-padding,canvas.height-padding); ctx.stroke();
   ctx.fillStyle="#fff"; ctx.font="12px monospace";
   ctx.fillText(max.toFixed(2),5,padding);
   ctx.fillText(min.toFixed(2),5,canvas.height-padding);
-
   const step=Math.max(1,Math.floor(cfdData.length/5));
   for(let i=0;i<cfdData.length;i+=step){
     const x=padding + i/(cfdData.length-1)*width;
     ctx.fillText(i,x-5,canvas.height-10);
   }
 }
-
-function updateCFD(){ 
-  cfdData.push(generarVela()); 
-  if(cfdData.length>50) cfdData.shift(); 
-  drawCFD(); 
-}
+function updateCFD(){ cfdData.push(generarVela()); if(cfdData.length>50) cfdData.shift(); drawCFD(); }
 initCFD();
 setInterval(updateCFD,2000);
 function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
 
-// ==== IA & ALERTAS PRO ====
+// ==== IA & ALERTAS ====
+const iaConsole=document.getElementById("ia-console");
 function logConsole(text){
-  const c=document.getElementById("ia-console");
   const timestamp = new Date().toLocaleTimeString();
-  const newLine = [${timestamp}] ${text}\n;
-  c.innerText = newLine; // siempre muestra último mensaje arriba
+  iaConsole.innerText=`[${timestamp}] ${text}`;
 }
-const iaMessages=[
-  "EUR/USD soporte detectado 📉",
-  "BTC alcista 🚀",
-  "S&P500 y Nasdaq sincronizados 📊",
-  "Brent y Oro sin correlación ⚖️"
-];
-setInterval(()=>{ 
-  const msg=iaMessages[Math.floor(Math.random()*iaMessages.length)];
-  logConsole(msg); 
-},8000);
 
 function showAlert(msg){
   const box=document.getElementById("alertBox");
@@ -229,49 +208,72 @@ function showAlert(msg){
   box.appendChild(div);
   setTimeout(()=>div.remove(),7000);
 }
-setInterval(()=>{ if(Math.random()<0.2) showAlert("⚡ Alerta CFD rompe soporte/resistencia!"); },7000);
 
-// ==== NOTICIAS MANUAL + EXTERNA ====
-async function fetchNewsRealtime(query="EUR/USD"){
+// ==== NOTICIAS MANUALES ====
+const newsPanel=document.getElementById("news-panel");
+function processManualNews(){
+  const text=document.getElementById("manual-news").value.trim();
+  if(!text) return;
+  let signal="⚡ Posible señal neutra";
+  if(/compra/i.test(text)) signal="✅ Señal de COMPRA detectada en noticia";
+  if(/venta/i.test(text)) signal="❌ Señal de VENTA detectada en noticia";
+  const div=document.createElement("div");
+  div.className="news";
+  div.innerHTML=`<span>${new Date().toLocaleTimeString()}:</span> ${signal} – ${text}`;
+  newsPanel.appendChild(div);
+  logConsole(signal + ", Polmillone");
+  document.getElementById("manual-news").value="";
+  newsPanel.scrollTop = newsPanel.scrollHeight;
+}
+
+// ==== INDICADOR PRO + CORRELACIONES ====
+const ALPHA_KEY="72RR8SF3PVVBOT6A"; 
+const FRED_KEY="a30f845c596ce7b0bdd9866a0c5a2ee4"; 
+
+async function fetchAlpha(symbol="EURUSD", interval="5min"){
   try{
-    const url=https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=es&sortBy=publishedAt&apiKey=pub_b272af150959422caa98464f57f2f31b;
-    const res=await fetch(url); 
-    const json=await res.json(); 
-    return json.articles||[];
+    const url=`https://www.alphavantage.co/query?function=FX_INTRADAY&from_symbol=${symbol.slice(0,3)}&to_symbol=${symbol.slice(3)}&interval=${interval}&apikey=${ALPHA_KEY}`;
+    const res=await fetch(url);
+    const data=await res.json();
+    return data;
+  }catch(e){console.error(e); return null;}
+}
+
+async function fetchFRED(series_id="DEXUSEU"){
+  try{
+    const url=`https://api.stlouisfed.org/fred/series/observations?series_id=${series_id}&api_key=${FRED_KEY}&file_type=json`;
+    const res=await fetch(url);
+    const data=await res.json();
+    return data.observations || [];
   }catch(e){console.error(e); return [];}
 }
-function displayNews(articles){
-  const container=document.getElementById("news-panel");
-  container.innerHTML=`<h3>Noticias importantes</h3>
-    <input class="news-input" id="manual-news" placeholder="Añadir noticia manual..." />
-    <button class="news-btn" onclick="addManualNews()">Enviar noticia</button>`;
-  articles.forEach(a=>{
-    const div=document.createElement("div"); 
-    div.className="news";
-    div.innerHTML=<span>${new Date(a.publishedAt).toLocaleTimeString()}:</span> ${a.title}<br><small>${a.source.name}</small>;
-    container.appendChild(div);
-  });
-}
-async function updateNewsPanels(){
-  const news=await fetchNewsRealtime("EUR/USD");
-  displayNews(news.slice(0,5)); // solo noticias importantes
-}
-updateNewsPanels();
-setInterval(updateNewsPanels,30000);
 
-function addManualNews(){
-  const input=document.getElementById("manual-news");
-  const text=input.value.trim();
-  if(text){
-    const container=document.getElementById("news-panel");
-    const div=document.createElement("div"); 
-    div.className="news";
-    div.innerHTML=<span>${new Date().toLocaleTimeString()}:</span> ${text}<br><small>Manual</small>;
-    container.insertBefore(div,container.children[3]); // siempre al principio
-    input.value="";
-    logConsole(Polmillone, IA analiza: "${text}" → posible impacto en EUR/USD y correlaciones.);
-  }
+// ==== INDICADOR PRO REAL + CORRELACIONES AUTOMÁTICAS ====
+async function checkProSignals(){
+  const lastVela=cfdData[cfdData.length-1];
+  if(!lastVela) return;
+
+  const alphaData=await fetchAlpha("EURUSD","5min");
+  const fredData=await fetchFRED("DEXUSEU");
+
+  let signal="Sin señal";
+  // ejemplo de correlaciones simples
+  if(lastVela.close>lastVela.open && alphaData) signal="✅ COMPRA EUR/USD detectada";
+  if(lastVela.close<lastVela.open && alphaData) signal="❌ VENTA EUR/USD detectada";
+
+  // agregar correlaciones manual ejemplo
+  const eurUp=precios["tv_eurodolar"]>100; 
+  const dxyDown=precios["tv_dxy"]<100;
+  if(eurUp && dxyDown) signal+=" ⚡ Confirmada por correlación EUR/USD vs DXY";
+
+  const div=document.createElement("div");
+  div.className="news";
+  div.innerHTML=`<span>${new Date().toLocaleTimeString()}:</span> ${signal}`;
+  newsPanel.appendChild(div);
+  newsPanel.scrollTop = newsPanel.scrollHeight;
+  logConsole(signal + ", Polmillone");
 }
+setInterval(checkProSignals,10000);
 </script>
 </body>
 </html>
