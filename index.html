@@ -213,26 +213,32 @@ function logConsole(text){
   c.scrollTop = c.scrollHeight; // siempre va al último mensaje
 }
 
+// Simulación de señales del indicador EUR/USD
+function generarSenal(){
+  const senales=["COMPRA EUR/USD","VENTA EUR/USD"];
+  const temporalidades=["1M","5M","15M","1H"];
+  const senal = senales[Math.floor(Math.random()*senales.length)];
+  const temp = temporalidades[Math.floor(Math.random()*temporalidades.length)];
+  const mensaje = `${senal} (${temp}) - Señal detectada por indicador`;
+  // Mostrar en noticias
+  const container=document.getElementById("news-panel");
+  const div=document.createElement("div"); div.className="news";
+  div.innerHTML=`<span>${new Date().toLocaleTimeString()}:</span> ${mensaje} <br><small>indicador</small>`;
+  container.insertBefore(div, container.children[1]);
+  // También en la consola IA
+  logConsole(mensaje);
+}
+setInterval(generarSenal,15000); // cada 15s simulando señal
+
+// Mensajes IA automáticos
 const iaMessages=[
-  "EUR/USD soporte detectado 📉 (1H)",
   "BTC alcista 🚀 (15M)",
   "S&P500 y Nasdaq sincronizados 📊 (5M)",
   "Brent y Oro sin correlación ⚖️ (1H)"
 ];
-
 setInterval(()=>{
   logConsole(iaMessages[Math.floor(Math.random()*iaMessages.length)]);
 },8000);
-
-function showAlert(msg){
-  const box=document.getElementById("alertBox");
-  const div=document.createElement("div");
-  div.className="alert";
-  div.innerText=msg;
-  box.appendChild(div);
-  setTimeout(()=>div.remove(),7000);
-}
-setInterval(()=>{ if(Math.random()<0.2) showAlert("⚡ Alerta CFD rompe soporte/resistencia!"); },7000);
 
 // ==== NOTICIAS ====
 async function fetchNewsRealtime(query="EUR/USD"){
@@ -254,7 +260,6 @@ function displayNews(articles){
   });
 }
 
-// Actualiza noticias automáticamente
 async function updateNewsPanels(){
   const news=await fetchNewsRealtime("EUR/USD");
   displayNews(news.slice(0,10));
@@ -262,7 +267,7 @@ async function updateNewsPanels(){
 updateNewsPanels();
 setInterval(updateNewsPanels,30000);
 
-// Añadir noticia manual
+// Añadir noticia manual y que la IA la interprete
 function addManualNews(){
   const input = document.getElementById("manual-news-input");
   const newsText = input.value.trim();
@@ -270,10 +275,24 @@ function addManualNews(){
     const container=document.getElementById("news-panel");
     const div=document.createElement("div"); div.className="news";
     div.innerHTML=`<span>${new Date().toLocaleTimeString()}:</span> ${newsText} <br><small>manual</small>`;
-    container.insertBefore(div, container.children[1]); // al principio después del título
+    container.insertBefore(div, container.children[1]);
     input.value="";
+    // Interpretación simple de IA
+    logConsole(`IA: Analizando noticia -> "${newsText}". Posible impacto en EUR/USD: ${Math.random()<0.5?'Alcista 📈':'Bajista 📉'}`);
   }
 }
+
+// Alertas aleatorias CFD
+function showAlert(msg){
+  const box=document.getElementById("alertBox");
+  const div=document.createElement("div");
+  div.className="alert";
+  div.innerText=msg;
+  box.appendChild(div);
+  setTimeout(()=>div.remove(),7000);
+}
+setInterval(()=>{ if(Math.random()<0.2) showAlert("⚡ Alerta CFD rompe soporte/resistencia!"); },7000);
+
 </script>
 </body>
 </html>
