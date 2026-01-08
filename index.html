@@ -36,15 +36,14 @@ h2 { margin: 0 0 5px 0; text-align: center; font-size: 1.1rem; }
 #cfd-canvas { width:100%; height:100%; display:block; }
 
 #ia-news-container { display:flex; gap:10px; flex:1; margin-top:8px; }
-#ia-console { flex:1; background:#000; color:#0f0; font-family: monospace; padding:6px; overflow-y:auto; font-size:0.8rem; border-radius:4px; border:1px solid #444; height:180px; }
+#ia-console { flex:1; background:#000; color:#0f0; font-family: monospace; padding:6px; overflow-y:auto; font-size:0.8rem; border-radius:4px; border:1px solid #444; height:180px; } 
 .news-panel{ flex:1; background:#121921; padding:10px; border-radius:6px; max-height:180px; overflow-y:auto; }
 .news-panel h3{ margin:0 0 5px 0; font-size:14px; }
 .news{margin-bottom:6px;} .news span{font-weight:bold;}
 .alert{background:#7c2d12;color:#fff;padding:6px;text-align:center;font-weight:bold;margin:4px 0;border-radius:4px;}
 canvas{image-rendering:pixelated;}
-
-#manual-news { width:100%; padding:4px; margin-bottom:4px; border-radius:4px; border:1px solid #555; background:#222; color:#fff; }
-#add-news-btn { padding:4px 8px; border-radius:4px; border:none; background:#0a74da; color:#fff; cursor:pointer; }
+input.news-input{ width:100%; padding:4px; margin-top:4px; border-radius:4px; border:none; background:#222; color:#fff; }
+button.news-btn{ margin-top:4px; padding:4px; border:none; border-radius:4px; background:#0f0; color:#000; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -86,13 +85,13 @@ canvas{image-rendering:pixelated;}
   <canvas id="cfd-canvas"></canvas>
 </div>
 
-<!-- Noticia manual -->
-<input type="text" id="manual-news" placeholder="Añadir noticia manual...">
-<button id="add-news-btn">Añadir noticia</button>
-
 <div id="ia-news-container">
-  <div id="ia-console">Consola de IA activa...</div>
-  <div class="news-panel" id="news-panel"><h3>Noticias</h3></div>
+  <div id="ia-console">Hola Polmillone! IA lista...</div>
+  <div class="news-panel" id="news-panel">
+    <h3>Noticias importantes</h3>
+    <input class="news-input" id="manual-news" placeholder="Añadir noticia manual..." />
+    <button class="news-btn" onclick="addManualNews()">Enviar noticia</button>
+  </div>
 </div>
 
 <div id="alertBox"></div>
@@ -195,43 +194,32 @@ function drawCFD(){
   }
 }
 
-function updateCFD(){ cfdData.push(generarVela()); if(cfdData.length>50) cfdData.shift(); drawCFD(); }
+function updateCFD(){ 
+  cfdData.push(generarVela()); 
+  if(cfdData.length>50) cfdData.shift(); 
+  drawCFD(); 
+}
 initCFD();
 setInterval(updateCFD,2000);
 function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
 
-// ==== IA & ALERTAS ====
-let manualNewsQueue=[];
+// ==== IA & ALERTAS PRO ====
 function logConsole(text){
   const c=document.getElementById("ia-console");
   const timestamp = new Date().toLocaleTimeString();
-  const newLine = `[${timestamp}] ${text}\n`;
-  c.innerText = newLine + c.innerText;
+  const newLine = [${timestamp}] ${text}\n;
+  c.innerText = newLine; // siempre muestra último mensaje arriba
 }
-
-// Indicador simplificado: compara EUR/USD y DXY
-function checkSignals(){
-  const eurPrice=precios["tv_eurodolar"];
-  const dxyPrice=precios["tv_dxy"];
-  // señal simple: si EURUSD sube y DXY baja, compra EUR
-  if(eurPrice>100.5 && dxyPrice<99.5) return "Comprar EUR/USD 💹";
-  if(eurPrice<99.5 && dxyPrice>100.5) return "Vender EUR/USD 📉";
-  return null;
-}
-
-// Alertas combinadas con noticias manuales
-function processSignals(){
-  const signal=checkSignals();
-  if(signal) logConsole(signal);
-  if(signal && manualNewsQueue.length>0){
-    logConsole("Analizando noticia manual: "+manualNewsQueue[0]);
-    showAlert(signal+" – NOTICIA: "+manualNewsQueue.shift());
-  }
-}
-
-// Mensajes aleatorios IA
-const iaMessages=["EUR/USD soporte detectado 📉","BTC alcista 🚀","S&P500 y Nasdaq sincronizados 📊","Brent y Oro sin correlación ⚖️"];
-setInterval(()=>{ logConsole(iaMessages[Math.floor(Math.random()*iaMessages.length)]); processSignals(); },8000);
+const iaMessages=[
+  "EUR/USD soporte detectado 📉",
+  "BTC alcista 🚀",
+  "S&P500 y Nasdaq sincronizados 📊",
+  "Brent y Oro sin correlación ⚖️"
+];
+setInterval(()=>{ 
+  const msg=iaMessages[Math.floor(Math.random()*iaMessages.length)];
+  logConsole(msg); 
+},8000);
 
 function showAlert(msg){
   const box=document.getElementById("alertBox");
@@ -241,37 +229,49 @@ function showAlert(msg){
   box.appendChild(div);
   setTimeout(()=>div.remove(),7000);
 }
+setInterval(()=>{ if(Math.random()<0.2) showAlert("⚡ Alerta CFD rompe soporte/resistencia!"); },7000);
 
-// ==== NOTICIAS EXTERNAS ====
+// ==== NOTICIAS MANUAL + EXTERNA ====
 async function fetchNewsRealtime(query="EUR/USD"){
   try{
-    const url=`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=es&sortBy=publishedAt&apiKey=pub_b272af150959422caa98464f57f2f31b`;
-    const res=await fetch(url); const json=await res.json(); return json.articles||[];
+    const url=https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=es&sortBy=publishedAt&apiKey=pub_b272af150959422caa98464f57f2f31b;
+    const res=await fetch(url); 
+    const json=await res.json(); 
+    return json.articles||[];
   }catch(e){console.error(e); return [];}
 }
 function displayNews(articles){
   const container=document.getElementById("news-panel");
-  container.innerHTML=`<h3>Noticias</h3>`;
+  container.innerHTML=`<h3>Noticias importantes</h3>
+    <input class="news-input" id="manual-news" placeholder="Añadir noticia manual..." />
+    <button class="news-btn" onclick="addManualNews()">Enviar noticia</button>`;
   articles.forEach(a=>{
-    const div=document.createElement("div"); div.className="news";
-    div.innerHTML=`<span>${new Date(a.publishedAt).toLocaleTimeString()}:</span> ${a.title}<br><small>${a.source.name}</small>`;
+    const div=document.createElement("div"); 
+    div.className="news";
+    div.innerHTML=<span>${new Date(a.publishedAt).toLocaleTimeString()}:</span> ${a.title}<br><small>${a.source.name}</small>;
     container.appendChild(div);
   });
 }
 async function updateNewsPanels(){
   const news=await fetchNewsRealtime("EUR/USD");
-  displayNews(news.slice(0,10));
+  displayNews(news.slice(0,5)); // solo noticias importantes
 }
 updateNewsPanels();
 setInterval(updateNewsPanels,30000);
 
-// ==== Añadir noticia manual ====
-document.getElementById("add-news-btn").addEventListener("click", ()=>{
-  const newsText=document.getElementById("manual-news").value.trim();
-  if(newsText) manualNewsQueue.push(newsText);
-  document.getElementById("manual-news").value="";
-  logConsole("Noticia manual añadida.");
-});
+function addManualNews(){
+  const input=document.getElementById("manual-news");
+  const text=input.value.trim();
+  if(text){
+    const container=document.getElementById("news-panel");
+    const div=document.createElement("div"); 
+    div.className="news";
+    div.innerHTML=<span>${new Date().toLocaleTimeString()}:</span> ${text}<br><small>Manual</small>;
+    container.insertBefore(div,container.children[3]); // siempre al principio
+    input.value="";
+    logConsole(Polmillone, IA analiza: "${text}" → posible impacto en EUR/USD y correlaciones.);
+  }
+}
 </script>
 </body>
 </html>
