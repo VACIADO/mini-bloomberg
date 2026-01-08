@@ -144,6 +144,7 @@ let pesosDolar={ tv_dxy:1, tv_bono_us:0.8, tv_nasdaq:0.6, tv_sp500:0.6, tv_vix:0
 let precios={};
 for(const id of [...euroActivos,...dolarActivos]) precios[id]=100+Math.random()*10;
 
+// ==== CFD + Señales ====
 function calcularCFD(){
   let sumEuro=0, totalEuro=0;
   euroActivos.forEach(id=>{ precios[id]+=(Math.random()-0.5)*0.5; sumEuro+=precios[id]*pesosEuro[id]; totalEuro+=pesosEuro[id]; });
@@ -193,12 +194,18 @@ function drawCFD(){
   }
 }
 
-function updateCFD(){ cfdData.push(generarVela()); if(cfdData.length>50) cfdData.shift(); drawCFD(); }
+function updateCFD(){ 
+  cfdData.push(generarVela()); 
+  if(cfdData.length>50) cfdData.shift(); 
+  drawCFD(); 
+  checkSignals();
+  calcularCorrelacion();
+}
 initCFD();
 setInterval(updateCFD,2000);
 function updateCFDInterval(){cfdInterval=parseInt(document.getElementById("cfd_interval").value);}
 
-// ==== MINI CHAT IA ====
+// ==== Mini Chat IA / Noticias ====
 const iaConsole = document.getElementById("ia-console");
 let chatHistory = [];
 
@@ -220,19 +227,21 @@ function sendMessage(){
 
 function processMessage(msg){
   let response = "";
-  if(msg.toLowerCase().includes("precio del oro")){
+  const m = msg.toLowerCase();
+  if(m.includes("precio del oro")){
     response = `El precio del oro es aproximadamente ${(1800 + Math.random()*50).toFixed(2)} USD/onza 🪙`;
-  } else if(msg.toLowerCase().includes("eur/usd")){
+  } else if(m.includes("eur/usd")){
     response = `EUR/USD está en ${(1.08 + Math.random()*0.01).toFixed(4)}`;
-  } else if(msg.toLowerCase().includes("noticia")){
+  } else if(m.includes("noticia")){
     response = "Noticia recibida y analizada ⚡";
+    showAlert("Alerta importante detectada por IA!");
   } else {
     response = "Pol Millone responde: Entendido ✔️";
   }
   setTimeout(()=> logConsole("IA", response), 500);
 }
 
-// ==== ALERTAS ====
+// ==== Alertas ====
 function showAlert(msg){
   const box=document.getElementById("alertBox");
   const div=document.createElement("div");
@@ -242,7 +251,40 @@ function showAlert(msg){
   setTimeout(()=>div.remove(),7000);
 }
 
-// ==== NOTICIAS EXTERNAS ====
+// ==== Señales Indicador CFD ====
+function checkSignals(){
+  const lastVela = cfdData[cfdData.length-1];
+  if(lastVela.close - lastVela.open > 0.3){
+    showAlert("Señal de COMPRA generada 🚀");
+    logConsole("IA","Señal COMPRA en CFD detectada");
+  } else if(lastVela.open - lastVela.close > 0.3){
+    showAlert("Señal de VENTA generada 🔻");
+    logConsole("IA","Señal VENTA en CFD detectada");
+  }
+}
+
+// ==== Correlación Euro/Dólar ====
+function calcularCorrelacion(){
+  let euroSum=0, dolarSum=0, euroD=0, dolarD=0, cov=0;
+  for(let i=0;i<Math.min(euroActivos.length,dolarActivos.length);i++){
+    const e = precios[euroActivos[i]];
+    const d = precios[dolarActivos[i]];
+    euroSum+=e; dolarSum+=d;
+  }
+  const euroAvg = euroSum/euroActivos.length;
+  const dolarAvg = dolarSum/dolarActivos.length;
+  for(let i=0;i<Math.min(euroActivos.length,dolarActivos.length);i++){
+    const e = precios[euroActivos[i]];
+    const d = precios[dolarActivos[i]];
+    cov += (e - euroAvg)*(d - dolarAvg);
+    euroD += Math.pow(e - euroAvg,2);
+    dolarD += Math.pow(d - dolarAvg,2);
+  }
+  const corr = cov / Math.sqrt(euroD*dolarD);
+  logConsole("IA", `Correlación Euro/Dólar: ${corr.toFixed(2)}`);
+}
+
+// ==== Noticias externas demo ====
 async function updateExternalNews(){
   const demoArticles=[
     {title:"EUR/USD rompe soporte diario", publishedAt:new Date(), source:{name:"Demo News"}}
