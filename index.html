@@ -11,7 +11,7 @@
   h2 { margin:0 0 8px 0; text-align:center; font-size:0.95rem; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:8px; }
   .text-euro { color: #3b82f6; }
   .text-dolar { color: #ef4444; }
-  .tradingview-widget-container { flex:1; margin-top:3px; border-radius:4px; overflow:hidden; }
+  .tradingview-widget-container { flex:1; margin-top:3px; border-radius:4px; overflow:hidden; min-height: 60px; }
   
   #cfd-container { flex:1; border:1px solid #2a2e39; border-radius:6px; position:relative; background:#000; overflow:hidden; }
   #cfd-canvas { width:100%; height:100%; display:block; }
@@ -81,391 +81,383 @@
 
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-// ==========================================
-// 1. INTEGRACIÓN DE WIDGETS DE TRADINGVIEW
-// ==========================================
-function crearWidget(symbol, containerId){
-  document.getElementById(containerId).innerHTML="";
-  new TradingView.widget({
-    container_id: containerId,
-    symbol: symbol,
-    interval: "15",
-    timezone: "Europe/Madrid",
-    theme: "dark",
-    style: "1",
-    locale: "es",
-    hide_top_toolbar: true,
-    hide_legend: true,
-    width: "100%",
-    height: "100%"
-  });
-}
-
-const widgets = {
-  // Bloque Euro
-  tv_exy:       "INDEX:EXY",      
-  tv_eurodolar: "FX:EURUSD",     
-  tv_bono_eu:   "TVC:DE10Y",     
-  tv_eurjpy:    "FX:EURJPY",     
-  tv_dax:       "INDEX:DAX",      
-  // Bloque Dólar
-  tv_dxy:       "INDEX:DXY",      
-  tv_bono_us:   "US10Y",          
-  tv_brent:     "TVC:UKOIL",     
-  tv_sp500:     "OANDA:SPX500USD",
-  tv_vix:       "CAPITALCOM:VIX"  
-};
-
-for(const id in widgets) crearWidget(widgets[id], id);
-
-// ==========================================
-// 2. MOTOR DE SIMULACIÓN Y ESTRUCTURA CFD
-// ==========================================
-let cfdData = [];
-let lastClose = 100.00;
-const canvas = document.getElementById("cfd-canvas");
-const ctx = canvas.getContext("2d");
-
-function resizeCanvas(){ 
-  canvas.width = canvas.parentElement.clientWidth; 
-  canvas.height = canvas.parentElement.clientHeight; 
-}
-window.addEventListener("resize", () => { resizeCanvas(); drawCFD(); });
-resizeCanvas();
-
-const pesosEuro = { tv_exy: 0.30, tv_eurodolar: 0.25, tv_bono_eu: 0.20, tv_eurjpy: 0.15, tv_dax: 0.10 };
-const pesosDolar = { tv_dxy: 0.30, tv_bono_us: 0.25, tv_brent: 0.20, tv_sp500: 0.15, tv_vix: 0.10 };
-
-function obtenerCambioPorcentual(pesos) {
-  let cambioTotal = 0;
-  for (const id in pesos) {
-    const pctChange = (Math.random() - 0.492) * 0.18; // Leve sesgo dinámico
-    cambioTotal += pctChange * pesos[id];
-  }
-  return cambioTotal;
-}
-
-function calcularNuevoPrecioCFD() {
-  const euroPerf = obtenerCambioPorcentual(pesosEuro);
-  const dolarPerf = obtenerCambioPorcentual(pesosDolar);
-  const netDelta = euroPerf - dolarPerf;
-  return lastClose * (1 + netDelta / 100);
-}
-
-// ==========================================
-// 3. ESTRUCTURA PINE SCRIPT V5 EN JAVASCRIPT
-// ==========================================
-const LONG_MA_LEN = 50;  // M.M. Larga
-const SHORT_MA_LEN = 20; // M.M. Corta
-const ATR_TARGET_MULT = 1.5;
-const ATR_STOP_MULT = 1.0;
-
-function ta_sma(data, length) {
-  if (data.length < length) return null;
-  const slice = data.slice(-length);
-  const sum = slice.reduce((acc, val) => acc + val.close, 0);
-  return sum / length;
-}
-
-function ta_atr(data, length = 14) {
-  if (data.length < length + 1) return 0.2;
-  let trSum = 0;
-  for (let i = data.length - length; i < data.length; i++) {
-    const high = data[i].high;
-    const low = data[i].low;
-    const prevClose = data[i - 1].close;
-    const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
-    trSum += tr;
-  }
-  return trSum / length;
-}
-
-// Variables globales de memoria Pine Script
-let memoryLastSuccessPrice = null;
-let memoryLastClosedSignal = null;
-
-function analizarPineScriptEngine() {
-  if (cfdData.length < 50) return;
-
-  const currentIdx = cfdData.length - 1;
-  const currentCandle = cfdData[currentIdx];
-  const prevCandle = cfdData[currentIdx - 1];
-
-  // 1. Medias Móviles
-  const shortMA = ta_sma(cfdData, SHORT_MA_LEN);
-  const longMA = ta_sma(cfdData, LONG_MA_LEN);
-
-  const prevShortMA = ta_sma(cfdData.slice(0, -1), SHORT_MA_LEN);
-  const prevLongMA = ta_sma(cfdData.slice(0, -1), LONG_MA_LEN);
-
-  // Cruces (crossover y crossunder)
-  const buySignal = (prevShortMA <= prevLongMA) && (shortMA > longMA);
-  const sellSignal = (prevShortMA >= prevLongMA) && (longMA > shortMA);
-
-  // 2. Patrones de Velas
-  const open = currentCandle.open;
-  const close = currentCandle.close;
-  const high = currentCandle.high;
-  const low = currentCandle.low;
-  const body = Math.abs(open - close);
-  const range = high - low;
-
-  const isHammer = ((high - Math.max(open, close)) > 2 * body) && ((Math.min(open, close) - low) > 2 * body);
-  const isDoji = body <= 0.1 * range;
-
-  // 3. Fibonacci (últimas 50 velas)
-  const slice50 = cfdData.slice(-50);
-  const fibHigh = Math.max(...slice50.map(v => v.high));
-  const fibLow = Math.min(...slice50.map(v => v.low));
-  const fibRange = fibHigh - fibLow;
-  const fib50 = fibLow + 0.5 * fibRange;
-  const fib618 = fibLow + 0.618 * fibRange;
-
-  // 4. ATR, Targets y Stops
-  const atr = ta_atr(cfdData, 14);
-  const profitTarget = atr * ATR_TARGET_MULT;
-  const stopLoss = atr * ATR_STOP_MULT;
-
-  // Asignar cálculos a la vela actual para dibujo
-  currentCandle.shortMA = shortMA;
-  currentCandle.longMA = longMA;
-  currentCandle.fib50 = fib50;
-  currentCandle.fib618 = fib618;
-  currentCandle.isHammer = isHammer;
-  currentCandle.isDoji = isDoji;
-
-  // 5. Ejecución de Señales y Registros
-  if (buySignal) {
-    const target = close + profitTarget;
-    const stop = close - stopLoss;
-    currentCandle.signal = { type: "BUY", target, stop };
-    showAlert(`COMPRA 🚀 @ ${close.toFixed(2)} | Target: ${target.toFixed(2)} | Stop: ${stop.toFixed(2)}`, "alert-buy");
-    logConsole("PINE ENGINE", `🚀 SEÑAL DE COMPRA (Cruce SMA 20/50)\n ├─ Entrada: ${close.toFixed(2)}\n ├─ Take Profit: ${target.toFixed(2)} (+${profitTarget.toFixed(2)})\n └─ Stop Loss: ${stop.toFixed(2)} (-${stopLoss.toFixed(2)})`);
-    memoryLastClosedSignal = "BUY";
-    memoryLastSuccessPrice = close;
-  } else if (sellSignal) {
-    const target = close - profitTarget;
-    const stop = close + stopLoss;
-    currentCandle.signal = { type: "SELL", target, stop };
-    showAlert(`VENTA 🪂 @ ${close.toFixed(2)} | Target: ${target.toFixed(2)} | Stop: ${stop.toFixed(2)}`, "alert-sell");
-    logConsole("PINE ENGINE", `🪂 SEÑAL DE VENTA (Cruce SMA 20/50)\n ├─ Entrada: ${close.toFixed(2)}\n ├─ Take Profit: ${target.toFixed(2)} (-${profitTarget.toFixed(2)})\n └─ Stop Loss: ${stop.toFixed(2)} (+${stopLoss.toFixed(2)})`);
-    memoryLastClosedSignal = "SELL";
-    memoryLastSuccessPrice = close;
-  }
-
-  if (isHammer) {
-    logConsole("PATRÓN VELAS", `🔨 Patrón Martillo (Hammer) detectado en ${close.toFixed(2)}. Posible giro alcista.`);
-  }
-  if (isDoji) {
-    logConsole("PATRÓN VELAS", `⚔️ Patrón Doji detectado en ${close.toFixed(2)}. Indecisión de mercado.`);
-  }
-}
-
-// ==========================================
-// 4. DIBUJO DEL CANVAS (VELAS, SMA, FIB)
-// ==========================================
-function generarVela(){ 
-  const open = lastClose; 
-  const close = calcularNuevoPrecioCFD(); 
-  const high = Math.max(open, close) + Math.random() * 0.05; 
-  const low = Math.min(open, close) - Math.random() * 0.05; 
-  lastClose = close; 
-  return { open, high, low, close };
-}
-
-function initCFD(){ 
-  for(let i = 0; i < 60; i++){ 
-    cfdData.push(generarVela()); 
-    analizarPineScriptEngine();
-  }
-  drawCFD();
-}
-
-function drawCFD(){
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if(cfdData.length === 0) return;
-
-  const padding = 45;
-  const width = canvas.width - padding * 2;
-  const height = canvas.height - padding * 2;
-
-  const max = Math.max(...cfdData.map(v => v.high)) + 0.05;
-  const min = Math.min(...cfdData.map(v => v.low)) - 0.05;
-
-  const getX = (i) => padding + (i / (cfdData.length - 1 || 1)) * width;
-  const getY = (val) => padding + (max - val) / (max - min) * height;
-
-  // 1. Dibujar Líneas de Fibonacci
-  const lastCandle = cfdData[cfdData.length - 1];
-  if (lastCandle && lastCandle.fib50) {
-    // Fib 50%
-    ctx.strokeStyle = "rgba(34, 197, 94, 0.4)";
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(padding, getY(lastCandle.fib50)); ctx.lineTo(canvas.width - padding, getY(lastCandle.fib50)); ctx.stroke();
-    ctx.fillStyle = "#22c55e"; ctx.font = "10px sans-serif";
-    ctx.fillText(`Fib 50.0%: ${lastCandle.fib50.toFixed(2)}`, canvas.width - 110, getY(lastCandle.fib50) - 3);
-
-    // Fib 61.8%
-    ctx.strokeStyle = "rgba(239, 68, 68, 0.4)";
-    ctx.beginPath(); ctx.moveTo(padding, getY(lastCandle.fib618)); ctx.lineTo(canvas.width - padding, getY(lastCandle.fib618)); ctx.stroke();
-    ctx.fillStyle = "#ef4444";
-    ctx.fillText(`Fib 61.8%: ${lastCandle.fib618.toFixed(2)}`, canvas.width - 110, getY(lastCandle.fib618) - 3);
-    ctx.setLineDash([]);
-  }
-
-  // 2. Dibujar Velas
-  const candleWidth = Math.max(3, (width / cfdData.length) - 3);
-
-  cfdData.forEach((v, i) => {
-    const x = getX(i);
-    const yOpen = getY(v.open);
-    const yClose = getY(v.close);
-    const yHigh = getY(v.high);
-    const yLow = getY(v.low);
-
-    // Mecha
-    ctx.strokeStyle = "#94a3b8";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(x, yHigh); ctx.lineTo(x, yLow); ctx.stroke();
-
-    // Cuerpo
-    ctx.fillStyle = (v.close >= v.open) ? "#22c55e" : "#ef4444";
-    ctx.fillRect(x - candleWidth/2, Math.min(yOpen, yClose), candleWidth, Math.max(2, Math.abs(yClose - yOpen)));
-
-    // Iconos de patrones de velas
-    if (v.isHammer) {
-      ctx.fillStyle = "#a855f7"; ctx.font = "10px sans-serif";
-      ctx.fillText("🔨", x - 5, yLow + 12);
+document.addEventListener("DOMContentLoaded", () => {
+  // ==========================================
+  // 1. INTEGRACIÓN DE WIDGETS DE TRADINGVIEW
+  // ==========================================
+  function crearWidget(containerId, symbol){
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = "";
+    if (typeof TradingView !== 'undefined') {
+      new TradingView.widget({
+        container_id: containerId,
+        symbol: symbol,
+        interval: "15",
+        timezone: "Europe/Madrid",
+        theme: "dark",
+        style: "1",
+        locale: "es",
+        hide_top_toolbar: true,
+        hide_legend: true,
+        width: "100%",
+        height: "100%"
+      });
     }
-    if (v.isDoji) {
-      ctx.fillStyle = "#eab308"; ctx.font = "10px sans-serif";
-      ctx.fillText("✖", x - 4, yHigh - 5);
+  }
+
+  const widgets = {
+    // Bloque Euro
+    tv_exy:        "INDEX:EXY",      
+    tv_eurodolar:  "FX:EURUSD",     
+    tv_bono_eu:    "TVC:DE10Y",     
+    tv_eurjpy:     "FX:EURJPY",     
+    tv_dax:        "INDEX:DAX",      
+    // Bloque Dólar
+    tv_dxy:        "INDEX:DXY",      
+    tv_bono_us:    "TVC:US10Y", // Corregido el identificador          
+    tv_brent:      "TVC:UKOIL",     
+    tv_sp500:      "OANDA:SPX500USD",
+    tv_vix:        "CAPITALCOM:VIX"  
+  };
+
+  for(const id in widgets) {
+    crearWidget(id, widgets[id]); // Parámetros corregidos
+  }
+
+  // ==========================================
+  // 2. MOTOR DE SIMULACIÓN Y ESTRUCTURA CFD
+  // ==========================================
+  let cfdData = [];
+  let lastClose = 100.00;
+  const canvas = document.getElementById("cfd-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  function resizeCanvas(){ 
+    canvas.width = canvas.parentElement.clientWidth; 
+    canvas.height = canvas.parentElement.clientHeight; 
+  }
+  window.addEventListener("resize", () => { resizeCanvas(); drawCFD(); });
+  resizeCanvas();
+
+  const pesosEuro = { tv_exy: 0.30, tv_eurodolar: 0.25, tv_bono_eu: 0.20, tv_eurjpy: 0.15, tv_dax: 0.10 };
+  const pesosDolar = { tv_dxy: 0.30, tv_bono_us: 0.25, tv_brent: 0.20, tv_sp500: 0.15, tv_vix: 0.10 };
+
+  function obtenerCambioPorcentual(pesos) {
+    let cambioTotal = 0;
+    for (const id in pesos) {
+      const pctChange = (Math.random() - 0.492) * 0.18;
+      cambioTotal += pctChange * pesos[id];
+    }
+    return cambioTotal;
+  }
+
+  function calcularNuevoPrecioCFD() {
+    const euroPerf = obtenerCambioPorcentual(pesosEuro);
+    const dolarPerf = obtenerCambioPorcentual(pesosDolar);
+    const netDelta = euroPerf - dolarPerf;
+    return lastClose * (1 + netDelta / 100);
+  }
+
+  // ==========================================
+  // 3. ESTRUCTURA PINE SCRIPT V5 EN JAVASCRIPT
+  // ==========================================
+  const LONG_MA_LEN = 50;  
+  const SHORT_MA_LEN = 20; 
+  const ATR_TARGET_MULT = 1.5;
+  const ATR_STOP_MULT = 1.0;
+
+  function ta_sma(data, length) {
+    if (data.length < length) return null;
+    const slice = data.slice(-length);
+    const sum = slice.reduce((acc, val) => acc + val.close, 0);
+    return sum / length;
+  }
+
+  function ta_atr(data, length = 14) {
+    if (data.length < length + 1) return 0.2;
+    let trSum = 0;
+    for (let i = data.length - length; i < data.length; i++) {
+      const high = data[i].high;
+      const low = data[i].low;
+      const prevClose = data[i - 1].close;
+      const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
+      trSum += tr;
+    }
+    return trSum / length;
+  }
+
+  let memoryLastSuccessPrice = null;
+  let memoryLastClosedSignal = null;
+
+  function analizarPineScriptEngine() {
+    if (cfdData.length < 50) return;
+
+    const currentIdx = cfdData.length - 1;
+    const currentCandle = cfdData[currentIdx];
+
+    const shortMA = ta_sma(cfdData, SHORT_MA_LEN);
+    const longMA = ta_sma(cfdData, LONG_MA_LEN);
+
+    const prevShortMA = ta_sma(cfdData.slice(0, -1), SHORT_MA_LEN);
+    const prevLongMA = ta_sma(cfdData.slice(0, -1), LONG_MA_LEN);
+
+    const buySignal = (prevShortMA <= prevLongMA) && (shortMA > longMA);
+    const sellSignal = (prevShortMA >= prevLongMA) && (longMA > shortMA);
+
+    const open = currentCandle.open;
+    const close = currentCandle.close;
+    const high = currentCandle.high;
+    const low = currentCandle.low;
+    const body = Math.abs(open - close);
+    const range = high - low;
+
+    const isHammer = ((high - Math.max(open, close)) > 2 * body) && ((Math.min(open, close) - low) > 2 * body);
+    const isDoji = body <= 0.1 * range;
+
+    const slice50 = cfdData.slice(-50);
+    const fibHigh = Math.max(...slice50.map(v => v.high));
+    const fibLow = Math.min(...slice50.map(v => v.low));
+    const fibRange = fibHigh - fibLow;
+    const fib50 = fibLow + 0.5 * fibRange;
+    const fib618 = fibLow + 0.618 * fibRange;
+
+    const atr = ta_atr(cfdData, 14);
+    const profitTarget = atr * ATR_TARGET_MULT;
+    const stopLoss = atr * ATR_STOP_MULT;
+
+    currentCandle.shortMA = shortMA;
+    currentCandle.longMA = longMA;
+    currentCandle.fib50 = fib50;
+    currentCandle.fib618 = fib618;
+    currentCandle.isHammer = isHammer;
+    currentCandle.isDoji = isDoji;
+
+    if (buySignal) {
+      const target = close + profitTarget;
+      const stop = close - stopLoss;
+      currentCandle.signal = { type: "BUY", target, stop };
+      showAlert(`COMPRA 🚀 @ ${close.toFixed(2)} | Target: ${target.toFixed(2)} | Stop: ${stop.toFixed(2)}`, "alert-buy");
+      logConsole("PINE ENGINE", `🚀 SEÑAL DE COMPRA (Cruce SMA 20/50)\n ├─ Entrada: ${close.toFixed(2)}\n ├─ Take Profit: ${target.toFixed(2)} (+${profitTarget.toFixed(2)})\n └─ Stop Loss: ${stop.toFixed(2)} (-${stopLoss.toFixed(2)})`);
+      memoryLastClosedSignal = "BUY";
+      memoryLastSuccessPrice = close;
+    } else if (sellSignal) {
+      const target = close - profitTarget;
+      const stop = close + stopLoss;
+      currentCandle.signal = { type: "SELL", target, stop };
+      showAlert(`VENTA 🪂 @ ${close.toFixed(2)} | Target: ${target.toFixed(2)} | Stop: ${stop.toFixed(2)}`, "alert-sell");
+      logConsole("PINE ENGINE", `🪂 SEÑAL DE VENTA (Cruce SMA 20/50)\n ├─ Entrada: ${close.toFixed(2)}\n ├─ Take Profit: ${target.toFixed(2)} (-${profitTarget.toFixed(2)})\n └─ Stop Loss: ${stop.toFixed(2)} (+${stopLoss.toFixed(2)})`);
+      memoryLastClosedSignal = "SELL";
+      memoryLastSuccessPrice = close;
     }
 
-    // Señales de estrategia
-    if (v.signal) {
-      if (v.signal.type === "BUY") {
-        ctx.fillStyle = "#22c55e"; ctx.font = "12px sans-serif";
-        ctx.fillText("🚀 Compra", x - 20, yLow + 22);
-      } else if (v.signal.type === "SELL") {
-        ctx.fillStyle = "#ef4444"; ctx.font = "12px sans-serif";
-        ctx.fillText("🪂 Venta", x - 18, yHigh - 12);
+    if (isHammer) {
+      logConsole("PATRÓN VELAS", `🔨 Patrón Martillo (Hammer) detectado en ${close.toFixed(2)}. Posible giro alcista.`);
+    }
+    if (isDoji) {
+      logConsole("PATRÓN VELAS", `⚔️ Patrón Doji detectado en ${close.toFixed(2)}. Indecisión de mercado.`);
+    }
+  }
+
+  // ==========================================
+  // 4. DIBUJO DEL CANVAS (VELAS, SMA, FIB)
+  // ==========================================
+  function generarVela(){ 
+    const open = lastClose; 
+    const close = calcularNuevoPrecioCFD(); 
+    const high = Math.max(open, close) + Math.random() * 0.05; 
+    const low = Math.min(open, close) - Math.random() * 0.05; 
+    lastClose = close; 
+    return { open, high, low, close };
+  }
+
+  function initCFD(){ 
+    for(let i = 0; i < 60; i++){ 
+      cfdData.push(generarVela()); 
+      analizarPineScriptEngine();
+    }
+    drawCFD();
+  }
+
+  function drawCFD(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if(cfdData.length === 0) return;
+
+    const padding = 45;
+    const width = canvas.width - padding * 2;
+    const height = canvas.height - padding * 2;
+
+    const max = Math.max(...cfdData.map(v => v.high)) + 0.05;
+    const min = Math.min(...cfdData.map(v => v.low)) - 0.05;
+
+    const getX = (i) => padding + (i / (cfdData.length - 1 || 1)) * width;
+    const getY = (val) => padding + (max - val) / (max - min) * height;
+
+    const lastCandle = cfdData[cfdData.length - 1];
+    if (lastCandle && lastCandle.fib50) {
+      ctx.strokeStyle = "rgba(34, 197, 94, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(padding, getY(lastCandle.fib50)); ctx.lineTo(canvas.width - padding, getY(lastCandle.fib50)); ctx.stroke();
+      ctx.fillStyle = "#22c55e"; ctx.font = "10px sans-serif";
+      ctx.fillText(`Fib 50.0%: ${lastCandle.fib50.toFixed(2)}`, canvas.width - 110, getY(lastCandle.fib50) - 3);
+
+      ctx.strokeStyle = "rgba(239, 68, 68, 0.4)";
+      ctx.beginPath(); ctx.moveTo(padding, getY(lastCandle.fib618)); ctx.lineTo(canvas.width - padding, getY(lastCandle.fib618)); ctx.stroke();
+      ctx.fillStyle = "#ef4444";
+      ctx.fillText(`Fib 61.8%: ${lastCandle.fib618.toFixed(2)}`, canvas.width - 110, getY(lastCandle.fib618) - 3);
+      ctx.setLineDash([]);
+    }
+
+    const candleWidth = Math.max(3, (width / cfdData.length) - 3);
+
+    cfdData.forEach((v, i) => {
+      const x = getX(i);
+      const yOpen = getY(v.open);
+      const yClose = getY(v.close);
+      const yHigh = getY(v.high);
+      const yLow = getY(v.low);
+
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, yHigh); ctx.lineTo(x, yLow); ctx.stroke();
+
+      ctx.fillStyle = (v.close >= v.open) ? "#22c55e" : "#ef4444";
+      ctx.fillRect(x - candleWidth/2, Math.min(yOpen, yClose), candleWidth, Math.max(2, Math.abs(yClose - yOpen)));
+
+      if (v.isHammer) {
+        ctx.fillStyle = "#a855f7"; ctx.font = "10px sans-serif";
+        ctx.fillText("🔨", x - 5, yLow + 12);
       }
+      if (v.isDoji) {
+        ctx.fillStyle = "#eab308"; ctx.font = "10px sans-serif";
+        ctx.fillText("✖", x - 4, yHigh - 5);
+      }
+
+      if (v.signal) {
+        if (v.signal.type === "BUY") {
+          ctx.fillStyle = "#22c55e"; ctx.font = "12px sans-serif";
+          ctx.fillText("🚀 Compra", x - 20, yLow + 22);
+        } else if (v.signal.type === "SELL") {
+          ctx.fillStyle = "#ef4444"; ctx.font = "12px sans-serif";
+          ctx.fillText("🪂 Venta", x - 18, yHigh - 12);
+        }
+      }
+    });
+
+    ctx.strokeStyle = "#f97316"; ctx.lineWidth = 2; ctx.beginPath();
+    let first20 = true;
+    cfdData.forEach((v, i) => {
+      if (v.shortMA) {
+        const x = getX(i); const y = getY(v.shortMA);
+        if (first20) { ctx.moveTo(x, y); first20 = false; } else { ctx.lineTo(x, y); }
+      }
+    });
+    ctx.stroke();
+
+    ctx.strokeStyle = "#3b82f6"; ctx.lineWidth = 2; ctx.beginPath();
+    let first50 = true;
+    cfdData.forEach((v, i) => {
+      if (v.longMA) {
+        const x = getX(i); const y = getY(v.longMA);
+        if (first50) { ctx.moveTo(x, y); first50 = false; } else { ctx.lineTo(x, y); }
+      }
+    });
+    ctx.stroke();
+
+    ctx.fillStyle = "#64748b"; ctx.font = "11px monospace";
+    ctx.fillText(max.toFixed(2), 5, padding);
+    ctx.fillText(min.toFixed(2), 5, canvas.height - padding);
+  }
+
+  function updateCFD(){ 
+    cfdData.push(generarVela()); 
+    if(cfdData.length > 70) cfdData.shift(); 
+    analizarPineScriptEngine();
+    drawCFD(); 
+  }
+
+  initCFD();
+  setInterval(updateCFD, 2000);
+
+  // ==========================================
+  // 5. CONSOLA IA SMART COPILOT Y COMANDOS
+  // ==========================================
+  const iaConsole = document.getElementById("ia-console");
+  let chatHistory = [];
+
+  function logConsole(source, text){
+    if (!iaConsole) return;
+    const timestamp = new Date().toLocaleTimeString();
+    const newLine = `[${timestamp}] [${source}] ${text}`;
+    chatHistory.push(newLine);
+    iaConsole.innerText = chatHistory.slice(-40).join("\n\n");
+    iaConsole.scrollTop = iaConsole.scrollHeight;
+  }
+
+  window.sendMessage = function(){
+    const input = document.getElementById("chat-input");
+    if (!input) return;
+    const msg = input.value.trim();
+    if(!msg) return;
+    input.value = "";
+    logConsole("USER", msg);
+    processMessage(msg);
+  };
+
+  function processMessage(msg){
+    const cleanMsg = msg.toLowerCase();
+    let response = "";
+
+    const lastCandle = cfdData[cfdData.length - 1];
+    const shortMA = (lastCandle && lastCandle.shortMA) ? lastCandle.shortMA.toFixed(2) : "N/A";
+    const longMA = (lastCandle && lastCandle.longMA) ? lastCandle.longMA.toFixed(2) : "N/A";
+
+    if (cleanMsg.includes("tendencia") || cleanMsg.includes("ma") || cleanMsg.includes("media")) {
+      const estadoMA = (lastCandle && lastCandle.shortMA > lastCandle.longMA) ? "📈 ALCISTA (SMA 20 > SMA 50)" : "📉 BAJISTA (SMA 20 < SMA 50)";
+      response = `ANÁLISIS DE TENDENCIA:\n ├─ Estado actual: ${estadoMA}\n ├─ SMA 20 (Corta): ${shortMA}\n └─ SMA 50 (Larga): ${longMA}`;
+    } 
+    else if (cleanMsg.includes("fibonacci") || cleanMsg.includes("fib")) {
+      response = (lastCandle && lastCandle.fib50) 
+        ? `ANÁLISIS DE FIBONACCI (50 Velas):\n ├─ Nivel 50.0%: ${lastCandle.fib50.toFixed(2)}\n └─ Nivel 61.8% (Golden Zone): ${lastCandle.fib618.toFixed(2)}`
+        : "Recopilando datos suficientes para calcular Fibonacci...";
     }
-  });
-
-  // 3. Dibujar Medias Móviles (SMA 20 y SMA 50)
-  // SMA 20 (Naranja)
-  ctx.strokeStyle = "#f97316"; ctx.lineWidth = 2; ctx.beginPath();
-  let first20 = true;
-  cfdData.forEach((v, i) => {
-    if (v.shortMA) {
-      const x = getX(i); const y = getY(v.shortMA);
-      if (first20) { ctx.moveTo(x, y); first20 = false; } else { ctx.lineTo(x, y); }
+    else if (cleanMsg.includes("precio") || cleanMsg.includes("cfd") || cleanMsg.includes("cotizacion")) {
+      response = `COTIZACIÓN SINTÉTICA EN TIEMPO REAL:\n ├─ Precio Actual: ${lastClose.toFixed(2)}\n └─ Último cierre registrado en algoritmo.`;
     }
-  });
-  ctx.stroke();
-
-  // SMA 50 (Azul)
-  ctx.strokeStyle = "#3b82f6"; ctx.lineWidth = 2; ctx.beginPath();
-  let first50 = true;
-  cfdData.forEach((v, i) => {
-    if (v.longMA) {
-      const x = getX(i); const y = getY(v.longMA);
-      if (first50) { ctx.moveTo(x, y); first50 = false; } else { ctx.lineTo(x, y); }
+    else if (cleanMsg.includes("memoria") || cleanMsg.includes("historico")) {
+      response = memoryLastClosedSignal 
+        ? `MEMORIA DE ESTRATEGIA:\n ├─ Última señal cerrada: ${memoryLastClosedSignal}\n └─ Precio de entrada registrado: ${memoryLastSuccessPrice.toFixed(2)}`
+        : "MEMORIA DE ESTRATEGIA:\n └─ Aún no se han completado cierres con beneficio registrado.";
     }
-  });
-  ctx.stroke();
+    else {
+      response = `IA COPILOT: Noticia o comando recibido ("${msg}"). Evaluando impacto sobre la volatilidad de los bloques EUR y USD. Sin alteración del algoritmo de medias en este tick.`;
+    }
 
-  // Ejes y Escala
-  ctx.fillStyle = "#64748b"; ctx.font = "11px monospace";
-  ctx.fillText(max.toFixed(2), 5, padding);
-  ctx.fillText(min.toFixed(2), 5, canvas.height - padding);
-}
-
-function updateCFD(){ 
-  cfdData.push(generarVela()); 
-  if(cfdData.length > 70) cfdData.shift(); 
-  analizarPineScriptEngine();
-  drawCFD(); 
-}
-
-initCFD();
-setInterval(updateCFD, 2000);
-
-// ==========================================
-// 5. CONSOLA IA SMART COPILOT Y COMANDOS
-// ==========================================
-const iaConsole = document.getElementById("ia-console");
-let chatHistory = [];
-
-function logConsole(source, text){
-  const timestamp = new Date().toLocaleTimeString();
-  const newLine = `[${timestamp}] [${source}] ${text}`;
-  chatHistory.push(newLine);
-  iaConsole.innerText = chatHistory.slice(-40).join("\n\n");
-  iaConsole.scrollTop = iaConsole.scrollHeight;
-}
-
-function sendMessage(){
-  const input = document.getElementById("chat-input");
-  const msg = input.value.trim();
-  if(!msg) return;
-  input.value = "";
-  logConsole("USER", msg);
-  processMessage(msg);
-}
-
-function processMessage(msg){
-  const cleanMsg = msg.toLowerCase();
-  let response = "";
-
-  const lastCandle = cfdData[cfdData.length - 1];
-  const shortMA = lastCandle.shortMA ? lastCandle.shortMA.toFixed(2) : "N/A";
-  const longMA = lastCandle.longMA ? lastCandle.longMA.toFixed(2) : "N/A";
-
-  if (cleanMsg.includes("tendencia") || cleanMsg.includes("ma") || cleanMsg.includes("media")) {
-    const estadoMA = lastCandle.shortMA > lastCandle.longMA ? "📈 ALCISTA (SMA 20 > SMA 50)" : "📉 BAJISTA (SMA 20 < SMA 50)";
-    response = `ANÁLISIS DE TENDENCIA:\n ├─ Estado actual: ${estadoMA}\n ├─ SMA 20 (Corta): ${shortMA}\n └─ SMA 50 (Larga): ${longMA}`;
-  } 
-  else if (cleanMsg.includes("fibonacci") || cleanMsg.includes("fib")) {
-    response = `ANÁLISIS DE FIBONACCI (50 Velas):\n ├─ Nivel 50.0%: ${lastCandle.fib50.toFixed(2)}\n └─ Nivel 61.8% (Golden Zone): ${lastCandle.fib618.toFixed(2)}`;
-  }
-  else if (cleanMsg.includes("precio") || cleanMsg.includes("cfd") || cleanMsg.includes("cotizacion")) {
-    response = `COTIZACIÓN SINTÉTICA EN TIEMPO REAL:\n ├─ Precio Actual: ${lastClose.toFixed(2)}\n └─ Último cierre registrado en algoritmo.`;
-  }
-  else if (cleanMsg.includes("memoria") || cleanMsg.includes("historico")) {
-    response = memoryLastClosedSignal 
-      ? `MEMORIA DE ESTRATEGIA:\n ├─ Última señal cerrada: ${memoryLastClosedSignal}\n └─ Precio de entrada registrado: ${memoryLastSuccessPrice.toFixed(2)}`
-      : "MEMORIA DE ESTRATEGIA:\n └─ Aún no se han completado cierres con beneficio registrado.";
-  }
-  else {
-    response = `IA COPILOT: Noticia o comando recibido ("${msg}"). Evaluando impacto sobre la volatilidad de los bloques EUR y USD. Sin alteración del algoritmo de medias en este tick.`;
+    setTimeout(() => logConsole("IA CORE", response), 300);
   }
 
-  setTimeout(() => logConsole("IA CORE", response), 300);
-}
+  function showAlert(msg, typeClass = "alert-info"){
+    const box = document.getElementById("alertBox");
+    if (!box) return;
+    const div = document.createElement("div");
+    div.className = `alert ${typeClass}`;
+    div.innerText = msg;
+    box.appendChild(div);
+    setTimeout(() => div.remove(), 6000);
+  }
 
-function showAlert(msg, typeClass = "alert-info"){
-  const box = document.getElementById("alertBox");
-  const div = document.createElement("div");
-  div.className = `alert ${typeClass}`;
-  div.innerText = msg;
-  box.appendChild(div);
-  setTimeout(() => div.remove(), 6000);
-}
+  setInterval(() => {
+    const lastCandle = cfdData[cfdData.length - 1];
+    if (!lastCandle) return;
+    const alcista = lastCandle.shortMA > lastCandle.longMA;
+    const textoResumen = alcista ? "📈 Día / Estructura Alcista" : "📉 Día / Estructura Bajista";
+    logConsole("REPORTE DIARIO", `RESUMEN DE MERCADO:\n ├─ Estado: ${textoResumen}\n ├─ Cierre Actual: ${lastClose.toFixed(2)}\n └─ SMA 20: ${lastCandle.shortMA?.toFixed(2)} | SMA 50: ${lastCandle.longMA?.toFixed(2)}`);
+  }, 45000);
 
-// Informe de cierre de mercado automático (Según lógica horaCierre de tu script)
-setInterval(() => {
-  const lastCandle = cfdData[cfdData.length - 1];
-  if (!lastCandle) return;
-  const alcista = lastCandle.shortMA > lastCandle.longMA;
-  const textoResumen = alcista ? "📈 Día / Estructura Alcista" : "📉 Día / Estructura Bajista";
-  logConsole("REPORTE DIARIO", `RESUMEN DE MERCADO:\n ├─ Estado: ${textoResumen}\n ├─ Cierre Actual: ${lastClose.toFixed(2)}\n └─ SMA 20: ${lastCandle.shortMA?.toFixed(2)} | SMA 50: ${lastCandle.longMA?.toFixed(2)}`);
-}, 45000);
-
-logConsole("SISTEMA", "Sistema Mini Bloomberg Pro Iniciado.\nEngine Pine Script v5 operativo (SMA, Fib, ATR, Señales Compra/Venta).");
+  logConsole("SISTEMA", "Sistema Mini Bloomberg Pro Iniciado.\nEngine Pine Script v5 operativo (SMA, Fib, ATR, Señales Compra/Venta).");
+});
 </script>
 </body>
 </html>
