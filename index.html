@@ -13,6 +13,9 @@
   .text-dolar { color: #ef4444; }
   .tradingview-widget-container { flex:1; margin-top:3px; border-radius:4px; overflow:hidden; min-height: 60px; }
   
+  .header-cfd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .timeframe-select { background: #1e222d; color: #3b82f6; border: 1px solid #2a2e39; border-radius: 4px; padding: 2px 8px; font-weight: bold; cursor: pointer; }
+
   #cfd-container { flex:1; border:1px solid #2a2e39; border-radius:6px; position:relative; background:#000; overflow:hidden; }
   #cfd-canvas { width:100%; height:100%; display:block; }
   
@@ -60,7 +63,19 @@
 
 <!-- PANEL CFD SINTÉTICO & MOTOR PINE SCRIPT AI -->
 <div class="panel" style="flex:1 1 95%; height: 520px;">
-  <h2>📊 CFD Sintético Real-Time – Engine Pine Script v5 (SMA + Fib + ATR + Patrones)</h2>
+  <div class="header-cfd">
+    <h2>📊 CFD Sintético Real-Time – Engine Pine Script v5 (SMA + Fib + ATR + Patrones)</h2>
+    <div>
+      <label style="font-size: 0.75rem; color:#8f9cae;">Escala: </label>
+      <select id="tf-select" class="timeframe-select" onchange="window.cambiarTimeframe(this.value)">
+        <option value="1000">M1 (1s)</option>
+        <option value="3000" selected>M5 (3s)</option>
+        <option value="5000">M15 (5s)</option>
+        <option value="10000">H1 (10s)</option>
+      </select>
+    </div>
+  </div>
+  
   <div id="cfd-container">
     <div id="alertBox"></div>
     <canvas id="cfd-canvas"></canvas>
@@ -72,8 +87,8 @@
       <h3>Terminal Copilot IA Macro & Técnico</h3>
       <p style="font-size:0.75rem; color:#8f9cae; margin:0 0 8px 0;">Haz consultas sobre la tendencia, Fibonacci, Medias Móviles o envía noticias de impacto.</p>
       <div class="input-group">
-        <input type="text" id="chat-input" placeholder="Ej: ¿Qué tendencia tenemos?, Analizar Fibonacci, Compra..." onkeypress="if(event.key==='Enter') sendMessage()">
-        <button onclick="sendMessage()">Analizar</button>
+        <input type="text" id="chat-input" placeholder="Ej: ¿Qué tendencia tenemos?, Analizar Fibonacci, Compra..." onkeypress="if(event.key==='Enter') window.sendMessage()">
+        <button onclick="window.sendMessage()">Analizar</button>
       </div>
     </div>
   </div>
@@ -83,7 +98,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
-  // 1. INTEGRACIÓN DE WIDGETS DE TRADINGVIEW
+  // 1. INTEGRACIÓN DE WIDGETS DE TRADINGVIEW (SIMBOLOS COMPATIBLES)
   // ==========================================
   function crearWidget(containerId, symbol){
     const el = document.getElementById(containerId);
@@ -106,23 +121,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Tickers globales universales
   const widgets = {
     // Bloque Euro
-    tv_exy:        "INDEX:EXY",      
+    tv_exy:        "FX_IDC:EURUSD", 
     tv_eurodolar:  "FX:EURUSD",     
-    tv_bono_eu:    "TVC:DE10Y",     
+    tv_bono_eu:    "TICKERS:DE10Y", 
     tv_eurjpy:     "FX:EURJPY",     
-    tv_dax:        "INDEX:DAX",      
+    tv_dax:        "GLOBALDATA:DAX", 
     // Bloque Dólar
-    tv_dxy:        "INDEX:DXY",      
-    tv_bono_us:    "TVC:US10Y", // Corregido el identificador          
+    tv_dxy:        "CAPITALCOM:DXY", 
+    tv_bono_us:    "TVC:US10Y",     
     tv_brent:      "TVC:UKOIL",     
-    tv_sp500:      "OANDA:SPX500USD",
-    tv_vix:        "CAPITALCOM:VIX"  
+    tv_sp500:      "FOREXCOM:SPXUSD",
+    tv_vix:        "TVC:VIX"  
   };
 
   for(const id in widgets) {
-    crearWidget(id, widgets[id]); // Parámetros corregidos
+    crearWidget(id, widgets[id]);
   }
 
   // ==========================================
@@ -130,6 +146,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
   let cfdData = [];
   let lastClose = 100.00;
+  let updateInterval = null;
+  let currentSpeed = 3000;
+
   const canvas = document.getElementById("cfd-canvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
@@ -192,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let memoryLastClosedSignal = null;
 
   function analizarPineScriptEngine() {
-    if (cfdData.length < 50) return;
+    if (cfdData.length < 5) return; // Permite dibujado desde velas tempranas
 
     const currentIdx = cfdData.length - 1;
     const currentCandle = cfdData[currentIdx];
@@ -203,15 +222,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const prevShortMA = ta_sma(cfdData.slice(0, -1), SHORT_MA_LEN);
     const prevLongMA = ta_sma(cfdData.slice(0, -1), LONG_MA_LEN);
 
-    const buySignal = (prevShortMA <= prevLongMA) && (shortMA > longMA);
-    const sellSignal = (prevShortMA >= prevLongMA) && (longMA > shortMA);
+    const buySignal = prevShortMA && prevLongMA && (prevShortMA <= prevLongMA) && (shortMA > longMA);
+    const sellSignal = prevShortMA && prevLongMA && (prevShortMA >= prevLongMA) && (longMA > shortMA);
 
     const open = currentCandle.open;
     const close = currentCandle.close;
     const high = currentCandle.high;
     const low = currentCandle.low;
     const body = Math.abs(open - close);
-    const range = high - low;
+    const range = Math.max(0.001, high - low);
 
     const isHammer = ((high - Math.max(open, close)) > 2 * body) && ((Math.min(open, close) - low) > 2 * body);
     const isDoji = body <= 0.1 * range;
@@ -251,13 +270,6 @@ document.addEventListener("DOMContentLoaded", () => {
       memoryLastClosedSignal = "SELL";
       memoryLastSuccessPrice = close;
     }
-
-    if (isHammer) {
-      logConsole("PATRÓN VELAS", `🔨 Patrón Martillo (Hammer) detectado en ${close.toFixed(2)}. Posible giro alcista.`);
-    }
-    if (isDoji) {
-      logConsole("PATRÓN VELAS", `⚔️ Patrón Doji detectado en ${close.toFixed(2)}. Indecisión de mercado.`);
-    }
   }
 
   // ==========================================
@@ -266,13 +278,14 @@ document.addEventListener("DOMContentLoaded", () => {
   function generarVela(){ 
     const open = lastClose; 
     const close = calcularNuevoPrecioCFD(); 
-    const high = Math.max(open, close) + Math.random() * 0.05; 
-    const low = Math.min(open, close) - Math.random() * 0.05; 
+    const high = Math.max(open, close) + Math.random() * 0.08; 
+    const low = Math.min(open, close) - Math.random() * 0.08; 
     lastClose = close; 
     return { open, high, low, close };
   }
 
   function initCFD(){ 
+    cfdData = [];
     for(let i = 0; i < 60; i++){ 
       cfdData.push(generarVela()); 
       analizarPineScriptEngine();
@@ -292,7 +305,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const min = Math.min(...cfdData.map(v => v.low)) - 0.05;
 
     const getX = (i) => padding + (i / (cfdData.length - 1 || 1)) * width;
-    const getY = (val) => padding + (max - val) / (max - min) * height;
+    const getY = (val) => padding + (max - val) / Math.max(0.001, (max - min)) * height;
 
     const lastCandle = cfdData[cfdData.length - 1];
     if (lastCandle && lastCandle.fib50) {
@@ -346,6 +359,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
+    // Medias Móviles
     ctx.strokeStyle = "#f97316"; ctx.lineWidth = 2; ctx.beginPath();
     let first20 = true;
     cfdData.forEach((v, i) => {
@@ -378,11 +392,22 @@ document.addEventListener("DOMContentLoaded", () => {
     drawCFD(); 
   }
 
+  function startLoop(speed) {
+    if (updateInterval) clearInterval(updateInterval);
+    updateInterval = setInterval(updateCFD, speed);
+  }
+
+  window.cambiarTimeframe = function(newSpeed) {
+    currentSpeed = parseInt(newSpeed);
+    startLoop(currentSpeed);
+    logConsole("SISTEMA", `Escala cambiada a ${currentSpeed / 1000}s por vela.`);
+  };
+
   initCFD();
-  setInterval(updateCFD, 2000);
+  startLoop(currentSpeed);
 
   // ==========================================
-  // 5. CONSOLA IA SMART COPILOT Y COMANDOS
+  // 5. CONSOLA IA SMART COPILOT Y COMANDOS (EXPOSICIÓN GLOBAL)
   // ==========================================
   const iaConsole = document.getElementById("ia-console");
   let chatHistory = [];
@@ -411,8 +436,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let response = "";
 
     const lastCandle = cfdData[cfdData.length - 1];
-    const shortMA = (lastCandle && lastCandle.shortMA) ? lastCandle.shortMA.toFixed(2) : "N/A";
-    const longMA = (lastCandle && lastCandle.longMA) ? lastCandle.longMA.toFixed(2) : "N/A";
+    const shortMA = (lastCandle && lastCandle.shortMA) ? lastCandle.shortMA.toFixed(2) : "Calculando...";
+    const longMA = (lastCandle && lastCandle.longMA) ? lastCandle.longMA.toFixed(2) : "Calculando...";
 
     if (cleanMsg.includes("tendencia") || cleanMsg.includes("ma") || cleanMsg.includes("media")) {
       const estadoMA = (lastCandle && lastCandle.shortMA > lastCandle.longMA) ? "📈 ALCISTA (SMA 20 > SMA 50)" : "📉 BAJISTA (SMA 20 < SMA 50)";
@@ -420,22 +445,22 @@ document.addEventListener("DOMContentLoaded", () => {
     } 
     else if (cleanMsg.includes("fibonacci") || cleanMsg.includes("fib")) {
       response = (lastCandle && lastCandle.fib50) 
-        ? `ANÁLISIS DE FIBONACCI (50 Velas):\n ├─ Nivel 50.0%: ${lastCandle.fib50.toFixed(2)}\n └─ Nivel 61.8% (Golden Zone): ${lastCandle.fib618.toFixed(2)}`
+        ? `ANÁLISIS DE FIBONACCI:\n ├─ Nivel 50.0%: ${lastCandle.fib50.toFixed(2)}\n └─ Nivel 61.8% (Golden Zone): ${lastCandle.fib618.toFixed(2)}`
         : "Recopilando datos suficientes para calcular Fibonacci...";
     }
     else if (cleanMsg.includes("precio") || cleanMsg.includes("cfd") || cleanMsg.includes("cotizacion")) {
-      response = `COTIZACIÓN SINTÉTICA EN TIEMPO REAL:\n ├─ Precio Actual: ${lastClose.toFixed(2)}\n └─ Último cierre registrado en algoritmo.`;
+      response = `COTIZACIÓN EN TIEMPO REAL:\n ├─ Precio Actual: ${lastClose.toFixed(2)}\n └─ Última vela procesada dinámicamente.`;
     }
     else if (cleanMsg.includes("memoria") || cleanMsg.includes("historico")) {
       response = memoryLastClosedSignal 
         ? `MEMORIA DE ESTRATEGIA:\n ├─ Última señal cerrada: ${memoryLastClosedSignal}\n └─ Precio de entrada registrado: ${memoryLastSuccessPrice.toFixed(2)}`
-        : "MEMORIA DE ESTRATEGIA:\n └─ Aún no se han completado cierres con beneficio registrado.";
+        : "MEMORIA DE ESTRATEGIA:\n └─ Esperando cruces de medias para registrar órdenes.";
     }
     else {
-      response = `IA COPILOT: Noticia o comando recibido ("${msg}"). Evaluando impacto sobre la volatilidad de los bloques EUR y USD. Sin alteración del algoritmo de medias en este tick.`;
+      response = `IA COPILOT: Consulta analizada ("${msg}"). Evaluando volatilidad entre bloques Euro/Dólar. Las Medias Móviles avanzan según el intervalo activo.`;
     }
 
-    setTimeout(() => logConsole("IA CORE", response), 300);
+    setTimeout(() => logConsole("IA CORE", response), 200);
   }
 
   function showAlert(msg, typeClass = "alert-info"){
@@ -445,18 +470,10 @@ document.addEventListener("DOMContentLoaded", () => {
     div.className = `alert ${typeClass}`;
     div.innerText = msg;
     box.appendChild(div);
-    setTimeout(() => div.remove(), 6000);
+    setTimeout(() => div.remove(), 5000);
   }
 
-  setInterval(() => {
-    const lastCandle = cfdData[cfdData.length - 1];
-    if (!lastCandle) return;
-    const alcista = lastCandle.shortMA > lastCandle.longMA;
-    const textoResumen = alcista ? "📈 Día / Estructura Alcista" : "📉 Día / Estructura Bajista";
-    logConsole("REPORTE DIARIO", `RESUMEN DE MERCADO:\n ├─ Estado: ${textoResumen}\n ├─ Cierre Actual: ${lastClose.toFixed(2)}\n └─ SMA 20: ${lastCandle.shortMA?.toFixed(2)} | SMA 50: ${lastCandle.longMA?.toFixed(2)}`);
-  }, 45000);
-
-  logConsole("SISTEMA", "Sistema Mini Bloomberg Pro Iniciado.\nEngine Pine Script v5 operativo (SMA, Fib, ATR, Señales Compra/Venta).");
+  logConsole("SISTEMA", "Mini Bloomberg Pro activo.\nEngine Pine Script v5 cargado (SMA, Fib, ATR).");
 });
 </script>
 </body>
