@@ -3,58 +3,376 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bloomberg Pro Terminal v7.0 – Asistente Inteligente de Trading</title>
+<title>Terminal Pro v7.1 – Visual Harmony Edition</title>
 <style>
-  * { box-sizing: border-box; }
-  body { margin:0; font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:#0b0e14; color:#fff; display:flex; flex-direction:column; gap:12px; padding:12px; align-items:center; }
-  
-  /* BARRA MAESTRA SUPERIOR */
-  .master-bar { width:100%; max-width:1400px; background:#131722; border:1px solid #f59e0b; border-radius:8px; padding:12px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; box-shadow:0 0 15px rgba(245,158,11,0.15); }
-  .master-title { font-size:1.1rem; font-weight:bold; color:#f59e0b; display:flex; align-items:center; gap:8px; }
-  .master-select-container { display:flex; align-items:center; gap:10px; }
-  .master-select { background:#1e222d; color:#fff; border:2px solid #f59e0b; border-radius:6px; padding:8px 14px; font-size:0.95rem; font-weight:bold; outline:none; cursor:pointer; }
+  :root {
+    --bg-main: #090c10;
+    --bg-surface: #131822;
+    --bg-surface-elevated: #1a2130;
+    --bg-input: #0f131c;
+    
+    --border-color: #242c3d;
+    --border-highlight: rgba(245, 158, 11, 0.4);
+    
+    --accent-amber: #f59e0b;
+    --accent-amber-glow: rgba(245, 158, 11, 0.15);
+    --accent-ally: #38bdf8;
+    --accent-rival: #f43f5e;
+    --accent-green: #22c55e;
+    
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --shadow-main: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  }
 
-  /* CONTENEDOR PRINCIPAL TRES COLUMNAS */
-  .terminal-layout { width:100%; max-width:1400px; display:flex; flex-wrap:wrap; gap:12px; justify-content:center; }
-  .panel-column { display:flex; flex-direction:column; gap:10px; flex:1 1 300px; max-width:360px; }
-  
-  .market-slot { background:#131722; border:1px solid #2a2e39; border-radius:8px; padding:10px; display:flex; flex-direction:column; height:200px; }
-  .slot-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-  .slot-title { font-size:0.8rem; font-weight:bold; color:#8f9cae; }
-  .tv-container { flex:1; border-radius:4px; overflow:hidden; }
-  .badge-info { font-size:0.7rem; padding:4px 8px; border-radius:4px; background:#1e222d; color:#8f9cae; margin-top:4px; border-left:3px solid #f59e0b; }
+  * { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0;
+  }
 
-  /* ZONA CENTRAL (CFD + ASISTENTES) */
-  .center-column { flex:2 1 600px; display:flex; flex-direction:column; gap:12px; }
-  .cfd-panel { background:#131722; border:1px solid #2a2e39; border-radius:8px; padding:12px; display:flex; flex-direction:column; height:480px; }
+  body { 
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+    background-color: var(--bg-main); 
+    color: var(--text-primary); 
+    display: flex; 
+    flex-direction: column; 
+    gap: 16px; 
+    padding: 16px; 
+    align-items: center; 
+    min-height: 100vh;
+    line-height: 1.5;
+  }
   
-  .header-cfd { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px; }
-  .timeframe-select, .btn-macro { background:#1e222d; color:#f59e0b; border:1px solid #2a2e39; border-radius:4px; padding:4px 8px; font-weight:bold; cursor:pointer; font-size:0.75rem; }
-  .btn-macro:hover { background:#2a2e39; color:#fff; }
-  
-  #cfd-container { flex:1; border:1px solid #2a2e39; border-radius:6px; position:relative; background:#05070a; overflow:hidden; cursor:crosshair; }
-  #cfd-canvas { width:100%; height:100%; display:block; }
-  
-  /* CÁMARAS INTELIGENTES INFERIORES */
-  .intel-grid { display:flex; gap:10px; flex-wrap:wrap; }
-  .intel-box { flex:1 1 240px; background:#131722; border:1px solid #2a2e39; border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:6px; }
-  .intel-box h3 { margin:0 0 4px 0; font-size:0.8rem; text-transform:uppercase; color:#f59e0b; display:flex; align-items:center; gap:6px; }
-  .intel-content { font-size:0.75rem; color:#cbd5e1; line-height:1.4; background:#05070a; padding:8px; border-radius:4px; border:1px solid #1e222d; flex:1; }
+  /* 1. BARRA MAESTRA SUPERIOR */
+  .master-bar { 
+    width: 100%; 
+    max-width: 1440px; 
+    background: var(--bg-surface); 
+    border: 1px solid var(--border-highlight); 
+    border-radius: var(--radius-md); 
+    padding: 14px 24px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    flex-wrap: wrap; 
+    gap: 12px; 
+    box-shadow: 0 0 25px var(--accent-amber-glow); 
+  }
 
-  /* COPILOT CHAT */
-  #ia-news-container { display:flex; gap:10px; height:150px; }
-  #ia-console { flex:1.3; background:#05070a; color:#00ff66; font-family:'Courier New', monospace; padding:8px; overflow-y:auto; font-size:0.75rem; border-radius:4px; border:1px solid #2a2e39; line-height:1.3; }
-  .news-panel { flex:1; background:#131722; padding:8px; border-radius:4px; border:1px solid #2a2e39; display:flex; flex-direction:column; }
-  .input-group { display:flex; gap:6px; margin-top:auto; }
-  input[type="text"] { flex:1; padding:6px; border-radius:4px; border:1px solid #2a2e39; background:#1e222d; color:#fff; font-size:0.8rem; outline:none; }
-  button.btn-send { padding:6px 12px; border-radius:4px; border:none; background:#f59e0b; color:#000; font-weight:bold; cursor:pointer; font-size:0.8rem; }
+  .master-title { 
+    font-size: 1.15rem; 
+    font-weight: 700; 
+    color: var(--accent-amber); 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    letter-spacing: 0.5px;
+  }
 
-  #alertBox { position:absolute; top:10px; right:75px; z-index:10; display:flex; flex-direction:column; gap:6px; pointer-events:none; }
-  .alert { padding:6px 10px; font-size:0.75rem; font-weight:bold; border-radius:4px; }
-  .alert-buy { background:#16a34a; color:#fff; border-left:4px solid #4ade80; }
-  .alert-sell { background:#dc2626; color:#fff; border-left:4px solid #f87171; }
-  .text-aliado { color:#3b82f6; }
-  .text-rival { color:#ef4444; }
+  .master-select-container { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+  }
+
+  .master-select-label {
+    font-size: 0.85rem; 
+    font-weight: 600; 
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .master-select { 
+    background: var(--bg-surface-elevated); 
+    color: var(--text-primary); 
+    border: 1.5px solid var(--accent-amber); 
+    border-radius: var(--radius-sm); 
+    padding: 8px 16px; 
+    font-size: 0.9rem; 
+    font-weight: 600; 
+    outline: none; 
+    cursor: pointer; 
+    transition: all 0.2s ease;
+  }
+
+  .master-select:hover {
+    box-shadow: 0 0 10px var(--accent-amber-glow);
+  }
+
+  /* 2. ESTRUCTURA PRINCIPAL TRES COLUMNAS */
+  .terminal-layout { 
+    width: 100%; 
+    max-width: 1440px; 
+    display: grid;
+    grid-template-columns: minmax(280px, 320px) minmax(500px, 1fr) minmax(280px, 320px);
+    gap: 16px; 
+  }
+
+  @media (max-width: 1024px) {
+    .terminal-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .panel-column { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; 
+  }
+
+  .column-header {
+    font-size: 0.8rem; 
+    font-weight: 700; 
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .text-aliado { color: var(--accent-ally); }
+  .text-rival { color: var(--accent-rival); }
+
+  /* TARJETAS DE MERCADO (WIDGETS) */
+  .market-slot { 
+    background: var(--bg-surface); 
+    border: 1px solid var(--border-color); 
+    border-radius: var(--radius-md); 
+    padding: 12px; 
+    display: flex; 
+    flex-direction: column; 
+    height: 190px; 
+    box-shadow: var(--shadow-main);
+    transition: border-color 0.2s ease;
+  }
+
+  .market-slot:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .slot-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 8px; 
+  }
+
+  .slot-title { 
+    font-size: 0.8rem; 
+    font-weight: 600; 
+    color: var(--text-secondary); 
+  }
+
+  .tv-container { 
+    flex: 1; 
+    border-radius: var(--radius-sm); 
+    overflow: hidden; 
+    background: var(--bg-input);
+  }
+
+  .badge-info { 
+    font-size: 0.72rem; 
+    padding: 10px 12px; 
+    border-radius: var(--radius-sm); 
+    background: var(--bg-surface); 
+    color: var(--text-secondary); 
+    border: 1px solid var(--border-color);
+    line-height: 1.4;
+  }
+  
+  .badge-info.aliado { border-left: 3px solid var(--accent-ally); }
+  .badge-info.rival { border-left: 3px solid var(--accent-rival); }
+
+  /* ZONA CENTRAL (CFD + CÁMARAS + COPILOT) */
+  .center-column { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 16px; 
+  }
+
+  .cfd-panel { 
+    background: var(--bg-surface); 
+    border: 1px solid var(--border-color); 
+    border-radius: var(--radius-md); 
+    padding: 16px; 
+    display: flex; 
+    flex-direction: column; 
+    height: 460px; 
+    box-shadow: var(--shadow-main);
+  }
+  
+  .header-cfd { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 12px; 
+    flex-wrap: wrap; 
+    gap: 8px; 
+  }
+
+  .cfd-title {
+    margin: 0; 
+    font-size: 0.95rem; 
+    font-weight: 700;
+    color: var(--accent-amber); 
+    letter-spacing: 0.5px;
+  }
+
+  .timeframe-select { 
+    background: var(--bg-surface-elevated); 
+    color: var(--accent-amber); 
+    border: 1px solid var(--border-color); 
+    border-radius: var(--radius-sm); 
+    padding: 6px 12px; 
+    font-weight: 700; 
+    cursor: pointer; 
+    font-size: 0.8rem; 
+    outline: none; 
+  }
+
+  #cfd-container { 
+    flex: 1; 
+    border: 1px solid var(--border-color); 
+    border-radius: var(--radius-sm); 
+    position: relative; 
+    background: var(--bg-input); 
+    overflow: hidden; 
+    cursor: crosshair; 
+  }
+
+  #cfd-canvas { 
+    width: 100%; 
+    height: 100%; 
+    display: block; 
+  }
+
+  /* CÁMARAS INTELIGENTES */
+  .intel-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+    gap: 12px; 
+  }
+
+  .intel-box { 
+    background: var(--bg-surface); 
+    border: 1px solid var(--border-color); 
+    border-radius: var(--radius-md); 
+    padding: 14px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; 
+    box-shadow: var(--shadow-main);
+  }
+
+  .intel-box h3 { 
+    margin: 0; 
+    font-size: 0.78rem; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px;
+    color: var(--accent-amber); 
+    display: flex; 
+    align-items: center; 
+    gap: 6px; 
+  }
+
+  .intel-content { 
+    font-size: 0.78rem; 
+    color: var(--text-secondary); 
+    line-height: 1.5; 
+    background: var(--bg-input); 
+    padding: 10px; 
+    border-radius: var(--radius-sm); 
+    border: 1px solid var(--border-color); 
+    flex: 1; 
+  }
+
+  /* COPILOT CHAT & CONSOLA */
+  #ia-news-container { 
+    display: grid; 
+    grid-template-columns: 1.2fr 1fr; 
+    gap: 12px; 
+    min-height: 160px; 
+  }
+
+  @media (max-width: 640px) {
+    #ia-news-container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  #ia-console { 
+    background: var(--bg-input); 
+    color: var(--accent-green); 
+    font-family: 'Fira Code', 'Consolas', 'Courier New', monospace; 
+    padding: 12px; 
+    overflow-y: auto; 
+    font-size: 0.75rem; 
+    border-radius: var(--radius-md); 
+    border: 1px solid var(--border-color); 
+    line-height: 1.4; 
+    max-height: 160px;
+  }
+
+  .news-panel { 
+    background: var(--bg-surface); 
+    padding: 12px; 
+    border-radius: var(--radius-md); 
+    border: 1px solid var(--border-color); 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between;
+    box-shadow: var(--shadow-main);
+  }
+
+  .input-group { 
+    display: flex; 
+    gap: 8px; 
+    margin-top: 10px; 
+  }
+
+  input[type="text"] { 
+    flex: 1; 
+    padding: 8px 12px; 
+    border-radius: var(--radius-sm); 
+    border: 1px solid var(--border-color); 
+    background: var(--bg-input); 
+    color: var(--text-primary); 
+    font-size: 0.8rem; 
+    outline: none; 
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent-amber);
+  }
+
+  button.btn-send { 
+    padding: 8px 16px; 
+    border-radius: var(--radius-sm); 
+    border: none; 
+    background: var(--accent-amber); 
+    color: #000; 
+    font-weight: 700; 
+    cursor: pointer; 
+    font-size: 0.8rem; 
+    transition: background-color 0.2s, transform 0.1s;
+  }
+
+  button.btn-send:hover {
+    background: #d97706;
+  }
+
+  button.btn-send:active {
+    transform: scale(0.98);
+  }
 </style>
 </head>
 <body>
@@ -62,11 +380,11 @@
 <!-- 1. BARRA MAESTRA SELECTORA DE ACTIVO -->
 <div class="master-bar">
   <div class="master-title">
-    <span>⚡ TERMINAL BLOOMBERG PRO v7.0</span>
+    <span>⚡ TERMINAL BLOOMBERG PRO v7.1</span>
   </div>
   <div class="master-select-container">
-    <label for="masterAssetSelect" style="font-size:0.85rem; font-weight:bold; color:#8f9cae;">¿QUÉ ACTIVO QUIERES OPERAR HOY?:</label>
-    <select id="masterAssetSelect" class="master-select" onchange="window.cambiarActivoMaestro(this.value)">
+    <label for="masterAssetSelect" class="master-select-label">Activo a Operar:</label>
+    <select id="masterAssetSelect" class="master-select">
       <option value="EURUSD" selected>🇪🇺 EUR/USD (Euro / Dólar)</option>
       <option value="GOLD">🥇 ORO (XAU/USD)</option>
       <option value="BTCUSD">₿ BITCOIN (BTC/USD)</option>
@@ -80,7 +398,7 @@
 
   <!-- COLUMNA IZQUIERDA: EQUIPO ALIADO -->
   <div class="panel-column">
-    <h3 class="text-aliado" style="margin:0; font-size:0.85rem; text-transform:uppercase;">🛡️ EQUIPO ALIADO (Impulso)</h3>
+    <h3 class="column-header text-aliado">🛡️ EQUIPO ALIADO (Impulso)</h3>
     
     <div class="market-slot">
       <div class="slot-header"><span class="slot-title" id="title-aliado1">DAX 40</span></div>
@@ -94,18 +412,16 @@
       <div class="slot-header"><span class="slot-title" id="title-aliado3">EUR/JPY</span></div>
       <div class="tv-container" id="widget-aliado3"></div>
     </div>
-    <div class="badge-info" id="badge-aliado">ℹ️ Si estos activos suben, confirman fuerza para comprar el activo principal.</div>
+    <div class="badge-info aliado" id="badge-aliado">ℹ️ Si estos activos suben, confirman fuerza para comprar el activo principal.</div>
   </div>
 
-  <!-- COLUMNA CENTRAL: CFD + CÁMARAS INTELIGENTES DE ANÁLISIS -->
+  <!-- COLUMNA CENTRAL: CFD + CÁMARAS INTELIGENTES -->
   <div class="center-column">
     <div class="cfd-panel">
       <div class="header-cfd">
-        <h2 style="margin:0; font-size:0.9rem; color:#f59e0b;" id="cfd-title">GRAPH CFD: EUR/USD (INTERACTIVO)</h2>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <button class="btn-macro" style="color:#ef4444; border-color:#ef4444;" onclick="window.inyectarNoticia('NFP')">💥 Shock NFP</button>
-          <button class="btn-macro" style="color:#3b82f6; border-color:#3b82f6;" onclick="window.inyectarNoticia('BCE')">🏛️ Shock BCE</button>
-          <select id="tf-select" class="timeframe-select" onchange="window.cambiarTimeframe(this.value)">
+        <h2 class="cfd-title" id="cfd-title">GRAPH CFD: EUR/USD (INTERACTIVO)</h2>
+        <div>
+          <select id="tf-select" class="timeframe-select">
             <option value="1000">M1 (1s)</option>
             <option value="3000" selected>M5 (3s)</option>
             <option value="5000">M15 (5s)</option>
@@ -114,14 +430,12 @@
       </div>
       
       <div id="cfd-container">
-        <div id="alertBox"></div>
         <canvas id="cfd-canvas"></canvas>
       </div>
     </div>
 
-    <!-- CÁMARAS INTELIGENTES: ANÁLISIS TÉCNICO Y FUNDAMENTAL -->
+    <!-- CÁMARAS INTELIGENTES -->
     <div class="intel-grid">
-      <!-- CÁMARA 1: ANÁLISIS TÉCNICO DE ZONAS -->
       <div class="intel-box">
         <h3>📐 Asistente Técnico (Estructura)</h3>
         <div class="intel-content" id="ta-report">
@@ -129,7 +443,6 @@
         </div>
       </div>
 
-      <!-- CÁMARA 2: ANÁLISIS FUNDAMENTAL MACRO -->
       <div class="intel-box">
         <h3>📰 Informe Fundamental Macro</h3>
         <div class="intel-content" id="macro-report">
@@ -142,11 +455,13 @@
     <div id="ia-news-container">
       <div id="ia-console"></div>
       <div class="news-panel">
-        <h3 style="margin:0 0 4px 0; font-size:0.75rem; color:#8f9cae;">COPILOT IA MACRO</h3>
-        <p style="font-size:0.7rem; color:#8f9cae; margin:0 0 6px 0;">Pregunta por la tendencia, soportes o dirección.</p>
+        <div>
+          <h3 style="margin:0 0 4px 0; font-size:0.78rem; color:var(--text-secondary); font-weight:700;">COPILOT IA MACRO</h3>
+          <p style="font-size:0.72rem; color:var(--text-muted); margin:0;">Consulta tendencia, soportes o estructura actual.</p>
+        </div>
         <div class="input-group">
-          <input type="text" id="chat-input" placeholder="Ej: ¿Dónde está el soporte?, tendencia..." onkeypress="if(event.key==='Enter') window.sendMessage()">
-          <button class="btn-send" onclick="window.sendMessage()">Analizar</button>
+          <input type="text" id="chat-input" placeholder="Ej: ¿Dónde está el soporte?" onkeypress="if(event.key==='Enter') sendMessage()">
+          <button class="btn-send" onclick="sendMessage()">Analizar</button>
         </div>
       </div>
     </div>
@@ -154,7 +469,7 @@
 
   <!-- COLUMNA DERECHA: EQUIPO RIVAL -->
   <div class="panel-column">
-    <h3 class="text-rival" style="margin:0; font-size:0.85rem; text-transform:uppercase;">⚔️ EQUIPO RIVAL (Presión)</h3>
+    <h3 class="column-header text-rival">⚔️ EQUIPO RIVAL (Presión)</h3>
     
     <div class="market-slot">
       <div class="slot-header"><span class="slot-title" id="title-rival1">DXY (Índice Dólar)</span></div>
@@ -168,247 +483,306 @@
       <div class="slot-header"><span class="slot-title" id="title-rival3">S&P 500</span></div>
       <div class="tv-container" id="widget-rival3"></div>
     </div>
-    <div class="badge-info" id="badge-rival">ℹ️ Si estos activos suben con fuerza, ejercen presión bajista sobre tu operación.</div>
+    <div class="badge-info rival" id="badge-rival">ℹ️ Si estos activos suben con fuerza, ejercen presión bajista sobre tu operación.</div>
   </div>
 
 </div>
 
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  
-  // 1. DICCIONARIOS DE CONFIGURACIÓN DE CORRELACIONES
-  const configuracionesMercado = {
-    EURUSD: {
-      nombre: "EUR/USD (Euro / Dólar)",
-      aliados: [
-        { id: "widget-aliado1", title: "title-aliado1", name: "🇩🇪 DAX 40", symbol: "CAPITALCOM:DE40" },
-        { id: "widget-aliado2", title: "title-aliado2", name: "🇩🇪 Bono DE 10Y", symbol: "TVC:DE10Y" },
-        { id: "widget-aliado3", title: "title-aliado3", name: "🇪🇺 EUR/JPY", symbol: "FX:EURJPY" }
-      ],
-      rivales: [
-        { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
-        { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 Bono US 10Y", symbol: "TVC:US10Y" },
-        { id: "widget-rival3", title: "title-rival3", name: "🇺🇸 S&P 500", symbol: "FOREXCOM:SPXUSD" }
-      ],
-      ta: "<b>Resistencia Clave:</b> 1.0920<br><b>Soporte Principal:</b> 1.0840<br><b>Estructura:</b> Ruptura Alcista (BOS) en M15.<br><b>Zona de Entrada:</b> Retroceso a OTE 1.0865.",
-      macro: "El Euro se mantiene fuerte apoyado por las expectativas del BCE. Sin embargo, una subida repentina en el rendimiento del bono americano (US10Y) podría frenar el impulso."
-    },
-    GOLD: {
-      nombre: "🥇 ORO (XAU/USD)",
-      aliados: [
-        { id: "widget-aliado1", title: "title-aliado1", name: "📊 VIX (Miedo)", symbol: "TVC:VIX" },
-        { id: "widget-aliado2", title: "title-aliado2", name: "🇪🇺 EUR/USD", symbol: "FX:EURUSD" },
-        { id: "widget-aliado3", title: "title-aliado3", name: "🛢️ Petróleo Brent", symbol: "TVC:UKOIL" }
-      ],
-      rivales: [
-        { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
-        { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 Bono US 10Y", symbol: "TVC:US10Y" },
-        { id: "widget-rival3", title: "title-rival3", name: "📈 S&P 500", symbol: "FOREXCOM:SPXUSD" }
-      ],
-      ta: "<b>Resistencia Clave:</b> $2,420<br><b>Soporte Principal:</b> $2,380<br><b>Estructura:</b> Consolidación lateral.<br><b>Zona de Entrada:</b> Compras en barrido de liquidez en $2,385.",
-      macro: "El Oro actúa como refugio. La caída en los tipos reales o repuntes en el VIX favorecen las compras. Ojo al Dólar (DXY): si se dispara, el Oro corregirá."
-    },
-    BTCUSD: {
-      nombre: "₿ BITCOIN (BTC/USD)",
-      aliados: [
-        { id: "widget-aliado1", title: "title-aliado1", name: "💻 Nasdaq 100", symbol: "NASDAQ:NDX" },
-        { id: "widget-aliado2", title: "title-aliado2", name: "💎 Ethereum", symbol: "COINBASE:ETHUSD" },
-        { id: "widget-aliado3", title: "title-aliado3", name: "📈 S&P 500", symbol: "FOREXCOM:SPXUSD" }
-      ],
-      rivales: [
-        { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
-        { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 Bono US 10Y", symbol: "TVC:US10Y" },
-        { id: "widget-rival3", title: "title-rival3", name: "📊 VIX (Miedo)", symbol: "TVC:VIX" }
-      ],
-      ta: "<b>Resistencia Clave:</b> $68,500<br><b>Soporte Principal:</b> $64,200<br><b>Estructura:</b> Imbalance (FVG) pendiente por rellenar.<br><b>Zona de Entrada:</b> Compra óptima en $65,100.",
-      macro: "Bitcoin cotiza en alta correlación con el sector tecnológico americano (Nasdaq). Un apetito de riesgo alto en Wall Street impulsa el precio hacia arriba."
-    },
-    KO: {
-      nombre: "🥤 COCA-COLA (Stock US)",
-      aliados: [
-        { id: "widget-aliado1", title: "title-aliado1", name: "📈 S&P 500", symbol: "FOREXCOM:SPXUSD" },
-        { id: "widget-aliado2", title: "title-aliado2", name: "📊 Sector Consumo", symbol: "AMEX:XLP" },
-        { id: "widget-aliado3", title: "title-aliado3", name: "🇪🇺 EUR/USD", symbol: "FX:EURUSD" }
-      ],
-      rivales: [
-        { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 Bono US 10Y", symbol: "TVC:US10Y" },
-        { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
-        { id: "widget-rival3", title: "title-rival3", name: "🛢️ Petróleo Brent", symbol: "TVC:UKOIL" }
-      ],
-      ta: "<b>Resistencia Clave:</b> $65.50<br><b>Soporte Principal:</b> $61.80<br><b>Estructura:</b> Tendencia alcista lenta de bajo riesgo.<br><b>Zona de Entrada:</b> Buscar apoyos en la media móvil de 200 periodos.",
-      macro: "Coca-Cola es una acción defensiva de dividendo. Cuando los bonos a 10 años suben mucho, las acciones de dividendo sufren porque los inversores prefieren la renta fija."
-    }
-  };
-
-  function crearWidget(containerId, symbol){
-    const el = document.getElementById(containerId);
-    if (!el) return;
-    el.innerHTML = "";
-    if (typeof TradingView !== 'undefined') {
-      new TradingView.widget({
-        container_id: containerId, symbol: symbol, interval: "15",
-        timezone: "Europe/Madrid", theme: "dark", style: "1", locale: "es",
-        hide_top_toolbar: true, hide_legend: true, width: "100%", height: "100%"
-      });
-    }
+// CONFIGURACIÓN Y LÓGICA PRINCIPAL
+const configuracionesMercado = {
+  EURUSD: {
+    nombre: "EUR/USD (Euro / Dólar)",
+    aliados: [
+      { id: "widget-aliado1", title: "title-aliado1", name: "🇩🇪 DAX 40", symbol: "CAPITALCOM:DE40" },
+      { id: "widget-aliado2", title: "title-aliado2", name: "🇩🇪 Bono DE 10Y", symbol: "TVC:DE10Y" },
+      { id: "widget-aliado3", title: "title-aliado3", name: "🇪🇺 EUR/JPY", symbol: "FX:EURJPY" }
+    ],
+    rivales: [
+      { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
+      { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 Bono US 10Y", symbol: "TVC:US10Y" },
+      { id: "widget-rival3", title: "title-rival3", name: "🇺🇸 S&P 500", symbol: "FOREXCOM:SPXUSD" }
+    ],
+    ta: "<b>Resistencia Clave:</b> 1.0920<br><b>Soporte Principal:</b> 1.0840<br><b>Estructura:</b> Ruptura Alcista (BOS) en M15.<br><b>Zona de Entrada:</b> Retroceso a OTE 1.0865.",
+    macro: "El Euro se mantiene fuerte apoyado por expectativas macro. Sin embargo, un repunte en el bono americano (US10Y) ejercería presión inmediata."
+  },
+  GOLD: {
+    nombre: "🥇 ORO (XAU/USD)",
+    aliados: [
+      { id: "widget-aliado1", title: "title-aliado1", name: "📊 VIX (Volatilidad)", symbol: "TVC:VIX" },
+      { id: "widget-aliado2", title: "title-aliado2", name: "🇪🇺 EUR/USD", symbol: "FX:EURUSD" },
+      { id: "widget-aliado3", title: "title-aliado3", name: "🛢️ Petróleo Brent", symbol: "TVC:UKOIL" }
+    ],
+    rivales: [
+      { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
+      { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 Bono US 10Y", symbol: "TVC:US10Y" },
+      { id: "widget-rival3", title: "title-rival3", name: "📈 S&P 500", symbol: "FOREXCOM:SPXUSD" }
+    ],
+    ta: "<b>Resistencia Clave:</b> $2,420<br><b>Soporte Principal:</b> $2,380<br><b>Estructura:</b> Consolidación lateral.<br><b>Zona de Entrada:</b> Compras tras barrido en $2,385.",
+    macro: "El Oro actúa como activo refugio. Caídas en los tipos reales o subidas del VIX favorecen la demanda compradora."
+  },
+  BTCUSD: {
+    nombre: "₿ BITCOIN (BTC/USD)",
+    aliados: [
+      { id: "widget-aliado1", title: "title-aliado1", name: "💻 Nasdaq 100", symbol: "NASDAQ:NDX" },
+      { id: "widget-aliado2", title: "title-aliado2", name: "💎 Ethereum", symbol: "COINBASE:ETHUSD" },
+      { id: "widget-aliado3", title: "title-aliado3", name: "📈 S&P 500", symbol: "FOREXCOM:SPXUSD" }
+    ],
+    rivales: [
+      { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
+      { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 Bono US 10Y", symbol: "TVC:US10Y" },
+      { id: "widget-rival3", title: "title-rival3", name: "📊 VIX (Miedo)", symbol: "TVC:VIX" }
+    ],
+    ta: "<b>Resistencia Clave:</b> $68,500<br><b>Soporte Principal:</b> $64,200<br><b>Estructura:</b> Imbalance (FVG) pendiente por rellenar.<br><b>Zona de Entrada:</b> Entrada óptima en $65,100.",
+    macro: "Bitcoin cotiza con alta correlación respecto al sector tecnológico americano (Nasdaq). Apetito de riesgo favorece las subidas."
+  },
+  KO: {
+    nombre: "🥤 COCA-COLA (Stock US)",
+    aliados: [
+      { id: "widget-aliado1", title: "title-aliado1", name: "📈 S&P 500", symbol: "FOREXCOM:SPXUSD" },
+      { id: "widget-aliado2", title: "title-aliado2", name: "📊 Sector Consumo", symbol: "AMEX:XLP" },
+      { id: "widget-aliado3", title: "title-aliado3", name: "🇪🇺 EUR/USD", symbol: "FX:EURUSD" }
+    ],
+    rivales: [
+      { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 Bono US 10Y", symbol: "TVC:US10Y" },
+      { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
+      { id: "widget-rival3", title: "title-rival3", name: "🛢️ Petróleo Brent", symbol: "TVC:UKOIL" }
+    ],
+    ta: "<b>Resistencia Clave:</b> $65.50<br><b>Soporte Principal:</b> $61.80<br><b>Estructura:</b> Tendencia alcista estructural.<br><b>Zona de Entrada:</b> Apoyos en media móvil institucional.",
+    macro: "Acción defensiva de rendimiento estable. Si los rendimientos de bonos suben drásticamente, la renta variable defensiva puede ceder terreno."
   }
+};
 
-  window.cambiarActivoMaestro = function(codigoActivo) {
-    const config = configuracionesMercado[codigoActivo];
-    if (!config) return;
+let cfdData = [];
+let lastClose = 100.00;
+let updateInterval = null;
+let currentSpeed = 3000;
+let visibleCandles = 50; 
+let viewOffset = 0; 
+let isDragging = false;
+let startX = 0;
 
-    document.getElementById("cfd-title").innerText = `GRAPH CFD: ${config.nombre}`;
+let canvas, ctx, container;
 
-    // Cargar Equipo Aliado
-    config.aliados.forEach(item => {
-      document.getElementById(item.title).innerText = item.name;
-      crearWidget(item.id, item.symbol);
+function crearWidget(containerId, symbol) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = "";
+  if (typeof TradingView !== 'undefined') {
+    new TradingView.widget({
+      container_id: containerId,
+      symbol: symbol,
+      interval: "15",
+      timezone: "Europe/Madrid",
+      theme: "dark",
+      style: "1",
+      locale: "es",
+      hide_top_toolbar: true,
+      hide_legend: true,
+      width: "100%",
+      height: "100%"
     });
+  }
+}
 
-    // Cargar Equipo Rival
-    config.rivales.forEach(item => {
-      document.getElementById(item.title).innerText = item.name;
-      crearWidget(item.id, item.symbol);
-    });
+function cambiarActivoMaestro(codigoActivo) {
+  const config = configuracionesMercado[codigoActivo];
+  if (!config) return;
 
-    // Actualizar Cámaras Inteligentes
-    document.getElementById("ta-report").innerHTML = config.ta;
-    document.getElementById("macro-report").innerHTML = config.macro;
+  document.getElementById("cfd-title").innerText = `GRAPH CFD: ${config.nombre}`;
 
-    logConsole("SISTEMA", `Activo cambiado a ${config.nombre}. Equipos reorganizados.`);
-  };
-
-  // 2. MOTOR CFD (CANVAS INTERACTIVO)
-  let cfdData = [];
-  let lastClose = 100.00;
-  let updateInterval = null;
-  let currentSpeed = 3000;
-  let shockVolatilidad = 0;
-  let visibleCandles = 50; 
-  let viewOffset = 0; 
-  let isDragging = false;
-  let startX = 0;
-
-  const canvas = document.getElementById("cfd-canvas");
-  const container = document.getElementById("cfd-container");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-
-  function resizeCanvas(){ canvas.width = container.clientWidth; canvas.height = container.clientHeight; }
-  window.addEventListener("resize", () => { resizeCanvas(); drawCFD(); });
-  resizeCanvas();
-
-  container.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    visibleCandles = e.deltaY < 0 ? Math.max(10, visibleCandles - 3) : Math.min(200, visibleCandles + 3);
-    drawCFD();
-  }, { passive: false });
-
-  container.addEventListener("mousedown", (e) => { isDragging = true; startX = e.clientX; container.style.cursor = "grabbing"; });
-  window.addEventListener("mouseup", () => { isDragging = false; container.style.cursor = "crosshair"; });
-  container.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
-    const deltaX = startX - e.clientX;
-    if (Math.abs(deltaX) > 5) {
-      const candlesToMove = Math.round(deltaX / (canvas.width / visibleCandles));
-      if (candlesToMove !== 0) {
-        viewOffset = Math.max(0, Math.min(cfdData.length - visibleCandles, viewOffset + candlesToMove));
-        startX = e.clientX;
-        drawCFD();
-      }
-    }
+  config.aliados.forEach(item => {
+    const elTitle = document.getElementById(item.title);
+    if(elTitle) elTitle.innerText = item.name;
+    crearWidget(item.id, item.symbol);
   });
 
-  function generarVela(){
-    let base = (Math.random() - 0.495) * 0.20;
-    if (shockVolatilidad !== 0) { base += shockVolatilidad; shockVolatilidad *= 0.6; if (Math.abs(shockVolatilidad) < 0.01) shockVolatilidad = 0; }
-    const close = lastClose * (1 + base / 100);
-    const open = lastClose;
-    const high = Math.max(open, close) + Math.random() * 0.08;
-    const low = Math.min(open, close) - Math.random() * 0.08;
-    lastClose = close;
-    return { open, high, low, close };
+  config.rivales.forEach(item => {
+    const elTitle = document.getElementById(item.title);
+    if(elTitle) elTitle.innerText = item.name;
+    crearWidget(item.id, item.symbol);
+  });
+
+  document.getElementById("ta-report").innerHTML = config.ta;
+  document.getElementById("macro-report").innerHTML = config.macro;
+
+  logConsole("SISTEMA", `Activo actualizado a ${config.nombre}. Matriz de correlación reconfigurada.`);
+}
+
+function resizeCanvas() {
+  if (!container || !canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = container.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  drawCFD();
+}
+
+function generarVela() {
+  let delta = (Math.random() - 0.495) * 0.18;
+  const close = lastClose * (1 + delta / 100);
+  const open = lastClose;
+  const high = Math.max(open, close) + Math.random() * 0.05;
+  const low = Math.min(open, close) - Math.random() * 0.05;
+  lastClose = close;
+  return { open, high, low, close };
+}
+
+function initCFD() {
+  cfdData = [];
+  for (let i = 0; i < 100; i++) cfdData.push(generarVela());
+  drawCFD();
+}
+
+function drawCFD() {
+  if (!ctx || cfdData.length === 0) return;
+  const rect = container.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const padding = 25;
+  const mainHeight = h - padding * 2;
+  const mainWidth = w - padding * 2 - 45;
+
+  const endIndex = Math.max(0, cfdData.length - viewOffset);
+  const startIndex = Math.max(0, endIndex - visibleCandles);
+  const visibleData = cfdData.slice(startIndex, endIndex);
+  if (visibleData.length === 0) return;
+
+  const max = Math.max(...visibleData.map(v => v.high)) + 0.05;
+  const min = Math.min(...visibleData.map(v => v.low)) - 0.05;
+  
+  const getX = (i) => padding + (i / Math.max(1, visibleData.length - 1)) * mainWidth;
+  const getY = (val) => padding + (max - val) / Math.max(0.001, (max - min)) * mainHeight;
+
+  // Dibujar Rejilla
+  ctx.strokeStyle = "#242c3d";
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "#64748b";
+  ctx.font = "10px monospace";
+
+  for (let i = 0; i <= 4; i++) {
+    const priceVal = min + (i / 4) * (max - min);
+    const yPos = getY(priceVal);
+    ctx.beginPath(); 
+    ctx.moveTo(padding, yPos); 
+    ctx.lineTo(w - padding - 35, yPos); 
+    ctx.stroke();
+    ctx.fillText(priceVal.toFixed(2), w - padding - 30, yPos + 3);
   }
 
-  function initCFD(){ cfdData = []; for(let i = 0; i < 100; i++) cfdData.push(generarVela()); drawCFD(); }
+  // Dibujar Velas
+  const candleWidth = Math.max(2, (mainWidth / visibleData.length) - 3);
+  visibleData.forEach((v, i) => {
+    const x = getX(i);
+    const yOpen = getY(v.open);
+    const yClose = getY(v.close);
+    const yHigh = getY(v.high);
+    const yLow = getY(v.low);
 
-  function drawCFD(){
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if(cfdData.length === 0) return;
-    const padding = 30;
-    const mainHeight = canvas.height - padding * 2;
-    const width = canvas.width - padding * 2 - 45;
+    ctx.strokeStyle = v.close >= v.open ? "#22c55e" : "#f43f5e";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); 
+    ctx.moveTo(x, yHigh); 
+    ctx.lineTo(x, yLow); 
+    ctx.stroke();
 
-    const endIndex = Math.max(0, cfdData.length - viewOffset);
-    const startIndex = Math.max(0, endIndex - visibleCandles);
-    const visibleData = cfdData.slice(startIndex, endIndex);
-    if (visibleData.length === 0) return;
+    ctx.fillStyle = v.close >= v.open ? "#22c55e" : "#f43f5e";
+    ctx.fillRect(x - candleWidth / 2, Math.min(yOpen, yClose), candleWidth, Math.max(2, Math.abs(yClose - yOpen)));
+  });
+}
 
-    const max = Math.max(...visibleData.map(v => v.high)) + 0.05;
-    const min = Math.min(...visibleData.map(v => v.low)) - 0.05;
-    const getX = (i) => padding + (i / (visibleData.length - 1 || 1)) * width;
-    const getY = (val) => padding + (max - val) / Math.max(0.001, (max - min)) * mainHeight;
+function updateCFD() {
+  cfdData.push(generarVela());
+  if (cfdData.length > 500) cfdData.shift();
+  drawCFD();
+}
 
-    ctx.strokeStyle = "#1e222d"; ctx.lineWidth = 1; ctx.fillStyle = "#8f9cae"; ctx.font = "10px monospace";
-    for (let i = 0; i <= 4; i++) {
-      const priceVal = min + (i / 4) * (max - min);
-      const yPos = getY(priceVal);
-      ctx.beginPath(); ctx.moveTo(padding, yPos); ctx.lineTo(canvas.width - padding - 35, yPos); ctx.stroke();
-      ctx.fillText(priceVal.toFixed(2), canvas.width - padding - 30, yPos + 3);
-    }
+function startLoop(speed) {
+  if (updateInterval) clearInterval(updateInterval);
+  updateInterval = setInterval(updateCFD, speed);
+}
 
-    const candleWidth = Math.max(2, (width / visibleData.length) - 3);
-    visibleData.forEach((v, i) => {
-      const x = getX(i), yOpen = getY(v.open), yClose = getY(v.close), yHigh = getY(v.high), yLow = getY(v.low);
-      ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x, yHigh); ctx.lineTo(x, yLow); ctx.stroke();
-      ctx.fillStyle = (v.close >= v.open) ? "#22c55e" : "#ef4444";
-      ctx.fillRect(x - candleWidth/2, Math.min(yOpen, yClose), candleWidth, Math.max(2, Math.abs(yClose - yOpen)));
+const chatHistory = [];
+function logConsole(source, text) {
+  const iaConsole = document.getElementById("ia-console");
+  if (!iaConsole) return;
+  chatHistory.push(`[${new Date().toLocaleTimeString()}] [${source}] ${text}`);
+  iaConsole.innerText = chatHistory.slice(-25).join("\n\n");
+  iaConsole.scrollTop = iaConsole.scrollHeight;
+}
+
+function sendMessage() {
+  const input = document.getElementById("chat-input");
+  if (!input || !input.value.trim()) return;
+  const msg = input.value.trim();
+  input.value = "";
+  logConsole("USUARIO", msg);
+  setTimeout(() => {
+    logConsole("COPILOT IA", `Análisis procesado para "${msg}": El activo mantiene la estructura definida en el módulo técnico.`);
+  }, 250);
+}
+
+// INICIALIZACIÓN
+document.addEventListener("DOMContentLoaded", () => {
+  canvas = document.getElementById("cfd-canvas");
+  container = document.getElementById("cfd-container");
+  if (canvas) ctx = canvas.getContext("2d");
+
+  window.addEventListener("resize", resizeCanvas);
+  
+  if (container) {
+    container.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      visibleCandles = e.deltaY < 0 ? Math.max(10, visibleCandles - 3) : Math.min(200, visibleCandles + 3);
+      drawCFD();
+    }, { passive: false });
+
+    container.addEventListener("mousedown", (e) => { 
+      isDragging = true; 
+      startX = e.clientX; 
+      container.style.cursor = "grabbing"; 
+    });
+
+    window.addEventListener("mouseup", () => { 
+      isDragging = false; 
+      if (container) container.style.cursor = "crosshair"; 
+    });
+
+    container.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const deltaX = startX - e.clientX;
+      if (Math.abs(deltaX) > 5) {
+        const candlesToMove = Math.round(deltaX / (canvas.width / visibleCandles));
+        if (candlesToMove !== 0) {
+          viewOffset = Math.max(0, Math.min(cfdData.length - visibleCandles, viewOffset + candlesToMove));
+          startX = e.clientX;
+          drawCFD();
+        }
+      }
     });
   }
 
-  function updateCFD(){ cfdData.push(generarVela()); if(cfdData.length > 500) cfdData.shift(); drawCFD(); }
-  function startLoop(speed) { if (updateInterval) clearInterval(updateInterval); updateInterval = setInterval(updateCFD, speed); }
+  document.getElementById("masterAssetSelect").addEventListener("change", (e) => {
+    cambiarActivoMaestro(e.target.value);
+  });
 
-  window.cambiarTimeframe = function(newSpeed) {
-    currentSpeed = parseInt(newSpeed);
+  document.getElementById("tf-select").addEventListener("change", (e) => {
+    currentSpeed = parseInt(e.target.value);
     startLoop(currentSpeed);
-    logConsole("SISTEMA", `Timeframe ajustado.`);
-  };
-
-  window.inyectarNoticia = function(tipo) {
-    shockVolatilidad = (tipo === 'NFP' ? 1.5 : 1.0) * (Math.random() > 0.5 ? 1 : -1);
-    logConsole("NOTICIA MACRO", `💥 Evento ${tipo} simulado con éxito.`);
-  };
+    logConsole("SISTEMA", "Timeframe y velocidad de actualización ajustados.");
+  });
 
   initCFD();
+  resizeCanvas();
   startLoop(currentSpeed);
-
-  // 3. CONSOLA IA
-  const iaConsole = document.getElementById("ia-console");
-  let chatHistory = [];
-  function logConsole(source, text){
-    if (!iaConsole) return;
-    chatHistory.push(`[${new Date().toLocaleTimeString()}] [${source}] ${text}`);
-    iaConsole.innerText = chatHistory.slice(-25).join("\n\n");
-    iaConsole.scrollTop = iaConsole.scrollHeight;
-  }
-
-  window.sendMessage = function(){
-    const input = document.getElementById("chat-input");
-    if (!input || !input.value.trim()) return;
-    const msg = input.value.trim();
-    input.value = "";
-    logConsole("USER", msg);
-    setTimeout(() => {
-      logConsole("COPILOT IA", `Análisis procesado para "${msg}": El activo mantiene estructura estable según la cámara técnica.`);
-    }, 200);
-  };
-
-  // Cargar activo inicial al abrir
-  window.cambiarActivoMaestro("EURUSD");
-  logConsole("SISTEMA", "Terminal Pro v7.0 lista. Elige un activo arriba para ver la magia.");
+  
+  cambiarActivoMaestro("EURUSD");
+  logConsole("SISTEMA", "Terminal v7.1 Inicializada correctamente.");
 });
 </script>
 </body>
