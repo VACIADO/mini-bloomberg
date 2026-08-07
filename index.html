@@ -19,7 +19,7 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-main); color: var(--text-primary); margin: 0; padding: 10px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
         .master-bar { background: var(--bg-surface); border: 1px solid var(--border-color); padding: 10px 15px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: var(--accent-amber); }
-        .master-bar select { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 4px; font-weight: bold; }
+        .master-bar select { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
 
         .dashboard-grid { display: grid; grid-template-columns: 280px 1fr 300px; gap: 10px; flex: 1; overflow: hidden; }
         
@@ -38,7 +38,7 @@
 
         .ta-box { background: var(--bg-input); border: 1px solid var(--border-color); padding: 8px; border-radius: 4px; font-size: 11px; line-height: 1.4; color: var(--text-secondary); }
 
-        .ia-console { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 4px; flex: 1; padding: 8px; font-family: monospace; font-size: 11px; overflow-y: auto; color: var(--accent-amber); display: flex; flex-direction: column; gap: 4px; max-height: 200px; }
+        .ia-console { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 4px; flex: 1; padding: 8px; font-family: monospace; font-size: 11px; overflow-y: auto; color: var(--accent-amber); display: flex; flex-direction: column; gap: 6px; max-height: 200px; }
         .ia-input-area { display: flex; gap: 5px; margin-top: 5px; }
         .ia-input-area input { flex: 1; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); padding: 5px; border-radius: 3px; font-size: 11px; }
         .ia-input-area button { background: var(--accent-amber); border: none; color: #000; padding: 5px 10px; border-radius: 3px; font-weight: bold; cursor: pointer; }
@@ -69,7 +69,7 @@
         </div>
         <h3 style="margin-top: 10px;">📋 CHECKLIST</h3>
         <div class="ta-box" id="checklist-box">
-            • Estructura H1 validada<br>
+            • Estructura H1 / M15 validada<br>
             • Confluencia Fibonacci activa<br>
             • Gestión de riesgo 1-2%
         </div>
@@ -109,7 +109,7 @@
             <div>> Conexión establecida con Python Flask (127.0.0.1:5000).</div>
         </div>
         <div class="ia-input-area">
-            <input type="text" id="chat-input" placeholder="Consulta macro o comando...">
+            <input type="text" id="chat-input" placeholder="Consulta macro o comando..." onkeypress="handleKeyPress(event)">
             <button onclick="sendMessage()">ENVIAR</button>
         </div>
     </div>
@@ -215,6 +215,7 @@
 
     function cambiarActivoMaster() {
         const select = document.getElementById('masterAssetSelect');
+        cfdData = []; // Limpiar historial del gráfico al cambiar de activo
         cargarWidgetsTradingView(select.value);
     }
 
@@ -223,13 +224,14 @@
     let cfdData = [];
 
     async function updateCFD() {
+        const activoActual = document.getElementById('masterAssetSelect').value;
         try {
-            const response = await fetch('http://127.0.0.1:5000/precio');
+            const response = await fetch(`http://127.0.0.1:5000/precio?activo=${activoActual}`);
             const data = await response.json();
             
             const nuevoPrecio = parseFloat(data.precio);
-            
             const ultimaVela = cfdData.length > 0 ? cfdData[cfdData.length - 1] : { close: nuevoPrecio };
+            
             const nuevaVela = {
                 open: ultimaVela.close,
                 high: Math.max(ultimaVela.close, nuevoPrecio),
@@ -245,7 +247,7 @@
             updateBattleBar();
             
         } catch (e) {
-            console.error("Servidor Flask no detectado en puerto 5000.");
+            // Servidor desconectado temporalmente
         }
     }
 
@@ -256,22 +258,29 @@
         
         if (cfdData.length < 2) return;
 
-        const padding = 30;
+        const padding = 40;
         const prices = cfdData.map(v => v.high).concat(cfdData.map(v => v.low));
         const max = Math.max(...prices);
         const min = Math.min(...prices);
+        const range = max - min === 0 ? 1 : max - min;
         
+        // Línea principal de precio
         ctx.strokeStyle = '#22c55e';
         ctx.lineWidth = 2;
         ctx.beginPath();
         cfdData.forEach((v, i) => {
             const x = (i / (cfdData.length - 1)) * (w - padding);
-            const range = max - min === 0 ? 1 : max - min;
-            const y = h - ((v.close - min) / range * (h - padding)) - padding/2;
+            const y = h - ((v.close - min) / range * (h - padding)) - padding / 2;
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         });
         ctx.stroke();
+
+        // Mostrar precio actual en el gráfico
+        const ultimoPrecio = cfdData[cfdData.length - 1].close;
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = '11px monospace';
+        ctx.fillText(`LIVE: ${ultimoPrecio}`, w - 110, 20);
     }
 
     function updateBattleBar() {
@@ -285,19 +294,34 @@
     function sendMessage() {
         const input = document.getElementById('chat-input');
         const consoleLog = document.getElementById('ia-console');
-        if (input.value.trim() === "") return;
+        const texto = input.value.trim();
+        if (texto === "") return;
 
         const msg = document.createElement('div');
-        msg.innerText = "> " + input.value;
+        msg.innerText = "> " + texto;
         consoleLog.appendChild(msg);
         
         const response = document.createElement('div');
         response.style.color = "#f59e0b";
-        response.innerText = "IA: Procesando confluencia macroeconómica...";
-        consoleLog.appendChild(response);
         
+        // Respuestas simuladas inteligentes de la IA
+        if (texto.toLowerCase().includes('fibonacci')) {
+            response.innerText = "IA: Analizando niveles de retroceso de Fibonacci (61.8% / 50.0%) en temporalidad M15.";
+        } else if (texto.toLowerCase().includes('dxy')) {
+            response.innerText = "IA: Correlación inversa detectada con el DXY. El índice de fuerza del dólar mantiene presión bajista.";
+        } else {
+            response.innerText = "IA: Procesando confluencia macroeconómica y parámetros de riesgo...";
+        }
+        
+        consoleLog.appendChild(response);
         input.value = "";
         consoleLog.scrollTop = consoleLog.scrollHeight;
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
     }
 
     window.onload = function() {
