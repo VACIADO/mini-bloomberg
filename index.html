@@ -47,11 +47,11 @@
 <body>
 
 <div class="master-bar">
-    <span>⚡ TERMINAL BLOOMBERG PRO v9.0 — LIVE ENGINE</span>
+    <span>⚡ TERMINAL BLOOMBERG PRO v9.0 — WEBSOCKET ENGINE</span>
     <div>
         <label>ACTIVO PRINCIPAL: </label>
         <select id="masterAssetSelect" onchange="cambiarActivoMaster()">
-            <option value="EURUSD">EUR/USD (Forex / Python Real)</option>
+            <option value="EURUSD">EUR/USD (Forex / WebSocket Real)</option>
             <option value="BTCUSD">BTC/USD (Crypto)</option>
             <option value="KO">COCA-COLA (Stock)</option>
         </select>
@@ -75,9 +75,9 @@
         </div>
     </div>
 
-    <!-- COLUMNA CENTRAL: MOTOR DE BATALLA Y GRÁFICO REAL PYTHON -->
+    <!-- COLUMNA CENTRAL: MOTOR DE BATALLA Y GRÁFICO REAL WEBSOCKET -->
     <div class="panel center-panel">
-        <h3 id="cfd-title">GRAPH CFD: EUR/USD (PYTHON REAL TIME FEED)</h3>
+        <h3 id="cfd-title">GRAPH CFD: EUR/USD (WEBSOCKET LIVE FEED)</h3>
         
         <div class="battle-bar-container">
             <span>FUERZA COMPRADORA</span>
@@ -91,7 +91,7 @@
         </div>
 
         <div class="ta-box" id="ta-description">
-            <b>Análisis Técnico:</b> Cargando datos del servidor local en puerto 5000...
+            <b>Análisis Técnico:</b> Esperando conexión WebSocket (ws://localhost:8765)...
         </div>
     </div>
 
@@ -106,7 +106,7 @@
         <h3 style="margin-top: 10px;">💬 CONSOLA IA & MACRO</h3>
         <div class="ia-console" id="ia-console">
             <div>> Kernel Bloomberg Pro v9.0 inicializado.</div>
-            <div>> Conexión establecida con Python Flask (127.0.0.1:5000).</div>
+            <div>> Conectando a WebSocket ws://localhost:8765...</div>
         </div>
         <div class="ia-input-area">
             <input type="text" id="chat-input" placeholder="Consulta macro o comando..." onkeypress="handleKeyPress(event)">
@@ -128,7 +128,7 @@
                 { id: "widget-rival1", name: "DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
                 { id: "widget-rival2", name: "VIX (Miedo)", symbol: "TVC:VIX" }
             ],
-            ta: "<b>Soporte:</b> 1.15160 | <b>Resistencia:</b> 1.15420<br><b>Estructura:</b> Flujo directo desde el servidor Python local."
+            ta: "<b>Soporte:</b> 1.15160 | <b>Resistencia:</b> 1.15420<br><b>Estructura:</b> Flujo directo WebSocket activo."
         },
         BTCUSD: {
             nombre: "BTC/USD (Crypto)",
@@ -210,12 +210,12 @@
         });
 
         document.getElementById('ta-description').innerHTML = config.ta;
-        document.getElementById('cfd-title').innerText = `GRAPH CFD: ${config.nombre} (PYTHON REAL TIME FEED)`;
+        document.getElementById('cfd-title').innerText = `GRAPH CFD: ${config.nombre} (WEBSOCKET LIVE FEED)`;
     }
 
     function cambiarActivoMaster() {
         const select = document.getElementById('masterAssetSelect');
-        cfdData = []; // Limpiar historial del gráfico al cambiar de activo
+        cfdData = []; 
         cargarWidgetsTradingView(select.value);
     }
 
@@ -223,33 +223,42 @@
     const ctx = canvas.getContext('2d');
     let cfdData = [];
 
-    async function updateCFD() {
-        const activoActual = document.getElementById('masterAssetSelect').value;
-        try {
-            const response = await fetch(`http://127.0.0.1:5000/precio?activo=${activoActual}`);
-            const data = await response.json();
-            
-            const nuevoPrecio = parseFloat(data.precio);
-            const ultimaVela = cfdData.length > 0 ? cfdData[cfdData.length - 1] : { close: nuevoPrecio };
-            
-            const nuevaVela = {
-                open: ultimaVela.close,
-                high: Math.max(ultimaVela.close, nuevoPrecio),
-                low: Math.min(ultimaVela.close, nuevoPrecio),
-                close: nuevoPrecio,
-                time: new Date()
-            };
+    // --- CONEXIÓN WEBSOCKET CON PYTHON ---
+    const socket = new WebSocket('ws://localhost:8765');
 
-            cfdData.push(nuevaVela);
-            if (cfdData.length > 60) cfdData.shift();
-            
-            drawCFD();
-            updateBattleBar();
-            
-        } catch (e) {
-            // Servidor desconectado temporalmente
-        }
-    }
+    socket.onopen = function() {
+        console.log("Conectado al servidor WebSocket de Python.");
+        const consoleLog = document.getElementById('ia-console');
+        const msg = document.createElement('div');
+        msg.innerText = "> Conexión WebSocket establecida con éxito.";
+        msg.style.color = "#22c55e";
+        consoleLog.appendChild(msg);
+    };
+
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        // El servidor envía: { price, battleScore }
+        const nuevoPrecio = parseFloat(data.price);
+        
+        const ultimaVela = cfdData.length > 0 ? cfdData[cfdData.length - 1] : { close: nuevoPrecio };
+        const nuevaVela = {
+            open: ultimaVela.close,
+            high: Math.max(ultimaVela.close, nuevoPrecio),
+            low: Math.min(ultimaVela.close, nuevoPrecio),
+            close: nuevoPrecio,
+            time: new Date()
+        };
+
+        cfdData.push(nuevaVela);
+        if (cfdData.length > 60) cfdData.shift();
+        
+        drawCFD();
+        updateBattleBarReal(data.battleScore);
+    };
+
+    socket.onerror = function(error) {
+        console.error("Error en WebSocket:", error);
+    };
 
     function drawCFD() {
         const w = canvas.width = canvas.offsetWidth;
@@ -280,15 +289,14 @@
         const ultimoPrecio = cfdData[cfdData.length - 1].close;
         ctx.fillStyle = '#f59e0b';
         ctx.font = '11px monospace';
-        ctx.fillText(`LIVE: ${ultimoPrecio}`, w - 110, 20);
+        ctx.fillText(`LIVE: ${ultimoPrecio}`, w - 120, 20);
     }
 
-    function updateBattleBar() {
+    function updateBattleBarReal(score) {
         const fill = document.getElementById('battle-fill');
-        const score = document.getElementById('battle-score');
-        const p = 50 + (Math.random() * 16 - 8); 
-        fill.style.width = p + "%";
-        score.innerText = `${p.toFixed(0)}% / ${(100-p).toFixed(0)}%`;
+        const scoreText = document.getElementById('battle-score');
+        fill.style.width = score + "%";
+        scoreText.innerText = `${score.toFixed(0)}% / ${(100-score).toFixed(0)}%`;
     }
 
     function sendMessage() {
@@ -304,7 +312,6 @@
         const response = document.createElement('div');
         response.style.color = "#f59e0b";
         
-        // Respuestas simuladas inteligentes de la IA
         if (texto.toLowerCase().includes('fibonacci')) {
             response.innerText = "IA: Analizando niveles de retroceso de Fibonacci (61.8% / 50.0%) en temporalidad M15.";
         } else if (texto.toLowerCase().includes('dxy')) {
@@ -326,7 +333,6 @@
 
     window.onload = function() {
         cargarWidgetsTradingView('EURUSD');
-        setInterval(updateCFD, 1000);
     };
 </script>
 </body>
