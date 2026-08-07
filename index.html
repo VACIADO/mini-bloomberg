@@ -2,52 +2,233 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Terminal Bloomberg Pro v9.0</title>
+    <title>Terminal Bloomberg Pro v9.0 — Live Engine</title>
+    <!-- TradingView Script -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
-        :root { --bg-main: #070a0f; --bg-surface: #111520; --bg-input: #0b0e14; --accent-amber: #f59e0b; --text-primary: #f8fafc; --text-secondary: #94a3b8; --border-color: #232b3b; }
-        body { font-family: sans-serif; background-color: var(--bg-main); color: var(--text-primary); margin: 0; padding: 14px; }
-        .master-bar { background: var(--bg-surface); border: 1px solid var(--border-color); padding: 12px; border-radius: 6px; margin-bottom: 14px; }
-        .cfd-panel { background: var(--bg-surface); padding: 14px; border-radius: 6px; height: 500px; display: flex; flex-direction: column; }
-        #cfd-container { flex: 1; background: var(--bg-input); border: 1px solid var(--border-color); position: relative; }
-        canvas { width: 100%; height: 100%; display: block; }
-        .battle-bar-container { background: var(--bg-input); padding: 10px; border-radius: 5px; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .battle-progress-bg { flex: 1; height: 10px; background: #f43f5e; border-radius: 5px; overflow: hidden; }
+        :root { 
+            --bg-main: #070a0f; 
+            --bg-surface: #111520; 
+            --bg-input: #0b0e14; 
+            --accent-amber: #f59e0b; 
+            --text-primary: #f8fafc; 
+            --text-secondary: #94a3b8; 
+            --border-color: #232b3b; 
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-main); color: var(--text-primary); margin: 0; padding: 10px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .master-bar { background: var(--bg-surface); border: 1px solid var(--border-color); padding: 10px 15px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: var(--accent-amber); }
+        .master-bar select { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 4px; font-weight: bold; }
+
+        .dashboard-grid { display: grid; grid-template-columns: 280px 1fr 300px; gap: 10px; flex: 1; overflow: hidden; }
+        
+        .panel { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; display: flex; flex-direction: column; padding: 10px; overflow: hidden; }
+        .panel h3 { margin: 0 0 10px 0; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .market-slot { background: var(--bg-input); border: 1px solid var(--border-color); height: 110px; border-radius: 4px; margin-bottom: 8px; position: relative; overflow: hidden; }
+        
+        .center-panel { display: flex; flex-direction: column; gap: 8px; }
+        .battle-bar-container { background: var(--bg-input); padding: 8px 12px; border-radius: 5px; display: flex; align-items: center; gap: 10px; border: 1px solid var(--border-color); font-size: 11px; font-weight: bold; }
+        .battle-progress-bg { flex: 1; height: 8px; background: #f43f5e; border-radius: 4px; overflow: hidden; }
         .battle-progress-fill { height: 100%; background: #22c55e; width: 50%; transition: width 0.5s; }
+        
+        #cfd-container { flex: 1; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 4px; position: relative; min-height: 220px; }
+        canvas { width: 100%; height: 100%; display: block; }
+
+        .ta-box { background: var(--bg-input); border: 1px solid var(--border-color); padding: 8px; border-radius: 4px; font-size: 11px; line-height: 1.4; color: var(--text-secondary); }
+
+        .ia-console { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 4px; flex: 1; padding: 8px; font-family: monospace; font-size: 11px; overflow-y: auto; color: var(--accent-amber); display: flex; flex-direction: column; gap: 4px; max-height: 200px; }
+        .ia-input-area { display: flex; gap: 5px; margin-top: 5px; }
+        .ia-input-area input { flex: 1; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); padding: 5px; border-radius: 3px; font-size: 11px; }
+        .ia-input-area button { background: var(--accent-amber); border: none; color: #000; padding: 5px 10px; border-radius: 3px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="master-bar">⚡ TERMINAL BLOOMBERG PRO v9.0</div>
-
-<div class="cfd-panel">
-    <h2 id="cfd-title">GRAPH CFD: EUR/USD</h2>
-    <div class="battle-bar-container">
-        <span>EUR</span>
-        <div class="battle-progress-bg"><div id="battle-fill" class="battle-progress-fill"></div></div>
-        <span>USD</span>
-        <span id="battle-score">50% / 50%</span>
+<div class="master-bar">
+    <span>⚡ TERMINAL BLOOMBERG PRO v9.0 — LIVE ENGINE</span>
+    <div>
+        <label>ACTIVO PRINCIPAL: </label>
+        <select id="masterAssetSelect" onchange="cambiarActivoMaster()">
+            <option value="EURUSD">EUR/USD (Forex / Python Real)</option>
+            <option value="BTCUSD">BTC/USD (Crypto)</option>
+            <option value="KO">COCA-COLA (Stock)</option>
+        </select>
     </div>
-    <div id="cfd-container">
-        <canvas id="cfd-canvas"></canvas>
+</div>
+
+<div class="dashboard-grid">
+    <!-- COLUMNA IZQUIERDA: ALIADOS -->
+    <div class="panel">
+        <h3>🟢 ALIADOS TÉCNICOS</h3>
+        <div id="aliados-container" style="display:flex; flex-direction:column; gap:6px; overflow-y:auto; flex:1;">
+            <div class="market-slot" id="widget-aliado1"></div>
+            <div class="market-slot" id="widget-aliado2"></div>
+            <div class="market-slot" id="widget-aliado3"></div>
+        </div>
+        <h3 style="margin-top: 10px;">📋 CHECKLIST</h3>
+        <div class="ta-box" id="checklist-box">
+            • Estructura H1 validada<br>
+            • Confluencia Fibonacci activa<br>
+            • Gestión de riesgo 1-2%
+        </div>
+    </div>
+
+    <!-- COLUMNA CENTRAL: MOTOR DE BATALLA Y GRÁFICO REAL PYTHON -->
+    <div class="panel center-panel">
+        <h3 id="cfd-title">GRAPH CFD: EUR/USD (PYTHON REAL TIME FEED)</h3>
+        
+        <div class="battle-bar-container">
+            <span>FUERZA COMPRADORA</span>
+            <div class="battle-progress-bg"><div id="battle-fill" class="battle-progress-fill"></div></div>
+            <span>VENDEDORA</span>
+            <span id="battle-score">50% / 50%</span>
+        </div>
+
+        <div id="cfd-container">
+            <canvas id="cfd-canvas"></canvas>
+        </div>
+
+        <div class="ta-box" id="ta-description">
+            <b>Análisis Técnico:</b> Cargando datos del servidor local en puerto 5000...
+        </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: RIVALES Y CONSOLA IA -->
+    <div class="panel">
+        <h3>🔴 RIVALES / DXY</h3>
+        <div id="rivales-container" style="display:flex; flex-direction:column; gap:6px; overflow-y:auto; flex:1; max-height: 250px;">
+            <div class="market-slot" id="widget-rival1"></div>
+            <div class="market-slot" id="widget-rival2"></div>
+        </div>
+
+        <h3 style="margin-top: 10px;">💬 CONSOLA IA & MACRO</h3>
+        <div class="ia-console" id="ia-console">
+            <div>> Kernel Bloomberg Pro v9.0 inicializado.</div>
+            <div>> Conexión establecida con Python Flask (127.0.0.1:5000).</div>
+        </div>
+        <div class="ia-input-area">
+            <input type="text" id="chat-input" placeholder="Consulta macro o comando...">
+            <button onclick="sendMessage()">ENVIAR</button>
+        </div>
     </div>
 </div>
 
 <script>
+    const configuracionesMercado = {
+        EURUSD: {
+            nombre: "EUR/USD (Forex)",
+            aliados: [
+                { id: "widget-aliado1", name: "S&P 500", symbol: "FOREXCOM:SPXUSD" },
+                { id: "widget-aliado2", name: "Oro", symbol: "TVC:GOLD" },
+                { id: "widget-aliado3", name: "Bonos 10Y", symbol: "CBOT:ZN1!" }
+            ],
+            rivales: [
+                { id: "widget-rival1", name: "DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
+                { id: "widget-rival2", name: "VIX (Miedo)", symbol: "TVC:VIX" }
+            ],
+            ta: "<b>Soporte:</b> 1.15160 | <b>Resistencia:</b> 1.15420<br><b>Estructura:</b> Flujo directo desde el servidor Python local."
+        },
+        BTCUSD: {
+            nombre: "BTC/USD (Crypto)",
+            aliados: [
+                { id: "widget-aliado1", name: "Nasdaq 100", symbol: "NASDAQ:NDX" },
+                { id: "widget-aliado2", name: "Ethereum", symbol: "BITSTAMP:ETHUSD" },
+                { id: "widget-aliado3", name: "MicroStrategy", symbol: "NASDAQ:MSTR" }
+            ],
+            rivales: [
+                { id: "widget-rival1", name: "DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
+                { id: "widget-rival2", name: "Bonos 10Y", symbol: "CBOT:ZN1!" }
+            ],
+            ta: "<b>Soporte:</b> $63,500 | <b>Resistencia:</b> $66,800<br><b>Estructura:</b> Alta volatilidad ligada al apetito por riesgo."
+        },
+        KO: {
+            nombre: "COCA-COLA (Stock)",
+            aliados: [
+                { id: "widget-aliado1", name: "S&P 500", symbol: "FOREXCOM:SPXUSD" },
+                { id: "widget-aliado2", name: "Dow Jones", symbol: "CAPITALCOM:US30" },
+                { id: "widget-aliado3", name: "Oro", symbol: "TVC:GOLD" }
+            ],
+            rivales: [
+                { id: "widget-rival1", name: "DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
+                { id: "widget-rival2", name: "Tasa FED", symbol: "ECONOMICS:USINT" }
+            ],
+            ta: "<b>Soporte:</b> $67.20 | <b>Resistencia:</b> $69.50<br><b>Estructura:</b> Activo defensivo de baja beta."
+        }
+    };
+
+    function cargarWidgetsTradingView(activoKey) {
+        const config = configuracionesMercado[activoKey];
+        if (!config) return;
+
+        [...config.aliados, ...config.rivales].forEach(item => {
+            const el = document.getElementById(item.id);
+            if (el) el.innerHTML = "";
+        });
+
+        config.aliados.forEach(item => {
+            if(document.getElementById(item.id)) {
+                new TradingView.widget({
+                    "width": "100%",
+                    "height": "110",
+                    "symbol": item.symbol,
+                    "interval": "15",
+                    "timezone": "Etc/UTC",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "es",
+                    "toolbar_bg": "#111520",
+                    "enable_publishing": false,
+                    "hide_top_toolbar": true,
+                    "hide_legend": true,
+                    "save_image": false,
+                    "container_id": item.id
+                });
+            }
+        });
+
+        config.rivales.forEach(item => {
+            if(document.getElementById(item.id)) {
+                new TradingView.widget({
+                    "width": "100%",
+                    "height": "110",
+                    "symbol": item.symbol,
+                    "interval": "15",
+                    "timezone": "Etc/UTC",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "es",
+                    "toolbar_bg": "#111520",
+                    "enable_publishing": false,
+                    "hide_top_toolbar": true,
+                    "hide_legend": true,
+                    "save_image": false,
+                    "container_id": item.id
+                });
+            }
+        });
+
+        document.getElementById('ta-description').innerHTML = config.ta;
+        document.getElementById('cfd-title').innerText = `GRAPH CFD: ${config.nombre} (PYTHON REAL TIME FEED)`;
+    }
+
+    function cambiarActivoMaster() {
+        const select = document.getElementById('masterAssetSelect');
+        cargarWidgetsTradingView(select.value);
+    }
+
     const canvas = document.getElementById('cfd-canvas');
     const ctx = canvas.getContext('2d');
     let cfdData = [];
-    let currentPrice = 1.15300;
 
-    // 1. CONEXIÓN AL SERVIDOR FLASK
     async function updateCFD() {
         try {
-            // Petición al servidor (debe estar corriendo en puerto 5000)
             const response = await fetch('http://127.0.0.1:5000/precio');
             const data = await response.json();
             
-            const nuevoPrecio = parseFloat(data.cfd);
+            const nuevoPrecio = parseFloat(data.precio);
             
-            // Crear nueva vela
             const ultimaVela = cfdData.length > 0 ? cfdData[cfdData.length - 1] : { close: nuevoPrecio };
             const nuevaVela = {
                 open: ultimaVela.close,
@@ -58,18 +239,16 @@
             };
 
             cfdData.push(nuevaVela);
-            if (cfdData.length > 50) cfdData.shift();
+            if (cfdData.length > 60) cfdData.shift();
             
-            // Actualizar interfaz
             drawCFD();
             updateBattleBar();
             
         } catch (e) {
-            console.error("Servidor no detectado. Revisa que Flask esté corriendo.");
+            console.error("Servidor Flask no detectado en puerto 5000.");
         }
     }
 
-    // 2. DIBUJO DEL CANVAS
     function drawCFD() {
         const w = canvas.width = canvas.offsetWidth;
         const h = canvas.height = canvas.offsetHeight;
@@ -77,34 +256,54 @@
         
         if (cfdData.length < 2) return;
 
-        const padding = 40;
+        const padding = 30;
         const prices = cfdData.map(v => v.high).concat(cfdData.map(v => v.low));
         const max = Math.max(...prices);
         const min = Math.min(...prices);
         
         ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 2;
         ctx.beginPath();
         cfdData.forEach((v, i) => {
             const x = (i / (cfdData.length - 1)) * (w - padding);
-            const y = h - ((v.close - min) / (max - min) * (h - padding)) - padding/2;
+            const range = max - min === 0 ? 1 : max - min;
+            const y = h - ((v.close - min) / range * (h - padding)) - padding/2;
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         });
         ctx.stroke();
     }
 
-    // 3. BARRA DE PELEA
     function updateBattleBar() {
         const fill = document.getElementById('battle-fill');
         const score = document.getElementById('battle-score');
-        // Simulación basada en movimiento
-        const p = 50 + (Math.random() * 20 - 10); 
+        const p = 50 + (Math.random() * 16 - 8); 
         fill.style.width = p + "%";
         score.innerText = `${p.toFixed(0)}% / ${(100-p).toFixed(0)}%`;
     }
 
-    // INICIAR
-    setInterval(updateCFD, 1000);
+    function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const consoleLog = document.getElementById('ia-console');
+        if (input.value.trim() === "") return;
+
+        const msg = document.createElement('div');
+        msg.innerText = "> " + input.value;
+        consoleLog.appendChild(msg);
+        
+        const response = document.createElement('div');
+        response.style.color = "#f59e0b";
+        response.innerText = "IA: Procesando confluencia macroeconómica...";
+        consoleLog.appendChild(response);
+        
+        input.value = "";
+        consoleLog.scrollTop = consoleLog.scrollHeight;
+    }
+
+    window.onload = function() {
+        cargarWidgetsTradingView('EURUSD');
+        setInterval(updateCFD, 1000);
+    };
 </script>
 </body>
 </html>
