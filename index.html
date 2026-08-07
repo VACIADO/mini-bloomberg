@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Terminal Bloomberg Pro v8.0 – Professional Time Scale CFD</title>
+<title>Terminal Bloomberg Pro v9.0 – Team Battle CFD Engine</title>
 <style>
   :root {
     --bg-main: #070a0f;
@@ -112,7 +112,7 @@
   .header-aliado { background: rgba(56, 189, 248, 0.1); color: var(--accent-ally); border-left: 4px solid var(--accent-ally); }
   .header-rival { background: rgba(244, 63, 94, 0.1); color: var(--accent-rival); border-left: 4px solid var(--accent-rival); }
 
-  /* WIDGETS */
+  /* WIDGETS LATERALES */
   .market-slot { 
     background: var(--bg-surface); 
     border: 1px solid var(--border-color); 
@@ -128,7 +128,7 @@
   .slot-title { font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); }
   .tv-container { flex: 1; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-input); }
 
-  /* ZONA CENTRAL (CFD) */
+  /* ZONA CENTRAL (CFD + BATTLE ENGINE) */
   .center-column { display: flex; flex-direction: column; gap: 14px; }
 
   .cfd-panel { 
@@ -138,11 +138,11 @@
     padding: 14px; 
     display: flex; 
     flex-direction: column; 
-    height: 520px; 
+    height: 540px; 
     box-shadow: var(--shadow-main);
   }
   
-  .header-cfd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .header-cfd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
   .cfd-title { margin: 0; font-size: 0.95rem; font-weight: 800; color: var(--accent-amber); }
 
   .cfd-controls { display: flex; align-items: center; gap: 10px; }
@@ -160,6 +160,40 @@
     outline: none; 
   }
 
+  /* BARRA DE ESTADO DE PELEA EN VIVO */
+  .battle-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-input);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    border: 1px solid var(--border-color);
+  }
+
+  .battle-team-label { font-size: 0.7rem; font-weight: 800; }
+  .battle-team-ally { color: var(--accent-ally); }
+  .battle-team-rival { color: var(--accent-rival); }
+
+  .battle-progress-bg {
+    flex: 1;
+    height: 8px;
+    background: var(--accent-rival);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .battle-progress-fill {
+    height: 100%;
+    background: var(--accent-ally);
+    width: 50%;
+    transition: width 0.4s ease;
+  }
+
+  .battle-status-text { font-size: 0.7rem; font-weight: 700; color: var(--text-primary); font-family: monospace; }
+
   #cfd-container { 
     flex: 1; 
     border: 1px solid var(--border-color); 
@@ -173,7 +207,7 @@
 
   #cfd-canvas { width: 100%; height: 100%; display: block; }
 
-  /* CÁMARAS Y COPILOT */
+  /* CÁMARAS Y COPILOT IA */
   .intel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   @media (max-width: 640px) { .intel-grid { grid-template-columns: 1fr; } }
 
@@ -223,13 +257,13 @@
 </head>
 <body>
 
-<!-- BARRA SUPERIOR -->
+<!-- BARRA SUPERIOR MAESTRA -->
 <div class="master-bar">
   <div class="master-title">
-    <span>⚡ TERMINAL BLOOMBERG PRO v8.0</span>
+    <span>⚡ TERMINAL BLOOMBERG PRO v9.0</span>
   </div>
   <div class="master-controls">
-    <label for="masterAssetSelect" class="master-label">Seleccionar Activo:</label>
+    <label for="masterAssetSelect" class="master-label">Seleccionar Activo Principal:</label>
     <select id="masterAssetSelect" class="master-select">
       <option value="EURUSD" selected>🇪🇺 EUR/USD (Euro / Dólar)</option>
       <option value="GOLD">🥇 ORO (XAU/USD)</option>
@@ -239,10 +273,10 @@
   </div>
 </div>
 
-<!-- TRES COLUMNAS -->
+<!-- ESTRUCTURA TRES COLUMNAS -->
 <div class="terminal-layout">
 
-  <!-- COLUMNA IZQUIERDA: EQUIPO EURO -->
+  <!-- COLUMNA IZQUIERDA: EQUIPO EURO / ALIADOS -->
   <div class="panel-column">
     <div class="column-header header-aliado">🛡️ EQUIPO EURO (Aliados / Risk-On)</div>
     
@@ -253,13 +287,13 @@
     <div class="market-slot"><div class="slot-header"><span class="slot-title" id="title-aliado5">Bund DE 10Y</span></div><div class="tv-container" id="widget-aliado5"></div></div>
   </div>
 
-  <!-- COLUMNA CENTRAL: CFD + CÁMARAS + COPILOT -->
+  <!-- COLUMNA CENTRAL: CFD + ENGINE DE PELEA + CÁMARAS -->
   <div class="center-column">
     <div class="cfd-panel">
       <div class="header-cfd">
-        <h2 class="cfd-title" id="cfd-title">GRAPH CFD: EUR/USD (PRO TIME SCALE)</h2>
+        <h2 class="cfd-title" id="cfd-title">GRAPH CFD: EUR/USD (TEAM BATTLE)</h2>
         <div class="cfd-controls">
-          <span class="cfd-btn-hint">🖱️ Scroll: Zoom | Arrastro: Mover</span>
+          <span class="cfd-btn-hint">🖱️ Rueda: Zoom | Arrastro: Mover</span>
           <select id="tf-select" class="timeframe-select">
             <option value="1000" data-tf="M1" data-minutes="1">M1 (1 Min)</option>
             <option value="2500" data-tf="M5" data-minutes="5" selected>M5 (5 Min)</option>
@@ -268,13 +302,23 @@
           </select>
         </div>
       </div>
+
+      <!-- BARRA DE MARCADOR DE PELEA DE EQUIPOS -->
+      <div class="battle-bar-container">
+        <span class="battle-team-label battle-team-ally">EQUIPO EURO</span>
+        <div class="battle-progress-bg">
+          <div id="battle-fill" class="battle-progress-fill"></div>
+        </div>
+        <span class="battle-team-label battle-team-rival">EQUIPO DÓLAR</span>
+        <span id="battle-score" class="battle-status-text">50% / 50%</span>
+      </div>
       
       <div id="cfd-container">
         <canvas id="cfd-canvas"></canvas>
       </div>
     </div>
 
-    <!-- CÁMARAS INTELIGENTES -->
+    <!-- CÁMARAS DE INTELIGENCIA -->
     <div class="intel-grid">
       <div class="intel-box">
         <h3>📐 Asistente Técnico (Estructura)</h3>
@@ -292,17 +336,17 @@
       <div class="news-panel">
         <div>
           <h3 style="margin:0 0 4px 0; font-size:0.75rem; color:var(--text-secondary); font-weight:700;">COPILOT IA MACRO</h3>
-          <p style="font-size:0.7rem; color:var(--text-muted);">Escribe para consultar la lectura de ambos equipos.</p>
+          <p style="font-size:0.7rem; color:var(--text-muted);">El motor analiza la tracción entre ambos equipos en vivo.</p>
         </div>
         <div class="input-group">
-          <input type="text" id="chat-input" placeholder="Ej: ¿Cuándo se hizo el máximo?" onkeypress="if(event.key==='Enter') sendMessage()">
+          <input type="text" id="chat-input" placeholder="Ej: ¿Quién va ganando la pelea ahora?" onkeypress="if(event.key==='Enter') sendMessage()">
           <button class="btn-send" onclick="sendMessage()">Enviar</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- COLUMNA DERECHA: EQUIPO DÓLAR -->
+  <!-- COLUMNA DERECHA: EQUIPO DÓLAR / RIVALES -->
   <div class="panel-column">
     <div class="column-header header-rival">⚔️ EQUIPO DÓLAR (Rivales / Presión USD)</div>
     
@@ -317,28 +361,28 @@
 
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-// CONFIGURACIÓN DE LOS 10 WIDGETS
+// SÍMBOLOS CORREGIDOS Y OPTIMIZADOS PARA TRADINGVIEW
 const configuracionesMercado = {
   EURUSD: {
     nombre: "EUR/USD (Euro / Dólar)",
-    basePrice: 1.0850,
+    basePrice: 1.15300,
     volatility: 0.0008,
     aliados: [
       { id: "widget-aliado1", title: "title-aliado1", name: "🇪🇺 EUR/JPY", symbol: "FX:EURJPY" },
       { id: "widget-aliado2", title: "title-aliado2", name: "🇩🇪 DAX 40", symbol: "CAPITALCOM:DE40" },
       { id: "widget-aliado3", title: "title-aliado3", name: "🇺🇸 Dow Jones", symbol: "CAPITALCOM:US30" },
       { id: "widget-aliado4", title: "title-aliado4", name: "🥇 ORO", symbol: "TVC:GOLD" },
-      { id: "widget-aliado5", title: "title-aliado5", name: "🇩🇪 Bund DE 10Y", symbol: "TVC:DE10Y" }
+      { id: "widget-aliado5", title: "title-aliado5", name: "🇩🇪 Bund DE 10Y", symbol: "EUREX:FGBL1!" } // Futuro oficial del Bund Alemán
     ],
     rivales: [
       { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
       { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 S&P 500", symbol: "FOREXCOM:SPXUSD" },
       { id: "widget-rival3", title: "title-rival3", name: "🛢️ Petróleo WTI", symbol: "TVC:USOIL" },
       { id: "widget-rival4", title: "title-rival4", name: "📊 VIX (Miedo)", symbol: "TVC:VIX" },
-      { id: "widget-rival5", title: "title-rival5", name: "🇺🇸 Treasury US 10Y", symbol: "TVC:US10Y" }
+      { id: "widget-rival5", title: "title-rival5", name: "🇺🇸 Treasury US 10Y", symbol: "CBOT:ZN1!" } // Futuro oficial del Bono US 10Y
     ],
-    ta: "<b>Soporte Clave:</b> 1.0820 | <b>Resistencia:</b> 1.0890<br><b>Estructura:</b> Ruptura alcista en M15. Aliados (EUR/JPY + DAX) presionan hacia arriba.",
-    macro: "La fortaleza de los rendimientos del Bund apoya al Euro. Si el DXY rompe soportes, el EUR/USD buscará la zona de 1.0910."
+    ta: "<b>Soporte Clave:</b> 1.14900 | <b>Resistencia:</b> 1.15600<br><b>Estructura:</b> Consolidación sobre la zona de 1.15300. Si supera 1.15400 impulsará el rally.",
+    macro: "La presión sobre el índice dólar mantiene al Euro fuerte. Si los rendimientos del Bund ganan tracción frente al Treasury US 10Y, la paridad buscará 1.15800."
   },
   GOLD: {
     nombre: "🥇 ORO (XAU/USD)",
@@ -353,13 +397,13 @@ const configuracionesMercado = {
     ],
     rivales: [
       { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
-      { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 Treasury US 10Y", symbol: "TVC:US10Y" },
+      { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 Treasury US 10Y", symbol: "CBOT:ZN1!" },
       { id: "widget-rival3", title: "title-rival3", name: "📈 S&P 500", symbol: "FOREXCOM:SPXUSD" },
       { id: "widget-rival4", title: "title-rival4", name: "💻 Nasdaq 100", symbol: "NASDAQ:NDX" },
-      { id: "widget-rival5", title: "title-rival5", name: "🇩🇪 Bund DE 10Y", symbol: "TVC:DE10Y" }
+      { id: "widget-rival5", title: "title-rival5", name: "🇩🇪 Bund DE 10Y", symbol: "EUREX:FGBL1!" }
     ],
-    ta: "<b>Soporte Clave:</b> $2,365 | <b>Resistencia:</b> $2,410<br><b>Estructura:</b> Consolidación en canal ascendente.",
-    macro: "El Oro actúa como refugio frente al repunte en el VIX. Caídas en los rendimientos de bonos impulsan las compras."
+    ta: "<b>Soporte Clave:</b> $2,365 | <b>Resistencia:</b> $2,410<br><b>Estructura:</b> Canal ascendente impulsado por demanda de cobertura.",
+    macro: "Soporte firme por compras defensivas. Caídas en el DXY aceleran la ruptura hacia $2,420."
   },
   BTCUSD: {
     nombre: "₿ BITCOIN (BTC/USD)",
@@ -374,13 +418,13 @@ const configuracionesMercado = {
     ],
     rivales: [
       { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
-      { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 Treasury US 10Y", symbol: "TVC:US10Y" },
+      { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 Treasury US 10Y", symbol: "CBOT:ZN1!" },
       { id: "widget-rival3", title: "title-rival3", name: "📊 VIX (Miedo)", symbol: "TVC:VIX" },
       { id: "widget-rival4", title: "title-rival4", name: "🛢️ Petróleo WTI", symbol: "TVC:USOIL" },
-      { id: "widget-rival5", title: "title-rival5", name: "🇩🇪 Bund DE 10Y", symbol: "TVC:DE10Y" }
+      { id: "widget-rival5", title: "title-rival5", name: "🇩🇪 Bund DE 10Y", symbol: "EUREX:FGBL1!" }
     ],
-    ta: "<b>Soporte Clave:</b> $63,800 | <b>Resistencia:</b> $67,500<br><b>Estructura:</b> Imbalance FVG por rellenar en gráfico superior.",
-    macro: "Alta correlación con el apetito de riesgo tecnológico. Si Wall Street abre al alza, BTC romperá resistencias."
+    ta: "<b>Soporte Clave:</b> $63,800 | <b>Resistencia:</b> $67,500<br><b>Estructura:</b> Ineficiencia FVG por rellenar en parte superior.",
+    macro: "Correlación directa con el apetito de riesgo de Wall Street."
   },
   KO: {
     nombre: "🥤 COCA-COLA (Stock US)",
@@ -394,20 +438,24 @@ const configuracionesMercado = {
       { id: "widget-aliado5", title: "title-aliado5", name: "🥇 ORO", symbol: "TVC:GOLD" }
     ],
     rivales: [
-      { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 Treasury US 10Y", symbol: "TVC:US10Y" },
+      { id: "widget-rival1", title: "title-rival1", name: "🇺🇸 Treasury US 10Y", symbol: "CBOT:ZN1!" },
       { id: "widget-rival2", title: "title-rival2", name: "🇺🇸 DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
       { id: "widget-rival3", title: "title-rival3", name: "🛢️ Petróleo WTI", symbol: "TVC:USOIL" },
       { id: "widget-rival4", title: "title-rival4", name: "📊 VIX (Miedo)", symbol: "TVC:VIX" },
       { id: "widget-rival5", title: "title-rival5", name: "💻 Nasdaq 100", symbol: "NASDAQ:NDX" }
     ],
     ta: "<b>Soporte Clave:</b> $61.50 | <b>Resistencia:</b> $65.00<br><b>Estructura:</b> Tendencia alcista acumulativa de bajo riesgo.",
-    macro: "Acción defensiva de dividendo. Aumentos agresivos en la rentabilidad de los bonos frenan temporalmente su avance."
+    macro: "Título defensivo. Subidas de rentabilidad en bonos reducen temporalmente su impulso."
   }
 };
 
-// VARIABLES DEL MOTOR CANVAS CFD
+// ESTADO DE LA PELEA DE EQUIPOS
+let fuerzaAliados = 0.6; // Estado actual del bando Euro
+let fuerzaRivales = -0.2; // Estado actual del bando Dólar
+
+// MOTOR CANVAS DEL CFD
 let cfdData = [];
-let currentPrice = 1.0850;
+let currentPrice = 1.15300;
 let currentVolatility = 0.0008;
 let updateInterval = null;
 let currentSpeed = 2500;
@@ -460,37 +508,89 @@ function cambiarActivoMaestro(codigoActivo) {
   document.getElementById("macro-report").innerHTML = config.macro;
 
   initCFD();
-  logConsole("SISTEMA", `Conectado a ${config.nombre}. Escala temporal lista.`);
+  logConsole("SISTEMA", `Mercado cambiado a ${config.nombre}. Bonos y widgets sincronizados.`);
 }
 
-function generarVela(prevDate) {
-  let tfMult = 1.0;
-  if(currentTimeframe === "M1") tfMult = 0.5;
-  if(currentTimeframe === "M5") tfMult = 1.0;
-  if(currentTimeframe === "M15") tfMult = 1.8;
-  if(currentTimeframe === "H1") tfMult = 3.5;
+// CALCULA LA PELEA EN VIVO ENTRE AMBOS BANDS
+function actualizarMarcadorPelea() {
+  // Oscilación dinámica simulando el combate de precios
+  fuerzaAliados += (Math.random() - 0.49) * 0.15;
+  fuerzaRivales += (Math.random() - 0.51) * 0.15;
 
-  let noise = (Math.random() - 0.492) * currentVolatility * tfMult;
+  fuerzaAliados = Math.max(-1, Math.min(1, fuerzaAliados));
+  fuerzaRivales = Math.max(-1, Math.min(1, fuerzaRivales));
+
+  // Cálculo de Porcentaje de Dominio (50% es empate)
+  let balance = 50 + ((fuerzaAliados - fuerzaRivales) * 25);
+  balance = Math.max(5, Math.min(95, balance));
+
+  const fillEl = document.getElementById("battle-fill");
+  const scoreEl = document.getElementById("battle-score");
+
+  if(fillEl) fillEl.style.width = `${balance}%`;
+  if(scoreEl) scoreEl.innerText = `${balance.toFixed(0)}% / ${(100 - balance).toFixed(0)}%`;
+
+  return (fuerzaAliados - fuerzaRivales); // Fuerza Neta
+}
+
+// GENERADOR DE VELAS BASADO EN LA PELEA DE EQUIPOS
+function generarVela(prevDate, esHistorial = false) {
+  let tfMult = 1.0;
+  if (currentTimeframe === "M1") tfMult = 0.5;
+  if (currentTimeframe === "M5") tfMult = 1.0;
+  if (currentTimeframe === "M15") tfMult = 1.8;
+  if (currentTimeframe === "H1") tfMult = 3.5;
+
+  const fuerzaNeta = actualizarMarcadorPelea();
+  const ruidoMercado = (Math.random() - 0.482) * currentVolatility * 0.3 * tfMult;
+
+  // El desplazamiento de la vela depende DIRECTAMENTE del ganador de la pelea
+  const deltaPelea = fuerzaNeta * currentVolatility * 1.5 * tfMult;
+  const deltaTotal = deltaPelea + ruidoMercado;
+
   const open = currentPrice;
-  const close = open + noise;
-  const high = Math.max(open, close) + Math.abs(Math.random() * currentVolatility * 0.5 * tfMult);
-  const low = Math.min(open, close) - Math.abs(Math.random() * currentVolatility * 0.5 * tfMult);
+  const close = open + deltaTotal;
   
-  currentPrice = close;
+  const high = Math.max(open, close) + Math.abs((Math.random() * currentVolatility * 0.4) * tfMult);
+  const low = Math.min(open, close) - Math.abs((Math.random() * currentVolatility * 0.4) * tfMult);
+  
+  if (!esHistorial) {
+    currentPrice = close;
+  }
+
   const time = new Date(prevDate ? prevDate.getTime() + (timeframeMinutes * 60 * 1000) : new Date().getTime());
-  
   return { open, high, low, close, time };
 }
 
+// CONSTRUCCIÓN DEL HISTORIAL HACIA ATRÁS (MANTIENE EL PRECIO ESTABLE)
 function initCFD() {
   cfdData = [];
-  let startTime = new Date(new Date().getTime() - (150 * timeframeMinutes * 60 * 1000));
-  
+  let pricePointer = currentPrice;
+  let timePointer = new Date();
+  let tempCandles = [];
+
+  let tfMult = 1.0;
+  if (currentTimeframe === "M1") tfMult = 0.5;
+  if (currentTimeframe === "M5") tfMult = 1.0;
+  if (currentTimeframe === "M15") tfMult = 1.8;
+  if (currentTimeframe === "H1") tfMult = 3.5;
+
   for (let i = 0; i < 150; i++) {
-    let vela = generarVela(startTime);
-    startTime = vela.time;
-    cfdData.push(vela);
+    let fuerzaNeta = (Math.random() - 0.48) * 1.2;
+    let noise = (fuerzaNeta * currentVolatility * 1.5 * tfMult) + ((Math.random() - 0.5) * currentVolatility * 0.3 * tfMult);
+    
+    let close = pricePointer;
+    let open = pricePointer - noise;
+    let high = Math.max(open, close) + Math.abs((Math.random() * currentVolatility * 0.4) * tfMult);
+    let low = Math.min(open, close) - Math.abs((Math.random() * currentVolatility * 0.4) * tfMult);
+
+    tempCandles.unshift({ open, high, low, close, time: new Date(timePointer) });
+
+    timePointer = new Date(timePointer.getTime() - (timeframeMinutes * 60 * 1000));
+    pricePointer = open;
   }
+
+  cfdData = tempCandles;
   lastCandleTime = cfdData[cfdData.length - 1].time;
   viewOffset = 0;
   drawCFD();
@@ -506,7 +606,7 @@ function resizeCanvas() {
   drawCFD();
 }
 
-// FORMATOS DE TIEMPO ESTILO TRADINGVIEW
+// FORMATOS DE FECHA Y HORA
 function formatTimeOnly(date) {
   const h = String(date.getHours()).padStart(2, '0');
   const m = String(date.getMinutes()).padStart(2, '0');
@@ -522,7 +622,7 @@ function formatDateFull(date) {
   return `${d} ${mon} ${h}:${min}`;
 }
 
-// DIBUJO COMPLETO DEL GRÁFICO Y BARRA DE TIEMPO DEDICADA
+// DIBUJO COMPLETO DEL CANVA Y BARRA DE TIEMPO DEDICADA
 function drawCFD() {
   if (!ctx || cfdData.length === 0) return;
   const rect = container.getBoundingClientRect();
@@ -531,8 +631,8 @@ function drawCFD() {
 
   ctx.clearRect(0, 0, w, h);
 
-  const paddingRight = 65;   // Barra Lateral de Precios
-  const paddingBottom = 28;  // FRANJA INFERIOR DEDICADA DE TIEMPO
+  const paddingRight = 75;   // Escala Lateral de Precios
+  const paddingBottom = 28;  // Franja Inferior Dedicada de Tiempo
   const paddingTop = 15;
   const mainHeight = h - paddingTop - paddingBottom;
   const mainWidth = w - paddingRight - 10;
@@ -546,14 +646,14 @@ function drawCFD() {
   const lows = visibleData.map(v => v.low);
   let max = Math.max(...highs);
   let min = Math.min(...lows);
-  const margin = (max - min) * 0.08 || 0.01;
+  const margin = (max - min) * 0.08 || 0.001;
   max += margin;
   min -= margin;
 
   const getX = (i) => 10 + (i / Math.max(1, visibleData.length - 1)) * (mainWidth - 10);
   const getY = (val) => paddingTop + (max - val) / (max - min) * mainHeight;
 
-  // 1. REJILLA HORIZONTAL Y ESCALA DE PRECIOS LATERAL (EJE Y)
+  // 1. REJILLA Y EJE Y (PRECIOS CON 5 DECIMALES)
   ctx.strokeStyle = "#1b2230";
   ctx.lineWidth = 1;
   ctx.fillStyle = "#64748b";
@@ -569,22 +669,19 @@ function drawCFD() {
     ctx.lineTo(w - paddingRight, yPos);
     ctx.stroke();
 
-    ctx.fillText(priceVal.toFixed(priceVal < 10 ? 4 : 2), w - paddingRight + 8, yPos + 3);
+    ctx.fillText(priceVal.toFixed(priceVal < 10 ? 5 : 2), w - paddingRight + 8, yPos + 3);
   }
 
-  // 2. DIBUJAR LA FRANJA DEDICADA DE LA BARRA DE TIEMPO (EJE X)
-  // Fondo de la franja inferior
+  // 2. FRANJA INFERIOR DEDICADA (EJE X - TIEMPO)
   ctx.fillStyle = "#0c1017";
   ctx.fillRect(0, h - paddingBottom, w - paddingRight, paddingBottom);
 
-  // Línea divisoria superior de la barra de tiempo
   ctx.strokeStyle = "#232b3b";
   ctx.beginPath();
   ctx.moveTo(0, h - paddingBottom);
   ctx.lineTo(w - paddingRight, h - paddingBottom);
   ctx.stroke();
 
-  // Marcas de tiempo (Ticks) y Horas sobre la franja
   const timeStep = Math.max(1, Math.floor(visibleData.length / 6));
   let lastDayPrinted = null;
 
@@ -592,29 +689,24 @@ function drawCFD() {
     const xPos = getX(i);
     const candle = visibleData[i];
 
-    // Línea de rejilla vertical en el gráfico
     ctx.strokeStyle = "#161b26";
     ctx.beginPath();
     ctx.moveTo(xPos, paddingTop);
     ctx.lineTo(xPos, h - paddingBottom);
     ctx.stroke();
 
-    // Muesca (Tick mark) en la barra de tiempo
     ctx.strokeStyle = "#334155";
     ctx.beginPath();
     ctx.moveTo(xPos, h - paddingBottom);
     ctx.lineTo(xPos, h - paddingBottom + 4);
     ctx.stroke();
 
-    // Texto de Hora/Fecha en la franja
     ctx.fillStyle = "#94a3b8";
     ctx.textAlign = "center";
     ctx.font = "10px monospace";
 
     const currentDay = candle.time.getDate();
     let label = formatTimeOnly(candle.time);
-    
-    // Si cambia de día, mostrar fecha corta
     if (lastDayPrinted !== null && lastDayPrinted !== currentDay) {
       label = `${currentDay}/${candle.time.getMonth() + 1} ${label}`;
     }
@@ -623,7 +715,7 @@ function drawCFD() {
     ctx.fillText(label, xPos, h - paddingBottom + 17);
   }
 
-  // 3. DIBUJAR VELAS JAPONESAS
+  // 3. VELAS JAPONESAS
   const candleWidth = Math.max(2, (mainWidth / visibleData.length) - 3);
   ctx.textAlign = "left";
 
@@ -648,7 +740,7 @@ function drawCFD() {
     ctx.fillRect(x - candleWidth / 2, Math.min(yOpen, yClose), candleWidth, Math.max(2, Math.abs(yClose - yOpen)));
   });
 
-  // 4. LÍNEA Y BADGE DE PRECIO ACTUAL
+  // 4. PRECIO ACTUAL Y BADGE FLOTANTE
   const lastCandle = cfdData[cfdData.length - 1];
   const lastY = getY(lastCandle.close);
   ctx.strokeStyle = "#f59e0b";
@@ -663,16 +755,14 @@ function drawCFD() {
   ctx.fillRect(w - paddingRight, lastY - 9, paddingRight, 18);
   ctx.fillStyle = "#000000";
   ctx.font = "bold 10px monospace";
-  ctx.fillText(lastCandle.close.toFixed(lastCandle.close < 10 ? 4 : 2), w - paddingRight + 6, lastY + 3);
+  ctx.fillText(lastCandle.close.toFixed(lastCandle.close < 10 ? 5 : 2), w - paddingRight + 6, lastY + 3);
 
-  // 5. CROSSHAIR Y BADGES FLOTANTES (TRADINGVIEW MODE)
+  // 5. CROSSHAIR + TIEMPO TRADINGVIEW
   if (mousePos.x > 0 && mousePos.x < w - paddingRight && mousePos.y > paddingTop && mousePos.y < h - paddingBottom) {
     ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
     ctx.setLineDash([2, 2]);
     
-    // Línea Vertical
     ctx.beginPath(); ctx.moveTo(mousePos.x, paddingTop); ctx.lineTo(mousePos.x, h - paddingBottom); ctx.stroke();
-    // Línea Horizontal
     ctx.beginPath(); ctx.moveTo(0, mousePos.y); ctx.lineTo(w - paddingRight, mousePos.y); ctx.stroke();
     ctx.setLineDash([]);
 
@@ -682,7 +772,7 @@ function drawCFD() {
     ctx.fillRect(w - paddingRight, mousePos.y - 8, paddingRight, 16);
     ctx.fillStyle = "#f8fafc";
     ctx.font = "9px monospace";
-    ctx.fillText(hoverPrice.toFixed(hoverPrice < 10 ? 4 : 2), w - paddingRight + 4, mousePos.y + 3);
+    ctx.fillText(hoverPrice.toFixed(hoverPrice < 10 ? 5 : 2), w - paddingRight + 4, mousePos.y + 3);
 
     // Badge Tiempo Flotante (Dentro de la franja Eje X)
     const hoveredIdx = Math.min(visibleData.length - 1, Math.max(0, Math.round((mousePos.x - 10) / (mainWidth - 10) * (visibleData.length - 1))));
@@ -732,8 +822,8 @@ function sendMessage() {
   input.value = "";
   logConsole("USUARIO", msg);
   setTimeout(() => {
-    logConsole("COPILOT IA", `Escala temporal leída correctamente. Estructura de máximos/mínimos sincronizada.`);
-  }, 200);
+    logConsole("COPILOT IA", `El motor de pelea reporta dominancia sobre el bando del Euro. Precio actual: ${currentPrice.toFixed(5)}`);
+  }, 250);
 }
 
 // EVENTOS Y MOUSE
@@ -744,7 +834,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("resize", resizeCanvas);
 
-  // ZOOM
+  // ZOOM CON RUEDA
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
     if (e.deltaY < 0) {
@@ -755,7 +845,7 @@ document.addEventListener("DOMContentLoaded", () => {
     drawCFD();
   }, { passive: false });
 
-  // PANNING (ARRASTRE)
+  // ARRASTRE / PANNING
   container.addEventListener("mousedown", (e) => {
     isDragging = true;
     startX = e.clientX;
@@ -790,7 +880,7 @@ document.addEventListener("DOMContentLoaded", () => {
     drawCFD();
   });
 
-  // SELECTORES SUPERIORES
+  // CONTROLES DE LA BARRA MAESTRA
   document.getElementById("masterAssetSelect").addEventListener("change", (e) => {
     cambiarActivoMaestro(e.target.value);
   });
@@ -803,10 +893,10 @@ document.addEventListener("DOMContentLoaded", () => {
     
     initCFD();
     startLoop(currentSpeed);
-    logConsole("SISTEMA", `Timeframe a ${currentTimeframe} (${timeframeMinutes} min/vela). Franja de tiempo reajustada.`);
+    logConsole("SISTEMA", `Timeframe cambiado a ${currentTimeframe}. Historial recalculado sin saltos de precio.`);
   });
 
-  // INICIALIZACIÓN
+  // INICIALIZAR TERMINAL
   resizeCanvas();
   cambiarActivoMaestro("EURUSD");
   startLoop(currentSpeed);
