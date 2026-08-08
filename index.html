@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Bloomberg - Terminal de Análisis</title>
+    <title>Mini Bloomberg - Terminal Profesional</title>
+    <!-- Importamos TradingView Lightweight Charts para gráficos de velas profesionales -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root {
             --bg-color: #0b0e14;
@@ -139,7 +141,7 @@
         .meter-fill-euro {
             height: 100%;
             background: var(--accent-green);
-            width: 58%;
+            width: 50%;
             transition: width 0.3s ease;
         }
 
@@ -147,8 +149,7 @@
             background: #0d131d;
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            height: 350px;
-            position: relative;
+            height: 420px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -157,7 +158,7 @@
 
         @media (min-width: 768px) {
             .chart-container {
-                height: 450px;
+                height: 520px;
             }
         }
 
@@ -167,6 +168,7 @@
             align-items: center;
             font-size: 0.85rem;
             color: var(--text-muted);
+            margin-bottom: 8px;
         }
 
         .timeframes {
@@ -190,22 +192,9 @@
             border-color: var(--accent-blue);
         }
 
-        .chart-canvas-area {
+        #tvchart {
             flex-grow: 1;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-top: 1px dashed rgba(255, 255, 255, 0.1);
-            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-            margin: 10px 0;
-        }
-
-        .decision-line-text {
-            position: absolute;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            letter-spacing: 0.1em;
+            width: 100%;
         }
 
         .chart-footer-stats {
@@ -213,6 +202,9 @@
             justify-content: space-between;
             font-size: 0.9rem;
             font-family: monospace;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 6px;
+            margin-top: 6px;
         }
     </style>
 </head>
@@ -220,191 +212,203 @@
 
     <div class="container">
         
-        <!-- COLUMNA IZQUIERDA: BANDO EURO (6 Activos) -->
+        <!-- BANDO EURO (6 Activos Reales) -->
         <div class="panel">
             <h2>
                 <span>Bando Euro</span>
-                <span style="font-size: 0.7rem; color: var(--accent-green);">6 / 6 Activos</span>
+                <span style="font-size: 0.7rem; color: var(--accent-green);">Yahoo Real</span>
             </h2>
             <div class="asset-list">
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">Índice Euro (EURX)</span>
-                        <span class="asset-value positive">105.20</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Peso Principal</span>
-                        <span class="positive">+0.15%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">Índice Euro (EURX)</span><span class="asset-value" id="val_EURX">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_EURX">--</span></div>
                 </div>
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">Bonos Alemán 10Y</span>
-                        <span class="asset-value negative">2.45%</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Peso Deuda</span>
-                        <span class="negative">-0.05%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">Bonos Alemán 10Y</span><span class="asset-value" id="val_Bund_10Y">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_Bund_10Y">--</span></div>
                 </div>
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">Oro (XAU)</span>
-                        <span class="asset-value positive">2,380.50</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Refugio / Divisa</span>
-                        <span class="positive">+0.42%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">Oro (XAU)</span><span class="asset-value" id="val_Gold">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_Gold">--</span></div>
                 </div>
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">Dow Jones</span>
-                        <span class="asset-value positive">39,120.0</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Apetito Riesgo</span>
-                        <span class="positive">+0.30%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">Dow Jones</span><span class="asset-value" id="val_Dow_Jones">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_Dow_Jones">--</span></div>
                 </div>
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">EUR/JPY</span>
-                        <span class="asset-value positive">168.40</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Cruce / Carry</span>
-                        <span class="positive">+0.25%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">EUR/JPY</span><span class="asset-value" id="val_EUR_JPY">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_EUR_JPY">--</span></div>
                 </div>
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">Euro Stoxx 50</span>
-                        <span class="asset-value positive">5,050.0</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Bolsa Euro</span>
-                        <span class="positive">+0.35%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">Euro Stoxx 50</span><span class="asset-value" id="val_Euro_Stoxx_50">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_Euro_Stoxx_50">--</span></div>
                 </div>
             </div>
         </div>
 
-        <!-- COLUMNA CENTRAL: GRÁFICO CFD PRO Y BALANZA -->
+        <!-- CENTRO: GRÁFICO DE VELA JAPONESA PROFESIONAL -->
         <div class="center-panel">
             
             <div class="battle-meter">
-                <div class="meter-title">⚖️ Balanza de Mercado (6 vs 6 Conectada)</div>
+                <div class="meter-title">⚖️ Balanza de Fuerza (Datos Reales Yahoo)</div>
                 <div class="meter-bar-container">
-                    <div class="meter-fill-euro" id="euroPowerBar" style="width: 58%;"></div>
+                    <div class="meter-fill-euro" id="euroPowerBar" style="width: 50%;"></div>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">
-                    <span>🟢 Bloque Euro Dominante (58%)</span>
-                    <span>🔴 Bloque Dólar (42%)</span>
+                    <span id="euroLabelText">🟢 Bloque Euro (50%)</span>
+                    <span id="dolarLabelText">🔴 Bloque Dólar (50%)</span>
                 </div>
             </div>
 
             <div class="panel" style="padding: 10px;">
                 <div class="chart-container">
                     <div class="chart-header">
-                        <div><strong>CFD SINTÉTICO</strong> <span style="font-size: 0.75rem; color: var(--accent-blue);">Live Server</span></div>
+                        <div><strong>CFD SINTÉTICO (Velas)</strong> <span id="statusBias" style="font-size: 0.75rem; color: var(--accent-blue);">Conectado</span></div>
                         <div class="timeframes">
-                            <button class="tf-btn">M1</button>
-                            <button class="tf-btn active">M5</button>
-                            <button class="tf-btn">M15</button>
-                            <button class="tf-btn">H1</button>
+                            <button class="tf-btn" onclick="setTf('M1')">M1</button>
+                            <button class="tf-btn active" onclick="setTf('M5')">M5</button>
+                            <button class="tf-btn" onclick="setTf('M15')">M15</button>
+                            <button class="tf-btn" onclick="setTf('H1')">H1</button>
                         </div>
                     </div>
 
-                    <div class="chart-canvas-area">
-                        <span class="decision-line-text" style="top: 15%; color: var(--accent-green);">▲ ZONA DE COMPRA (Impulso Alcista)</span>
-                        <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">
-                            [ Gráfico Sincronizado por Servidor ]<br>
-                            <span style="font-size: 0.7rem;">Impulsos y fuerza en tiempo real</span>
-                        </div>
-                        <span class="decision-line-text" style="bottom: 15%; color: var(--accent-red);">▼ ZONA DE VENTA (Impulso Bajista)</span>
-                    </div>
+                    <!-- Contenedor del Gráfico TradingView -->
+                    <div id="tvchart"></div>
 
                     <div class="chart-footer-stats">
                         <span>Precio CFD: <strong id="cfdPrice">1.08750</strong></span>
-                        <span class="positive">Fuerza Neta: +0.34%</span>
+                        <span id="netForceText" class="positive">Fuerza Neta: 0.00%</span>
                     </div>
                 </div>
             </div>
 
         </div>
 
-        <!-- COLUMNA DERECHA: BANDO DÓLAR (6 Activos) -->
+        <!-- BANDO DÓLAR (6 Activos Reales) -->
         <div class="panel">
             <h2>
                 <span>Bando Dólar</span>
-                <span style="font-size: 0.7rem; color: var(--accent-red);">6 / 6 Activos</span>
+                <span style="font-size: 0.7rem; color: var(--accent-red);">Yahoo Real</span>
             </h2>
             <div class="asset-list">
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">Índice Dólar (DXY)</span>
-                        <span class="asset-value negative">104.10</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Peso Principal</span>
-                        <span class="negative">-0.12%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">Índice Dólar (DXY)</span><span class="asset-value" id="val_DXY">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_DXY">--</span></div>
                 </div>
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">Bonos EE.UU. 10Y</span>
-                        <span class="asset-value positive">4.22%</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Deuda Soberana</span>
-                        <span class="positive">+0.08%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">Bonos EE.UU. 10Y</span><span class="asset-value" id="val_US_10Y">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_US_10Y">--</span></div>
                 </div>
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">S&P 500</span>
-                        <span class="asset-value negative">5,430.0</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Riesgo EE.UU.</span>
-                        <span class="negative">-0.20%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">S&P 500</span><span class="asset-value" id="val_SP_500">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_SP_500">--</span></div>
                 </div>
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">Petróleo (WTI)</span>
-                        <span class="asset-value positive">78.50</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Commodity</span>
-                        <span class="positive">+0.50%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">Petróleo (WTI)</span><span class="asset-value" id="val_WTI">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_WTI">--</span></div>
                 </div>
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">VIX (Miedo)</span>
-                        <span class="asset-value negative">13.20</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Volatilidad</span>
-                        <span class="negative">-1.10%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">VIX (Miedo)</span><span class="asset-value" id="val_VIX">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_VIX">--</span></div>
                 </div>
                 <div class="asset-item">
-                    <div class="asset-row-top">
-                        <span class="asset-name">Nasdaq 100</span>
-                        <span class="asset-value negative">18,900.0</span>
-                    </div>
-                    <div class="asset-row-bottom">
-                        <span>Bolsa Tech</span>
-                        <span class="negative">-0.15%</span>
-                    </div>
+                    <div class="asset-row-top"><span class="asset-name">Nasdaq 100</span><span class="asset-value" id="val_Nasdaq_100">--</span></div>
+                    <div class="asset-row-bottom"><span>Var.</span><span id="var_Nasdaq_100">--</span></div>
                 </div>
             </div>
         </div>
 
     </div>
 
+    <!-- SCRIPT DE TRADINGVIEW LIGHTWEIGHT CHARTS Y WEBSOCKET -->
+    <script>
+        // Inicializar el Gráfico de Velas Japonesas Profesionales
+        const chartContainer = document.getElementById('tvchart');
+        const chart = LightweightCharts.createChart(chartContainer, {
+            width: chartContainer.clientWidth,
+            height: chartContainer.clientHeight,
+            layout: {
+                background: { type: 'solid', color: '#0d131d' },
+                textColor: '#94a3b8',
+            },
+            grid: {
+                vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
+                horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
+            },
+            timeScale: {
+                timeVisible: true,
+                secondsVisible: true,
+                borderColor: '#1e293b'
+            },
+            rightPriceScale: {
+                borderColor: '#1e293b'
+            }
+        });
+
+        const candlestickSeries = chart.addCandlestickSeries({
+            upColor: '#10b981',
+            downColor: '#ef4444',
+            borderVisible: false,
+            wickUpColor: '#10b981',
+            wickDownColor: '#ef4444',
+        });
+
+        // Hacer que el gráfico sea responsivo al tamaño de pantalla
+        window.addEventListener('resize', () => {
+            chart.applyOptions({ width: chartContainer.clientWidth, height: chartContainer.clientHeight });
+        });
+
+        function setTf(tf) {
+            document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // Conexión WebSocket
+        const ws = new WebSocket('ws://localhost:8765');
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            // 1. Actualizar Activos Euro
+            for (const [id, info] of Object.entries(data.euro)) {
+                const valElem = document.getElementById(`val_${id}`);
+                const varElem = document.getElementById(`var_${id}`);
+                if (valElem) valElem.innerText = info.precio.toLocaleString();
+                if (varElem) {
+                    varElem.innerText = (info.var >= 0 ? '+' : '') + info.var + '%';
+                    varElem.className = info.var >= 0 ? 'positive' : 'negative';
+                }
+            }
+
+            // 2. Actualizar Activos Dólar
+            for (const [id, info] of Object.entries(data.dolar)) {
+                const valElem = document.getElementById(`val_${id}`);
+                const varElem = document.getElementById(`val_${id}`);
+                if (valElem) valElem.innerText = info.precio.toLocaleString();
+                if (varElem) {
+                    varElem.innerText = (info.var >= 0 ? '+' : '') + info.var + '%';
+                    varElem.className = info.var >= 0 ? 'positive' : 'negative';
+                }
+            }
+
+            // 3. Balanza
+            const euroBar = document.getElementById('euroPowerBar');
+            if (euroBar) euroBar.style.width = data.porcentajeEuro + '%';
+            document.getElementById('euroLabelText').innerText = `🟢 Bloque Euro (${data.porcentajeEuro}%)`;
+            document.getElementById('dolarLabelText').innerText = `🔴 Bloque Dólar (${data.porcentajeDolar}%)`;
+
+            // 4. Actualizar Precio y Vela Japonesa en el Gráfico Pro
+            document.getElementById('cfdPrice').innerText = data.vela.close.toFixed(5);
+            
+            const netForceElem = document.getElementById('netForceText');
+            netForceElem.innerText = `Fuerza Neta: ${(data.fuerzaNeta >= 0 ? '+' : '')}${data.fuerzaNeta}%`;
+            netForceElem.className = data.fuerzaNeta >= 0 ? 'positive' : 'negative';
+
+            // Alimentar la vela en tiempo real
+            candlestickSeries.update(data.vela);
+        };
+
+        ws.onopen = () => console.log("Conectado con éxito a Yahoo Finance y gráficos profesionales.");
+    </script>
 </body>
 </html>
