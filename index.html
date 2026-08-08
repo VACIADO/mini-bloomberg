@@ -2,413 +2,180 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Bloomberg - Terminal Profesional</title>
-    <!-- Importamos TradingView Lightweight Charts para gráficos de velas profesionales -->
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <title>Mini Bloomberg - EUR/USD Terminal Profesional</title>
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        :root {
-            --bg-color: #0b0e14;
-            --card-bg: #131b26;
-            --border-color: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-green: #10b981;
-            --accent-red: #ef4444;
-            --accent-blue: #3b82f6;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 10px;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-        }
-
-        @media (min-width: 1024px) {
-            .container {
-                grid-template-columns: 320px 1fr 320px;
-                padding: 20px;
-            }
-        }
-
-        .panel {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-        }
-
-        h2 {
-            font-size: 1rem;
-            margin-bottom: 12px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .asset-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .asset-item {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 8px 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .asset-row-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .asset-name {
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .asset-value {
-            font-family: monospace;
-            font-size: 0.85rem;
-        }
-
-        .asset-row-bottom {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            border-top: 1px solid rgba(255, 255, 255, 0.03);
-            padding-top: 2px;
-        }
-
-        .positive { color: var(--accent-green); }
-        .negative { color: var(--accent-red); }
-
-        .center-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .battle-meter {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: 12px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-        }
-
-        .meter-title {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-
-        .meter-bar-container {
-            height: 12px;
-            background: var(--accent-red);
-            border-radius: 6px;
-            overflow: hidden;
-            display: flex;
-        }
-
-        .meter-fill-euro {
-            height: 100%;
-            background: var(--accent-green);
-            width: 50%;
-            transition: width 0.3s ease;
-        }
-
-        .chart-container {
-            background: #0d131d;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            height: 420px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 10px;
-        }
-
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 520px;
-            }
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-
-        .timeframes {
-            display: flex;
-            gap: 5px;
-        }
-
-        .tf-btn {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.75rem;
-        }
-
-        .tf-btn.active, .tf-btn:hover {
-            background: var(--accent-blue);
-            color: white;
-            border-color: var(--accent-blue);
-        }
-
-        #tvchart {
-            flex-grow: 1;
-            width: 100%;
-        }
-
-        .chart-footer-stats {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            font-family: monospace;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding-top: 6px;
-            margin-top: 6px;
-        }
+        body { background-color: #0b0e14; color: #ffffff; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #38ef7d; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #8a9ba8; margin-bottom: 15px; font-size: 14px; }
+        .market-status { text-align: center; margin-bottom: 20px; }
+        .badge-closed { background: #f23645; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .dashboard { display: flex; gap: 20px; max-width: 1400px; margin: 0 auto; }
+        .sidebar { width: 350px; display: flex; flex-direction: column; gap: 15px; }
+        .panel { background: #131722; border: 1px solid #2a2e39; border-radius: 8px; padding: 15px; }
+        .panel h3 { margin-top: 0; color: #d1d4dc; font-size: 16px; border-bottom: 1px solid #2a2e39; padding-bottom: 8px; }
+        .asset-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+        .asset-name { color: #8a9ba8; }
+        .asset-price { font-weight: bold; color: #fff; }
+        .pos { color: #089981; }
+        .neg { color: #f23645; }
+        .main-content { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        .fuerza-bar-container { background: #131722; padding: 15px; border-radius: 8px; border: 1px solid #2a2e39; }
+        .bar-wrapper { display: flex; height: 25px; border-radius: 4px; overflow: hidden; margin-top: 10px; background: #2a2e39; }
+        .bar-euro { background: #2962FF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; transition: width 0.5s ease-in-out; }
+        .bar-dolar { background: #FF6D00; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; transition: width 0.5s ease-in-out; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; background: #131722; padding: 10px 15px; border-top-left-radius: 8px; border-top-right-radius: 8px; border: 1px solid #2a2e39; border-bottom: none; }
+        .timeframes { display: flex; gap: 4px; background: #0b0e14; padding: 3px; border-radius: 6px; border: 1px solid #2a2e39; }
+        .tf-btn { background: transparent; border: 1px solid transparent; color: #8a9ba8; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.2s ease; }
+        .tf-btn:hover { color: #ffffff; background: rgba(41, 98, 255, 0.15); }
+        .tf-btn.active { background: #2962FF; color: white; border-color: #2962FF; }
+        #chart-container { width: 100%; height: 450px; background: #131722; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; border: 1px solid #2a2e39; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        
-        <!-- BANDO EURO (6 Activos Reales) -->
-        <div class="panel">
-            <h2>
-                <span>Bando Euro</span>
-                <span style="font-size: 0.7rem; color: var(--accent-green);">Yahoo Real</span>
-            </h2>
-            <div class="asset-list">
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">Índice Euro (EURX)</span><span class="asset-value" id="val_EURX">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_EURX">--</span></div>
-                </div>
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">Bonos Alemán 10Y</span><span class="asset-value" id="val_Bund_10Y">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_Bund_10Y">--</span></div>
-                </div>
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">Oro (XAU)</span><span class="asset-value" id="val_Gold">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_Gold">--</span></div>
-                </div>
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">Dow Jones</span><span class="asset-value" id="val_Dow_Jones">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_Dow_Jones">--</span></div>
-                </div>
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">EUR/JPY</span><span class="asset-value" id="val_EUR_JPY">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_EUR_JPY">--</span></div>
-                </div>
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">Euro Stoxx 50</span><span class="asset-value" id="val_Euro_Stoxx_50">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_Euro_Stoxx_50">--</span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CENTRO: GRÁFICO DE VELA JAPONESA PROFESIONAL -->
-        <div class="center-panel">
-            
-            <div class="battle-meter">
-                <div class="meter-title">⚖️ Balanza de Fuerza (Datos Reales Yahoo)</div>
-                <div class="meter-bar-container">
-                    <div class="meter-fill-euro" id="euroPowerBar" style="width: 50%;"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">
-                    <span id="euroLabelText">🟢 Bloque Euro (50%)</span>
-                    <span id="dolarLabelText">🔴 Bloque Dólar (50%)</span>
-                </div>
-            </div>
-
-            <div class="panel" style="padding: 10px;">
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <div><strong>CFD SINTÉTICO (Velas)</strong> <span id="statusBias" style="font-size: 0.75rem; color: var(--accent-blue);">Conectado</span></div>
-                        <div class="timeframes">
-                            <button class="tf-btn" onclick="setTf('M1')">M1</button>
-                            <button class="tf-btn active" onclick="setTf('M5')">M5</button>
-                            <button class="tf-btn" onclick="setTf('M15')">M15</button>
-                            <button class="tf-btn" onclick="setTf('H1')">H1</button>
-                        </div>
-                    </div>
-
-                    <!-- Contenedor del Gráfico TradingView -->
-                    <div id="tvchart"></div>
-
-                    <div class="chart-footer-stats">
-                        <span>Precio CFD: <strong id="cfdPrice">1.08750</strong></span>
-                        <span id="netForceText" class="positive">Fuerza Neta: 0.00%</span>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- BANDO DÓLAR (6 Activos Reales) -->
-        <div class="panel">
-            <h2>
-                <span>Bando Dólar</span>
-                <span style="font-size: 0.7rem; color: var(--accent-red);">Yahoo Real</span>
-            </h2>
-            <div class="asset-list">
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">Índice Dólar (DXY)</span><span class="asset-value" id="val_DXY">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_DXY">--</span></div>
-                </div>
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">Bonos EE.UU. 10Y</span><span class="asset-value" id="val_US_10Y">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_US_10Y">--</span></div>
-                </div>
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">S&P 500</span><span class="asset-value" id="val_SP_500">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_SP_500">--</span></div>
-                </div>
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">Petróleo (WTI)</span><span class="asset-value" id="val_WTI">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_WTI">--</span></div>
-                </div>
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">VIX (Miedo)</span><span class="asset-value" id="val_VIX">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_VIX">--</span></div>
-                </div>
-                <div class="asset-item">
-                    <div class="asset-row-top"><span class="asset-name">Nasdaq 100</span><span class="asset-value" id="val_Nasdaq_100">--</span></div>
-                    <div class="asset-row-bottom"><span>Var.</span><span id="var_Nasdaq_100">--</span></div>
-                </div>
-            </div>
-        </div>
-
+    <h1>TERMINAL MINI BLOOMBERG</h1>
+    <div class="subtitle">Análisis de Correlación y Flujos EUR/USD</div>
+    <div class="market-status">
+        <span class="badge-closed">Sistema en Vivo (WebSockets)</span>
     </div>
 
-    <!-- SCRIPT DE TRADINGVIEW LIGHTWEIGHT CHARTS Y WEBSOCKET -->
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="panel">
+                <h3>Bando EUR (5 Activos)</h3>
+                <div id="lista-euro">Cargando datos...</div>
+            </div>
+            <div class="panel">
+                <h3>Bando USD (5 Activos)</h3>
+                <div id="lista-dolar">Cargando datos...</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="fuerza-bar-container">
+                <h3>Balanza de Fuerza Institucional</h3>
+                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px;">
+                    <span id="txt-euro">EUR: 50%</span>
+                    <span id="txt-neta" style="color: #38ef7d; font-weight: bold;">Fuerza Neta: 0.0</span>
+                    <span id="txt-dolar">USD: 50%</span>
+                </div>
+                <div class="bar-wrapper">
+                    <div id="bar-euro" class="bar-euro" style="width: 50%;">EUR 50%</div>
+                    <div id="bar-dolar" class="bar-dolar" style="width: 50%;">USD 50%</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="chart-header">
+                    <span style="font-size: 14px; font-weight: bold; color: #d1d4dc;">Gráfico Sintético EUR/USD</span>
+                    <div class="timeframes">
+                        <button class="tf-btn active" onclick="cambiarTF('M5', this)">M5</button>
+                        <button class="tf-btn" onclick="cambiarTF('M15', this)">M15</button>
+                        <button class="tf-btn" onclick="cambiarTF('M30', this)">M30</button>
+                        <button class="tf-btn" onclick="cambiarTF('H1', this)">H1</button>
+                        <button class="tf-btn" onclick="cambiarTF('H4', this)">H4</button>
+                        <button class="tf-btn" onclick="cambiarTF('D1', this)">D1</button>
+                    </div>
+                </div>
+                <div id="chart-container"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Inicializar el Gráfico de Velas Japonesas Profesionales
-        const chartContainer = document.getElementById('tvchart');
-        const chart = LightweightCharts.createChart(chartContainer, {
-            width: chartContainer.clientWidth,
-            height: chartContainer.clientHeight,
-            layout: {
-                background: { type: 'solid', color: '#0d131d' },
-                textColor: '#94a3b8',
-            },
-            grid: {
-                vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
-                horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
-            },
-            timeScale: {
-                timeVisible: true,
-                secondsVisible: true,
-                borderColor: '#1e293b'
-            },
-            rightPriceScale: {
-                borderColor: '#1e293b'
-            }
-        });
+        const nombresAmigables = {
+            "EUR_USD": "EUR/USD", "EUR_JPY": "EUR/JPY", "EUR_GBP": "EUR/GBP", "GOLD": "Oro", "BUND": "Bund Alemán",
+            "DXY": "DXY (Dólar)", "US10Y": "Treasury 10Y", "SP500": "S&P 500", "NASDAQ": "Nasdaq", "WTI": "Petróleo WTI"
+        };
 
-        const candlestickSeries = chart.addCandlestickSeries({
-            upColor: '#10b981',
-            downColor: '#ef4444',
-            borderVisible: false,
-            wickUpColor: '#10b981',
-            wickDownColor: '#ef4444',
-        });
+        let chart = null;
+        let candleSeries = null;
 
-        // Hacer que el gráfico sea responsivo al tamaño de pantalla
-        window.addEventListener('resize', () => {
-            chart.applyOptions({ width: chartContainer.clientWidth, height: chartContainer.clientHeight });
-        });
+        function inicializarGrafico() {
+            const container = document.getElementById('chart-container');
+            container.innerHTML = ''; // Limpiar contenedor por completo
 
-        function setTf(tf) {
-            document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            chart = LightweightCharts.createChart(container, {
+                layout: { background: { type: 'solid', color: '#131722' }, textColor: '#d1d4dc' },
+                grid: { vertLines: { color: '#2a2e39' }, horzLines: { color: '#2a2e39' } },
+                timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#2a2e39' },
+                rightPriceScale: { visible: true, borderColor: '#2a2e39', autoScale: true }
+            });
+
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#089981', 
+                downColor: '#f23645', 
+                borderVisible: false, 
+                wickUpColor: '#089981', 
+                wickDownColor: '#f23645',
+                priceFormat: { type: 'price', precision: 5, minMove: 0.00001 },
+            });
         }
 
-        // Conexión WebSocket
+        inicializarGrafico();
+
+        function cambiarTF(tf, elemento) {
+            document.querySelectorAll('.tf-btn').forEach(btn => btn.classList.remove('active'));
+            elemento.classList.add('active');
+            
+            inicializarGrafico(); // Destruye y recrea el gráfico limpio para la nueva escala
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ accion: "cambiar_tf", timeframe: tf }));
+            }
+        }
+
         const ws = new WebSocket('ws://localhost:8765');
+        let primeraCarga = true;
 
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            
-            // 1. Actualizar Activos Euro
-            for (const [id, info] of Object.entries(data.euro)) {
-                const valElem = document.getElementById(`val_${id}`);
-                const varElem = document.getElementById(`var_${id}`);
-                if (valElem) valElem.innerText = info.precio.toLocaleString();
-                if (varElem) {
-                    varElem.innerText = (info.var >= 0 ? '+' : '') + info.var + '%';
-                    varElem.className = info.var >= 0 ? 'positive' : 'negative';
+
+            if (data.velas && data.velas.length > 0) {
+                candleSeries.setData(data.velas);
+                if (primeraCarga) {
+                    chart.timeScale().fitContent();
+                    primeraCarga = false;
                 }
             }
 
-            // 2. Actualizar Activos Dólar
-            for (const [id, info] of Object.entries(data.dolar)) {
-                const valElem = document.getElementById(`val_${id}`);
-                const varElem = document.getElementById(`val_${id}`);
-                if (valElem) valElem.innerText = info.precio.toLocaleString();
-                if (varElem) {
-                    varElem.innerText = (info.var >= 0 ? '+' : '') + info.var + '%';
-                    varElem.className = info.var >= 0 ? 'positive' : 'negative';
-                }
+            if (data.porcentajeEuro !== undefined) {
+                document.getElementById('txt-euro').innerText = `EUR: ${data.porcentajeEuro}%`;
+                document.getElementById('txt-dolar').innerText = `USD: ${data.porcentajeDolar}%`;
+                document.getElementById('txt-neta').innerText = `Fuerza Neta: ${data.fuerzaNeta}`;
+                document.getElementById('bar-euro').style.width = data.porcentajeEuro + '%';
+                document.getElementById('bar-euro').innerText = data.porcentajeEuro > 10 ? `EUR ${data.porcentajeEuro}%` : '';
+                document.getElementById('bar-dolar').style.width = data.porcentajeDolar + '%';
+                document.getElementById('bar-dolar').innerText = data.porcentajeDolar > 10 ? `USD ${data.porcentajeDolar}%` : '';
             }
 
-            // 3. Balanza
-            const euroBar = document.getElementById('euroPowerBar');
-            if (euroBar) euroBar.style.width = data.porcentajeEuro + '%';
-            document.getElementById('euroLabelText').innerText = `🟢 Bloque Euro (${data.porcentajeEuro}%)`;
-            document.getElementById('dolarLabelText').innerText = `🔴 Bloque Dólar (${data.porcentajeDolar}%)`;
+            if (data.euro) {
+                let htmlEuro = '';
+                for (let key in data.euro) {
+                    let item = data.euro[key];
+                    let cls = item.var >= 0 ? 'pos' : 'neg';
+                    let nombreMostrar = nombresAmigables[key] || key;
+                    htmlEuro += `<div class="asset-item"><span class="asset-name">${nombreMostrar}</span><span class="asset-price">${item.precio} <span class="${cls}">(${item.var}%)</span></span></div>`;
+                }
+                document.getElementById('lista-euro').innerHTML = htmlEuro;
+            }
 
-            // 4. Actualizar Precio y Vela Japonesa en el Gráfico Pro
-            document.getElementById('cfdPrice').innerText = data.vela.close.toFixed(5);
-            
-            const netForceElem = document.getElementById('netForceText');
-            netForceElem.innerText = `Fuerza Neta: ${(data.fuerzaNeta >= 0 ? '+' : '')}${data.fuerzaNeta}%`;
-            netForceElem.className = data.fuerzaNeta >= 0 ? 'positive' : 'negative';
-
-            // Alimentar la vela en tiempo real
-            candlestickSeries.update(data.vela);
+            if (data.dolar) {
+                let htmlDolar = '';
+                for (let key in data.dolar) {
+                    let item = data.dolar[key];
+                    let cls = item.var >= 0 ? 'pos' : 'neg';
+                    let nombreMostrar = nombresAmigables[key] || key;
+                    htmlDolar += `<div class="asset-item"><span class="asset-name">${nombreMostrar}</span><span class="asset-price">${item.precio} <span class="${cls}">(${item.var}%)</span></span></div>`;
+                }
+                document.getElementById('lista-dolar').innerHTML = htmlDolar;
+            }
         };
 
-        ws.onopen = () => console.log("Conectado con éxito a Yahoo Finance y gráficos profesionales.");
+        ws.onopen = function() {
+            console.log("Conectado al servidor Mini Bloomberg.");
+        };
     </script>
 </body>
 </html>
