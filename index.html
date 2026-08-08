@@ -2,338 +2,409 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Terminal Bloomberg Pro v9.0 — Live Engine</title>
-    <!-- TradingView Script -->
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Bloomberg - Terminal de Análisis</title>
     <style>
-        :root { 
-            --bg-main: #070a0f; 
-            --bg-surface: #111520; 
-            --bg-input: #0b0e14; 
-            --accent-amber: #f59e0b; 
-            --text-primary: #f8fafc; 
-            --text-secondary: #94a3b8; 
-            --border-color: #232b3b; 
+        :root {
+            --bg-color: #0b0e14;
+            --card-bg: #131b26;
+            --border-color: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
         }
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-main); color: var(--text-primary); margin: 0; padding: 10px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        .master-bar { background: var(--bg-surface); border: 1px solid var(--border-color); padding: 10px 15px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: var(--accent-amber); }
-        .master-bar select { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
 
-        .dashboard-grid { display: grid; grid-template-columns: 280px 1fr 300px; gap: 10px; flex: 1; overflow: hidden; }
-        
-        .panel { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; display: flex; flex-direction: column; padding: 10px; overflow: hidden; }
-        .panel h3 { margin: 0 0 10px 0; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
 
-        .market-slot { background: var(--bg-input); border: 1px solid var(--border-color); height: 110px; border-radius: 4px; margin-bottom: 8px; position: relative; overflow: hidden; }
-        
-        .center-panel { display: flex; flex-direction: column; gap: 8px; }
-        .battle-bar-container { background: var(--bg-input); padding: 8px 12px; border-radius: 5px; display: flex; align-items: center; gap: 10px; border: 1px solid var(--border-color); font-size: 11px; font-weight: bold; }
-        .battle-progress-bg { flex: 1; height: 8px; background: #f43f5e; border-radius: 4px; overflow: hidden; }
-        .battle-progress-fill { height: 100%; background: #22c55e; width: 50%; transition: width 0.5s; }
-        
-        #cfd-container { flex: 1; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 4px; position: relative; min-height: 220px; }
-        canvas { width: 100%; height: 100%; display: block; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 10px;
+            min-height: 100vh;
+        }
 
-        .ta-box { background: var(--bg-input); border: 1px solid var(--border-color); padding: 8px; border-radius: 4px; font-size: 11px; line-height: 1.4; color: var(--text-secondary); }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
 
-        .ia-console { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 4px; flex: 1; padding: 8px; font-family: monospace; font-size: 11px; overflow-y: auto; color: var(--accent-amber); display: flex; flex-direction: column; gap: 6px; max-height: 200px; }
-        .ia-input-area { display: flex; gap: 5px; margin-top: 5px; }
-        .ia-input-area input { flex: 1; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); padding: 5px; border-radius: 3px; font-size: 11px; }
-        .ia-input-area button { background: var(--accent-amber); border: none; color: #000; padding: 5px 10px; border-radius: 3px; font-weight: bold; cursor: pointer; }
+        @media (min-width: 1024px) {
+            .container {
+                grid-template-columns: 320px 1fr 320px;
+                padding: 20px;
+            }
+        }
+
+        .panel {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .asset-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .asset-item {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .asset-row-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .asset-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .asset-value {
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .asset-row-bottom {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 2px;
+        }
+
+        .positive { color: var(--accent-green); }
+        .negative { color: var(--accent-red); }
+
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .battle-meter {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .meter-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .meter-bar-container {
+            height: 12px;
+            background: var(--accent-red);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .meter-fill-euro {
+            height: 100%;
+            background: var(--accent-green);
+            width: 58%;
+            transition: width 0.3s ease;
+        }
+
+        .chart-container {
+            background: #0d131d;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            height: 350px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 450px;
+            }
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .timeframes {
+            display: flex;
+            gap: 5px;
+        }
+
+        .tf-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .tf-btn.active, .tf-btn:hover {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .chart-canvas-area {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+        }
+
+        .decision-line-text {
+            position: absolute;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+        }
+
+        .chart-footer-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
 
-<div class="master-bar">
-    <span>⚡ TERMINAL BLOOMBERG PRO v9.0 — WEBSOCKET ENGINE</span>
-    <div>
-        <label>ACTIVO PRINCIPAL: </label>
-        <select id="masterAssetSelect" onchange="cambiarActivoMaster()">
-            <option value="EURUSD">EUR/USD (Forex / WebSocket Real)</option>
-            <option value="BTCUSD">BTC/USD (Crypto)</option>
-            <option value="KO">COCA-COLA (Stock)</option>
-        </select>
+    <div class="container">
+        
+        <!-- COLUMNA IZQUIERDA: BANDO EURO (6 Activos) -->
+        <div class="panel">
+            <h2>
+                <span>Bando Euro</span>
+                <span style="font-size: 0.7rem; color: var(--accent-green);">6 / 6 Activos</span>
+            </h2>
+            <div class="asset-list">
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">Índice Euro (EURX)</span>
+                        <span class="asset-value positive">105.20</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Peso Principal</span>
+                        <span class="positive">+0.15%</span>
+                    </div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">Bonos Alemán 10Y</span>
+                        <span class="asset-value negative">2.45%</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Peso Deuda</span>
+                        <span class="negative">-0.05%</span>
+                    </div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">Oro (XAU)</span>
+                        <span class="asset-value positive">2,380.50</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Refugio / Divisa</span>
+                        <span class="positive">+0.42%</span>
+                    </div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">Dow Jones</span>
+                        <span class="asset-value positive">39,120.0</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Apetito Riesgo</span>
+                        <span class="positive">+0.30%</span>
+                    </div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">EUR/JPY</span>
+                        <span class="asset-value positive">168.40</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Cruce / Carry</span>
+                        <span class="positive">+0.25%</span>
+                    </div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">Euro Stoxx 50</span>
+                        <span class="asset-value positive">5,050.0</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Bolsa Euro</span>
+                        <span class="positive">+0.35%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA CENTRAL: GRÁFICO CFD PRO Y BALANZA -->
+        <div class="center-panel">
+            
+            <div class="battle-meter">
+                <div class="meter-title">⚖️ Balanza de Mercado (6 vs 6 Conectada)</div>
+                <div class="meter-bar-container">
+                    <div class="meter-fill-euro" id="euroPowerBar" style="width: 58%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">
+                    <span>🟢 Bloque Euro Dominante (58%)</span>
+                    <span>🔴 Bloque Dólar (42%)</span>
+                </div>
+            </div>
+
+            <div class="panel" style="padding: 10px;">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div><strong>CFD SINTÉTICO</strong> <span style="font-size: 0.75rem; color: var(--accent-blue);">Live Server</span></div>
+                        <div class="timeframes">
+                            <button class="tf-btn">M1</button>
+                            <button class="tf-btn active">M5</button>
+                            <button class="tf-btn">M15</button>
+                            <button class="tf-btn">H1</button>
+                        </div>
+                    </div>
+
+                    <div class="chart-canvas-area">
+                        <span class="decision-line-text" style="top: 15%; color: var(--accent-green);">▲ ZONA DE COMPRA (Impulso Alcista)</span>
+                        <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">
+                            [ Gráfico Sincronizado por Servidor ]<br>
+                            <span style="font-size: 0.7rem;">Impulsos y fuerza en tiempo real</span>
+                        </div>
+                        <span class="decision-line-text" style="bottom: 15%; color: var(--accent-red);">▼ ZONA DE VENTA (Impulso Bajista)</span>
+                    </div>
+
+                    <div class="chart-footer-stats">
+                        <span>Precio CFD: <strong id="cfdPrice">1.08750</strong></span>
+                        <span class="positive">Fuerza Neta: +0.34%</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA: BANDO DÓLAR (6 Activos) -->
+        <div class="panel">
+            <h2>
+                <span>Bando Dólar</span>
+                <span style="font-size: 0.7rem; color: var(--accent-red);">6 / 6 Activos</span>
+            </h2>
+            <div class="asset-list">
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">Índice Dólar (DXY)</span>
+                        <span class="asset-value negative">104.10</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Peso Principal</span>
+                        <span class="negative">-0.12%</span>
+                    </div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">Bonos EE.UU. 10Y</span>
+                        <span class="asset-value positive">4.22%</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Deuda Soberana</span>
+                        <span class="positive">+0.08%</span>
+                    </div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">S&P 500</span>
+                        <span class="asset-value negative">5,430.0</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Riesgo EE.UU.</span>
+                        <span class="negative">-0.20%</span>
+                    </div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">Petróleo (WTI)</span>
+                        <span class="asset-value positive">78.50</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Commodity</span>
+                        <span class="positive">+0.50%</span>
+                    </div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">VIX (Miedo)</span>
+                        <span class="asset-value negative">13.20</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Volatilidad</span>
+                        <span class="negative">-1.10%</span>
+                    </div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-row-top">
+                        <span class="asset-name">Nasdaq 100</span>
+                        <span class="asset-value negative">18,900.0</span>
+                    </div>
+                    <div class="asset-row-bottom">
+                        <span>Bolsa Tech</span>
+                        <span class="negative">-0.15%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-</div>
 
-<div class="dashboard-grid">
-    <!-- COLUMNA IZQUIERDA: ALIADOS -->
-    <div class="panel">
-        <h3>🟢 ALIADOS TÉCNICOS</h3>
-        <div id="aliados-container" style="display:flex; flex-direction:column; gap:6px; overflow-y:auto; flex:1;">
-            <div class="market-slot" id="widget-aliado1"></div>
-            <div class="market-slot" id="widget-aliado2"></div>
-            <div class="market-slot" id="widget-aliado3"></div>
-        </div>
-        <h3 style="margin-top: 10px;">📋 CHECKLIST</h3>
-        <div class="ta-box" id="checklist-box">
-            • Estructura H1 / M15 validada<br>
-            • Confluencia Fibonacci activa<br>
-            • Gestión de riesgo 1-2%
-        </div>
-    </div>
-
-    <!-- COLUMNA CENTRAL: MOTOR DE BATALLA Y GRÁFICO REAL WEBSOCKET -->
-    <div class="panel center-panel">
-        <h3 id="cfd-title">GRAPH CFD: EUR/USD (WEBSOCKET LIVE FEED)</h3>
-        
-        <div class="battle-bar-container">
-            <span>FUERZA COMPRADORA</span>
-            <div class="battle-progress-bg"><div id="battle-fill" class="battle-progress-fill"></div></div>
-            <span>VENDEDORA</span>
-            <span id="battle-score">50% / 50%</span>
-        </div>
-
-        <div id="cfd-container">
-            <canvas id="cfd-canvas"></canvas>
-        </div>
-
-        <div class="ta-box" id="ta-description">
-            <b>Análisis Técnico:</b> Esperando conexión WebSocket (ws://localhost:8765)...
-        </div>
-    </div>
-
-    <!-- COLUMNA DERECHA: RIVALES Y CONSOLA IA -->
-    <div class="panel">
-        <h3>🔴 RIVALES / DXY</h3>
-        <div id="rivales-container" style="display:flex; flex-direction:column; gap:6px; overflow-y:auto; flex:1; max-height: 250px;">
-            <div class="market-slot" id="widget-rival1"></div>
-            <div class="market-slot" id="widget-rival2"></div>
-        </div>
-
-        <h3 style="margin-top: 10px;">💬 CONSOLA IA & MACRO</h3>
-        <div class="ia-console" id="ia-console">
-            <div>> Kernel Bloomberg Pro v9.0 inicializado.</div>
-            <div>> Conectando a WebSocket ws://localhost:8765...</div>
-        </div>
-        <div class="ia-input-area">
-            <input type="text" id="chat-input" placeholder="Consulta macro o comando..." onkeypress="handleKeyPress(event)">
-            <button onclick="sendMessage()">ENVIAR</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    const configuracionesMercado = {
-        EURUSD: {
-            nombre: "EUR/USD (Forex)",
-            aliados: [
-                { id: "widget-aliado1", name: "S&P 500", symbol: "FOREXCOM:SPXUSD" },
-                { id: "widget-aliado2", name: "Oro", symbol: "TVC:GOLD" },
-                { id: "widget-aliado3", name: "Bonos 10Y", symbol: "CBOT:ZN1!" }
-            ],
-            rivales: [
-                { id: "widget-rival1", name: "DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
-                { id: "widget-rival2", name: "VIX (Miedo)", symbol: "TVC:VIX" }
-            ],
-            ta: "<b>Soporte:</b> 1.15160 | <b>Resistencia:</b> 1.15420<br><b>Estructura:</b> Flujo directo WebSocket activo."
-        },
-        BTCUSD: {
-            nombre: "BTC/USD (Crypto)",
-            aliados: [
-                { id: "widget-aliado1", name: "Nasdaq 100", symbol: "NASDAQ:NDX" },
-                { id: "widget-aliado2", name: "Ethereum", symbol: "BITSTAMP:ETHUSD" },
-                { id: "widget-aliado3", name: "MicroStrategy", symbol: "NASDAQ:MSTR" }
-            ],
-            rivales: [
-                { id: "widget-rival1", name: "DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
-                { id: "widget-rival2", name: "Bonos 10Y", symbol: "CBOT:ZN1!" }
-            ],
-            ta: "<b>Soporte:</b> $63,500 | <b>Resistencia:</b> $66,800<br><b>Estructura:</b> Alta volatilidad ligada al apetito por riesgo."
-        },
-        KO: {
-            nombre: "COCA-COLA (Stock)",
-            aliados: [
-                { id: "widget-aliado1", name: "S&P 500", symbol: "FOREXCOM:SPXUSD" },
-                { id: "widget-aliado2", name: "Dow Jones", symbol: "CAPITALCOM:US30" },
-                { id: "widget-aliado3", name: "Oro", symbol: "TVC:GOLD" }
-            ],
-            rivales: [
-                { id: "widget-rival1", name: "DXY (Dólar)", symbol: "CAPITALCOM:DXY" },
-                { id: "widget-rival2", name: "Tasa FED", symbol: "ECONOMICS:USINT" }
-            ],
-            ta: "<b>Soporte:</b> $67.20 | <b>Resistencia:</b> $69.50<br><b>Estructura:</b> Activo defensivo de baja beta."
-        }
-    };
-
-    function cargarWidgetsTradingView(activoKey) {
-        const config = configuracionesMercado[activoKey];
-        if (!config) return;
-
-        [...config.aliados, ...config.rivales].forEach(item => {
-            const el = document.getElementById(item.id);
-            if (el) el.innerHTML = "";
-        });
-
-        config.aliados.forEach(item => {
-            if(document.getElementById(item.id)) {
-                new TradingView.widget({
-                    "width": "100%",
-                    "height": "110",
-                    "symbol": item.symbol,
-                    "interval": "15",
-                    "timezone": "Etc/UTC",
-                    "theme": "dark",
-                    "style": "1",
-                    "locale": "es",
-                    "toolbar_bg": "#111520",
-                    "enable_publishing": false,
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "save_image": false,
-                    "container_id": item.id
-                });
-            }
-        });
-
-        config.rivales.forEach(item => {
-            if(document.getElementById(item.id)) {
-                new TradingView.widget({
-                    "width": "100%",
-                    "height": "110",
-                    "symbol": item.symbol,
-                    "interval": "15",
-                    "timezone": "Etc/UTC",
-                    "theme": "dark",
-                    "style": "1",
-                    "locale": "es",
-                    "toolbar_bg": "#111520",
-                    "enable_publishing": false,
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "save_image": false,
-                    "container_id": item.id
-                });
-            }
-        });
-
-        document.getElementById('ta-description').innerHTML = config.ta;
-        document.getElementById('cfd-title').innerText = `GRAPH CFD: ${config.nombre} (WEBSOCKET LIVE FEED)`;
-    }
-
-    function cambiarActivoMaster() {
-        const select = document.getElementById('masterAssetSelect');
-        cfdData = []; 
-        cargarWidgetsTradingView(select.value);
-    }
-
-    const canvas = document.getElementById('cfd-canvas');
-    const ctx = canvas.getContext('2d');
-    let cfdData = [];
-
-    // --- CONEXIÓN WEBSOCKET CON PYTHON ---
-    const socket = new WebSocket('ws://localhost:8765');
-
-    socket.onopen = function() {
-        console.log("Conectado al servidor WebSocket de Python.");
-        const consoleLog = document.getElementById('ia-console');
-        const msg = document.createElement('div');
-        msg.innerText = "> Conexión WebSocket establecida con éxito.";
-        msg.style.color = "#22c55e";
-        consoleLog.appendChild(msg);
-    };
-
-    socket.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        // El servidor envía: { price, battleScore }
-        const nuevoPrecio = parseFloat(data.price);
-        
-        const ultimaVela = cfdData.length > 0 ? cfdData[cfdData.length - 1] : { close: nuevoPrecio };
-        const nuevaVela = {
-            open: ultimaVela.close,
-            high: Math.max(ultimaVela.close, nuevoPrecio),
-            low: Math.min(ultimaVela.close, nuevoPrecio),
-            close: nuevoPrecio,
-            time: new Date()
-        };
-
-        cfdData.push(nuevaVela);
-        if (cfdData.length > 60) cfdData.shift();
-        
-        drawCFD();
-        updateBattleBarReal(data.battleScore);
-    };
-
-    socket.onerror = function(error) {
-        console.error("Error en WebSocket:", error);
-    };
-
-    function drawCFD() {
-        const w = canvas.width = canvas.offsetWidth;
-        const h = canvas.height = canvas.offsetHeight;
-        ctx.clearRect(0, 0, w, h);
-        
-        if (cfdData.length < 2) return;
-
-        const padding = 40;
-        const prices = cfdData.map(v => v.high).concat(cfdData.map(v => v.low));
-        const max = Math.max(...prices);
-        const min = Math.min(...prices);
-        const range = max - min === 0 ? 1 : max - min;
-        
-        // Línea principal de precio
-        ctx.strokeStyle = '#22c55e';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        cfdData.forEach((v, i) => {
-            const x = (i / (cfdData.length - 1)) * (w - padding);
-            const y = h - ((v.close - min) / range * (h - padding)) - padding / 2;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-
-        // Mostrar precio actual en el gráfico
-        const ultimoPrecio = cfdData[cfdData.length - 1].close;
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = '11px monospace';
-        ctx.fillText(`LIVE: ${ultimoPrecio}`, w - 120, 20);
-    }
-
-    function updateBattleBarReal(score) {
-        const fill = document.getElementById('battle-fill');
-        const scoreText = document.getElementById('battle-score');
-        fill.style.width = score + "%";
-        scoreText.innerText = `${score.toFixed(0)}% / ${(100-score).toFixed(0)}%`;
-    }
-
-    function sendMessage() {
-        const input = document.getElementById('chat-input');
-        const consoleLog = document.getElementById('ia-console');
-        const texto = input.value.trim();
-        if (texto === "") return;
-
-        const msg = document.createElement('div');
-        msg.innerText = "> " + texto;
-        consoleLog.appendChild(msg);
-        
-        const response = document.createElement('div');
-        response.style.color = "#f59e0b";
-        
-        if (texto.toLowerCase().includes('fibonacci')) {
-            response.innerText = "IA: Analizando niveles de retroceso de Fibonacci (61.8% / 50.0%) en temporalidad M15.";
-        } else if (texto.toLowerCase().includes('dxy')) {
-            response.innerText = "IA: Correlación inversa detectada con el DXY. El índice de fuerza del dólar mantiene presión bajista.";
-        } else {
-            response.innerText = "IA: Procesando confluencia macroeconómica y parámetros de riesgo...";
-        }
-        
-        consoleLog.appendChild(response);
-        input.value = "";
-        consoleLog.scrollTop = consoleLog.scrollHeight;
-    }
-
-    function handleKeyPress(event) {
-        if (event.key === 'Enter') {
-            sendMessage();
-        }
-    }
-
-    window.onload = function() {
-        cargarWidgetsTradingView('EURUSD');
-    };
-</script>
 </body>
 </html>
