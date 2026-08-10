@@ -2,14 +2,17 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mini Bloomberg - EUR/USD Terminal Profesional</title>
+    <title>POLMILLONE TERMINAL - CFD Sintético Profesional</title>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body { background-color: #0b0e14; color: #ffffff; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
         h1 { text-align: center; color: #38ef7d; margin-bottom: 5px; }
         .subtitle { text-align: center; color: #8a9ba8; margin-bottom: 15px; font-size: 14px; }
-        .market-status { text-align: center; margin-bottom: 20px; }
-        .badge-closed { background: #f23645; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .market-status { text-align: center; margin-bottom: 15px; }
+        .badge-closed { background: #089981; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .macro-banner { background: #131722; border: 1px solid #2a2e39; border-radius: 8px; padding: 10px 15px; max-width: 1400px; margin: 0 auto 15px auto; display: flex; align-items: center; justify-content: space-between; font-size: 13px; border-left: 4px solid #089981; }
+
         .dashboard { display: flex; gap: 20px; max-width: 1400px; margin: 0 auto; }
         .sidebar { width: 350px; display: flex; flex-direction: column; gap: 15px; }
         .panel { background: #131722; border: 1px solid #2a2e39; border-radius: 8px; padding: 15px; }
@@ -29,29 +32,69 @@
         .tf-btn { background: transparent; border: 1px solid transparent; color: #8a9ba8; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.2s ease; }
         .tf-btn:hover { color: #ffffff; background: rgba(41, 98, 255, 0.15); }
         .tf-btn.active { background: #2962FF; color: white; border-color: #2962FF; }
-        #chart-container { width: 100%; height: 450px; background: #131722; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; border: 1px solid #2a2e39; }
+        #chart-container { width: 100%; height: 400px; background: #131722; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; border: 1px solid #2a2e39; }
+        
+        .news-container { max-height: 200px; overflow-y: auto; padding-right: 5px; }
+        .news-container::-webkit-scrollbar { width: 5px; }
+        .news-container::-webkit-scrollbar-thumb { background: #2a2e39; border-radius: 4px; }
+        .news-item { border-bottom: 1px solid #2a2e39; padding: 8px 0; font-size: 11px; }
+        .news-time { color: #38ef7d; font-weight: bold; font-size: 10px; }
+        
+        .impact-alert-box { background: rgba(242, 54, 69, 0.08); border: 1px solid #f23645; border-radius: 6px; padding: 10px; font-size: 12px; margin-top: 5px; }
+        .impact-alert-box.normal { background: rgba(8, 153, 129, 0.08); border-color: #089981; }
+        
+        .ai-panel { background: #131722; border: 1px solid #2a2e39; border-radius: 8px; padding: 15px; display: flex; gap: 20px; align-items: center; }
+        .ai-signal-box { min-width: 180px; text-align: center; padding: 10px; border-radius: 6px; background: #0b0e14; border: 1px solid #2a2e39; }
+        .ai-signal-text { font-size: 14px; font-weight: bold; margin-top: 5px; }
+        .ai-details { flex: 1; font-size: 13px; color: #8a9ba8; line-height: 1.4; }
+        .surgical-box { margin-top: 6px; font-size: 12px; color: #38ef7d; background: rgba(56, 239, 125, 0.05); padding: 5px; border-radius: 4px; border: 1px dashed #38ef7d; }
+        
+        .signals-history { max-height: 150px; overflow-y: auto; font-size: 11px; }
+        .signal-row { display: flex; justify-content: space-between; border-bottom: 1px solid #2a2e39; padding: 6px 0; }
     </style>
 </head>
 <body>
 
-    <h1>TERMINAL MINI BLOOMBERG</h1>
-    <div class="subtitle">Análisis de Correlación y Flujos EUR/USD</div>
+    <h1>POLMILLONE TERMINAL</h1>
+    <div class="subtitle">Gráfico Sintético Derivado de la Batalla de Flujos Institucionales</div>
     <div class="market-status">
-        <span class="badge-closed">Sistema en Vivo (WebSockets)</span>
+        <span class="badge-closed">Terminal Operativa Activa</span>
+    </div>
+
+    <div id="macro-banner" class="macro-banner">
+        <div><strong>Estado del Sistema:</strong> <span id="macro-status-text">Analizando flujos cruzados de bandos en tiempo real...</span></div>
+        <div id="macro-badge" style="font-weight: bold; color: #089981;">ACTIVO</div>
     </div>
 
     <div class="dashboard">
+        <!-- Barra Lateral Izquierda -->
         <div class="sidebar">
             <div class="panel">
-                <h3>Bando EUR (5 Activos)</h3>
+                <h3>Bando EUR</h3>
                 <div id="lista-euro">Cargando datos...</div>
             </div>
             <div class="panel">
-                <h3>Bando USD (5 Activos)</h3>
+                <h3>Bando USD</h3>
                 <div id="lista-dolar">Cargando datos...</div>
+            </div>
+            <div class="panel">
+                <h3>Noticias en Vivo (Streaming)</h3>
+                <div id="lista-noticias" class="news-container">Cargando noticias...</div>
+            </div>
+            <!-- Espacio libre aprovechado para Alerta de Alto Impacto -->
+            <div class="panel">
+                <h3>Alerta de Alto Impacto</h3>
+                <div id="alerta-impacto-container">
+                    <div class="impact-alert-box normal">
+                        <span id="alerta-hora" style="color: #089981; font-weight: bold;">[00:00]</span><br>
+                        <b id="alerta-titulo">Sin eventos críticos inmediatos</b>
+                        <div id="alerta-desc" style="font-size: 11px; color: #d1d4dc; margin-top: 4px;">Monitoreando calendario institucional...</div>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- Contenido Principal -->
         <div class="main-content">
             <div class="fuerza-bar-container">
                 <h3>Balanza de Fuerza Institucional</h3>
@@ -68,8 +111,9 @@
 
             <div>
                 <div class="chart-header">
-                    <span style="font-size: 14px; font-weight: bold; color: #d1d4dc;">Gráfico Sintético EUR/USD</span>
+                    <span style="font-size: 14px; font-weight: bold; color: #d1d4dc;">Gráfico CFD Sintético (POLMILLONE)</span>
                     <div class="timeframes">
+                        <button class="tf-btn" onclick="cambiarTF('M1', this)">M1</button>
                         <button class="tf-btn active" onclick="cambiarTF('M5', this)">M5</button>
                         <button class="tf-btn" onclick="cambiarTF('M15', this)">M15</button>
                         <button class="tf-btn" onclick="cambiarTF('M30', this)">M30</button>
@@ -80,13 +124,31 @@
                 </div>
                 <div id="chart-container"></div>
             </div>
+
+            <div class="ai-panel">
+                <div class="ai-signal-box">
+                    <span style="font-size: 11px; color: #8a9ba8; text-transform: uppercase;">Señal Algorítmica IA</span>
+                    <div id="ai-senal" class="ai-signal-text" style="color: #8a9ba8;">ESPERANDO</div>
+                </div>
+                <div class="ai-details">
+                    <div><strong>Patrón y Análisis de Flujos:</strong> <span id="ai-patron">Evaluando presión entre bandos...</span></div>
+                    <div style="margin-top: 4px;">Índice de Confianza: <span id="ai-confianza" style="color: #fff; font-weight: bold;">0%</span></div>
+                    <div id="ai-surgical" class="surgical-box" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Seguimiento y Acumulación de Señales IA</h3>
+                <div id="lista-historial-senales" class="signals-history">Esperando registros históricos...</div>
+            </div>
         </div>
     </div>
 
     <script>
         const nombresAmigables = {
-            "EUR_USD": "EUR/USD", "EUR_JPY": "EUR/JPY", "EUR_GBP": "EUR/GBP", "GOLD": "Oro", "BUND": "Bund Alemán",
-            "DXY": "DXY (Dólar)", "US10Y": "Treasury 10Y", "SP500": "S&P 500", "NASDAQ": "Nasdaq", "WTI": "Petróleo WTI"
+            "EUR_USD_REF": "Spot EUR/USD (Ref)", "EUR_JPY": "EUR/JPY", "GOLD": "Oro", 
+            "DXY": "DXY (Dólar)", "US10Y": "Treasury 10Y", "SP500": "S&P 500", 
+            "NASDAQ": "Nasdaq", "WTI": "Petróleo WTI", "DOW": "Dow Jones", "DAX": "DAX Alemán"
         };
 
         let chart = null;
@@ -94,7 +156,7 @@
 
         function inicializarGrafico() {
             const container = document.getElementById('chart-container');
-            container.innerHTML = ''; // Limpiar contenedor por completo
+            container.innerHTML = ''; 
 
             chart = LightweightCharts.createChart(container, {
                 layout: { background: { type: 'solid', color: '#131722' }, textColor: '#d1d4dc' },
@@ -118,8 +180,7 @@
         function cambiarTF(tf, elemento) {
             document.querySelectorAll('.tf-btn').forEach(btn => btn.classList.remove('active'));
             elemento.classList.add('active');
-            
-            inicializarGrafico(); // Destruye y recrea el gráfico limpio para la nueva escala
+            inicializarGrafico(); 
 
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ accion: "cambiar_tf", timeframe: tf }));
@@ -171,10 +232,67 @@
                 }
                 document.getElementById('lista-dolar').innerHTML = htmlDolar;
             }
+
+            if (data.noticias) {
+                let htmlNoticias = '';
+                data.noticias.forEach(n => {
+                    htmlNoticias += `<div class="news-item">
+                        <span class="news-time">[${n.hora}] ${n.fuente}</span><br>
+                        <b>${n.titulo}</b>
+                    </div>`;
+                });
+                document.getElementById('lista-noticias').innerHTML = htmlNoticias;
+            }
+
+            if (data.alertaImpacto) {
+                const a = data.alertaImpacto;
+                const box = document.getElementById('alerta-impacto-container').firstElementChild;
+                if (a.estado === "ALERTA") {
+                    box.className = "impact-alert-box"; // Rojo alerta
+                    box.style.borderColor = "#f23645";
+                    document.getElementById('alerta-hora').style.color = "#f23645";
+                } else {
+                    box.className = "impact-alert-box normal"; // Verde normal
+                    box.style.borderColor = "#089981";
+                    document.getElementById('alerta-hora').style.color = "#089981";
+                }
+                document.getElementById('alerta-hora').innerText = `[${a.hora_evento}]`;
+                document.getElementById('alerta-titulo').innerText = a.activo;
+                document.getElementById('alerta-desc').innerText = a.descripcion;
+            }
+
+            if (data.ia) {
+                const elSenal = document.getElementById('ai-senal');
+                elSenal.innerText = data.ia.senal;
+                elSenal.style.color = data.ia.color;
+                document.getElementById('ai-patron').innerText = data.ia.patron;
+                document.getElementById('ai-confianza').innerText = data.ia.confianza + '%';
+
+                const surgicalBox = document.getElementById('ai-surgical');
+                if (data.ia.detallesQuirurgicos) {
+                    const d = data.ia.detallesQuirurgicos;
+                    surgicalBox.style.display = 'block';
+                    surgicalBox.innerHTML = `🎯 <b>${d.tipo}</b> | Entrada: <b>${d.entrada}</b> | SL: <span style="color:#f23645;">${d.stopLoss}</span> | TP: <span style="color:#089981;">${d.takeProfit}</span>`;
+                } else {
+                    surgicalBox.style.display = 'none';
+                }
+
+                if (data.ia.historialSeguimiento) {
+                    let htmlHistorial = '';
+                    data.ia.historialSeguimiento.slice().reverse().forEach(h => {
+                        let colorEstado = h.estado.includes("ACIERTO") ? "#089981" : (h.estado.includes("FALLO") ? "#f23645" : "#8a9ba8");
+                        htmlHistorial += `<div class="signal-row">
+                            <span><b>${h.fecha_str}</b> - ${h.tipo} @ ${h.precio_entrada}</span>
+                            <span style="color: ${colorEstado}; font-weight: bold;">${h.estado}</span>
+                        </div>`;
+                    });
+                    document.getElementById('lista-historial-senales').innerHTML = htmlHistorial || "No hay señales registradas aún.";
+                }
+            }
         };
 
         ws.onopen = function() {
-            console.log("Conectado al servidor Mini Bloomberg.");
+            console.log("Conectado a POLMILLONE Terminal - CFD Sintético.");
         };
     </script>
 </body>
